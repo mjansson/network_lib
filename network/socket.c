@@ -667,7 +667,7 @@ void _socket_store_address_local( socket_t* sock, int family )
 	}
 	else
 	{
-		FOUNDATION_ASSERT_FAILFORMAT_LOG( "Unable to get local address for socket 0x%llx (" STRING_FORMAT_POINTER " : %d): Unsupported address family %u", sock->id, sock, sockbase->fd, family );
+		FOUNDATION_ASSERT_FAILFORMAT_LOG( HASH_NETWORK, "Unable to get local address for socket 0x%llx (" STRING_FORMAT_POINTER " : %d): Unsupported address family %u", sock->id, sock, sockbase->fd, family );
 		return;
 	}
 	getsockname( sockbase->fd, &address_local->saddr, (socklen_t*)&address_local->address_size );
