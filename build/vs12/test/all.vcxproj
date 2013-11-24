@@ -193,7 +193,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>BUILD_DEBUG=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\..\foundation_lib;..\..\..\..\lua_lib;..\..\..;..\..\..\..\foundation_lib\test;..\..\..\test</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\..\foundation_lib;..\..\..;..\..\..\..\foundation_lib\test;..\..\..\test</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -220,7 +220,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win32\debug;..\..\..\..\lua_lib\lib\win32\debug;..\..\..\..\lua_lib\lib\win32</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win32\debug</AdditionalLibraryDirectories>
       <AdditionalDependencies>foundation.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -231,7 +231,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>BUILD_DEBUG=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\..\foundation_lib;..\..\..\..\lua_lib;..\..\..;..\..\..\..\foundation_lib\test;..\..\..\test</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\..\foundation_lib;..\..\..;..\..\..\..\foundation_lib\test;..\..\..\test</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -259,7 +259,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win64\debug;..\..\..\..\lua_lib\lib\win64\debug;..\..\..\..\lua_lib\lib\win64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win64\debug</AdditionalLibraryDirectories>
       <AdditionalDependencies>foundation.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -271,7 +271,7 @@
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>BUILD_RELEASE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\..\foundation_lib;..\..\..\..\lua_lib;..\..\..;..\..\..\..\foundation_lib\test;..\..\..\test</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\..\foundation_lib;..\..\..;..\..\..\..\foundation_lib\test;..\..\..\test</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -299,7 +299,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>foundation.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win32\release;..\..\..\..\lua_lib\lib\win32\release;..\..\..\..\lua_lib\lib\win32</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win32\release</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Deploy|Win32'">
@@ -310,7 +310,7 @@
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>BUILD_DEPLOY=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\..\foundation_lib;..\..\..\..\lua_lib;..\..\..;..\..\..\..\foundation_lib\test;..\..\..\test</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\..\foundation_lib;..\..\..;..\..\..\..\foundation_lib\test;..\..\..\test</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -338,7 +338,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>foundation.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win32\deploy;..\..\..\..\lua_lib\lib\win32\deploy;..\..\..\..\lua_lib\lib\win32</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win32\deploy</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">
@@ -349,7 +349,7 @@
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>BUILD_PROFILE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\..\foundation_lib;..\..\..\..\lua_lib;..\..\..;..\..\..\..\foundation_lib\test;..\..\..\test</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\..\foundation_lib;..\..\..;..\..\..\..\foundation_lib\test;..\..\..\test</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -377,7 +377,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>foundation.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win32\profile;..\..\..\..\lua_lib\lib\win32\profile;..\..\..\..\lua_lib\lib\win32</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win32\profile</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -388,7 +388,7 @@
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>BUILD_RELEASE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\..\foundation_lib;..\..\..\..\lua_lib;..\..\..;..\..\..\..\foundation_lib\test;..\..\..\test</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\..\foundation_lib;..\..\..;..\..\..\..\foundation_lib\test;..\..\..\test</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -417,7 +417,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>foundation.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win64\release;..\..\..\..\lua_lib\lib\win64\release;..\..\..\..\lua_lib\lib\win64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win64\release</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Deploy|x64'">
@@ -428,7 +428,7 @@
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>BUILD_DEPLOY=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\..\foundation_lib;..\..\..\..\lua_lib;..\..\..;..\..\..\..\foundation_lib\test;..\..\..\test</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\..\foundation_lib;..\..\..;..\..\..\..\foundation_lib\test;..\..\..\test</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -457,7 +457,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>foundation.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win64\deploy;..\..\..\..\lua_lib\lib\win64\deploy;..\..\..\..\lua_lib\lib\win64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win64\deploy</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
@@ -468,7 +468,7 @@
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>BUILD_PROFILE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\..\foundation_lib;..\..\..\..\lua_lib;..\..\..;..\..\..\..\foundation_lib\test;..\..\..\test</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\..\foundation_lib;..\..\..;..\..\..\..\foundation_lib\test;..\..\..\test</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -497,7 +497,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>foundation.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win64\profile;..\..\..\..\lua_lib\lib\win64\profile;..\..\..\..\lua_lib\lib\win64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win64\profile</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
