@@ -1,0 +1,41 @@
+
+import os.path
+
+Import("env")
+
+
+# SOURCES
+
+networksources = [
+
+	'address.c', 'event.c', 'http.c', 'network.c', 'poll.c', 'socket.c', 'tcp.c'
+
+	]
+
+networkheaders = [
+
+	'address.h', 'build.h', 'event.h', 'http.h', 'internal.h', 'network.h', 'poll.h', 'socket.h', 'tcp.h', 'types.h'
+
+	]
+
+
+# ADD INTERNAL FLAGS
+
+libenv = env.Clone()
+libenv.Append( CPPDEFINES=['NETWORK_COMPILE=1'] )
+
+
+# OUTPUTS
+
+env['networklib'] = libenv.StaticLibrary( 'network', networksources )
+
+
+# DEPENDENCIES
+
+#if env['toolset'] == 'gnu':
+#	libenv.Depends( [ os.path.splitext( x )[0] + '.o' for x in networksources ], '#/network/network.h.gch' )
+
+
+# INSTALLS
+
+libenv.AddPostAction( 'network', libenv.Install( '#lib/${platform}${platformsuffix}/${buildprofile}', [ env['networklib'] ] ) )

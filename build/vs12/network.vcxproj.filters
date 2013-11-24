@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\network\address.c" />
+    <ClCompile Include="..\..\network\network.c" />
+    <ClCompile Include="..\..\network\event.c" />
+    <ClCompile Include="..\..\network\poll.c" />
+    <ClCompile Include="..\..\network\socket.c" />
+    <ClCompile Include="..\..\network\tcp.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\network\address.h" />
+    <ClInclude Include="..\..\network\internal.h" />
+    <ClInclude Include="..\..\network\network.h" />
+    <ClInclude Include="..\..\network\poll.h" />
+    <ClInclude Include="..\..\network\socket.h" />
+    <ClInclude Include="..\..\network\types.h" />
+    <ClInclude Include="..\..\network\build.h" />
+    <ClInclude Include="..\..\network\event.h" />
+    <ClInclude Include="..\..\network\hashstrings.h" />
+    <ClInclude Include="..\..\network\tcp.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\network\hashstrings.txt" />
+  </ItemGroup>
+</Project>
