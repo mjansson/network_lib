@@ -30,3 +30,5 @@
 #define BUILD_SIZE_SOCKET_READBUFFER          8192
 
 #define BUILD_SIZE_POLL_QUEUE                 32
+
+#define BUILD_SIZE_DEFALT_NUM_SOCKETS         128

@@ -17,6 +17,7 @@
 #  include <foundation/windows.h>
 #endif
 
+static bool _network_initialized = false;
 
 NETWORK_EXTERN int   _socket_initialize( unsigned int max_sockets );
 NETWORK_EXTERN void  _socket_shutdown( void );
@@ -27,6 +28,13 @@ NETWORK_EXTERN void  _network_event_shutdown( void );
 
 int network_initialize( unsigned int max_sockets )
 {
+	if( _network_initialized )
+		return 0;
+
+	if( !max_sockets )
+		max_sockets = BUILD_SIZE_DEFALT_NUM_SOCKETS;
+	max_sockets = math_clamp( max_sockets, 8, 65535 );
+
 	log_debugf( HASH_NETWORK, "Initializing network services (%u max sockets)", max_sockets );
 	
 #if FOUNDATION_PLATFORM_WINDOWS
@@ -53,6 +61,9 @@ int network_initialize( unsigned int max_sockets )
 
 void network_shutdown( void )
 {
+	if( !_network_initialized )
+		return;
+
 	log_debug( HASH_NETWORK, "Terminating network services" );
 
 	_socket_shutdown();

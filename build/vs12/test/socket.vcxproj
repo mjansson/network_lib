@@ -220,7 +220,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win32\debug;..\..\..\..\lua_lib\lib\win32\debug;..\..\..\..\lua_lib\lib\win32</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win32\debug</AdditionalLibraryDirectories>
       <AdditionalDependencies>test.lib;foundation.lib;ws2_32.lib;iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -259,7 +259,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win64\debug;..\..\..\..\lua_lib\lib\win64\debug;..\..\..\..\lua_lib\lib\win64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win64\debug</AdditionalLibraryDirectories>
       <AdditionalDependencies>test.lib;foundation.lib;ws2_32.lib;iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -299,7 +299,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>test.lib;foundation.lib;ws2_32.lib;iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win32\release;..\..\..\..\lua_lib\lib\win32\release;..\..\..\..\lua_lib\lib\win32</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win32\release</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Deploy|Win32'">
@@ -338,7 +338,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>test.lib;foundation.lib;ws2_32.lib;iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win32\deploy;..\..\..\..\lua_lib\lib\win32\deploy;..\..\..\..\lua_lib\lib\win32</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win32\deploy</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">
@@ -377,7 +377,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>test.lib;foundation.lib;ws2_32.lib;iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win32\profile;..\..\..\..\lua_lib\lib\win32\profile;..\..\..\..\lua_lib\lib\win32</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win32\profile</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -417,7 +417,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>test.lib;foundation.lib;ws2_32.lib;iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win64\release;..\..\..\..\lua_lib\lib\win64\release;..\..\..\..\lua_lib\lib\win64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win64\release</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Deploy|x64'">
@@ -457,7 +457,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>test.lib;foundation.lib;ws2_32.lib;iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win64\deploy;..\..\..\..\lua_lib\lib\win64\deploy;..\..\..\..\lua_lib\lib\win64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win64\deploy</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
@@ -497,7 +497,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>test.lib;foundation.lib;ws2_32.lib;iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win64\profile;..\..\..\..\lua_lib\lib\win64\profile;..\..\..\..\lua_lib\lib\win64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win64\profile</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
