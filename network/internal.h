@@ -26,6 +26,7 @@
 #  define FAR
 #elif FOUNDATION_PLATFORM_POSIX
 #  include <foundation/posix.h>
+#  include <sys/select.h>
 #  include <arpa/inet.h>
 #  include <netinet/in.h>
 #  include <netdb.h>

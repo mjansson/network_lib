@@ -311,7 +311,7 @@ network_address_t** network_address_local( void )
 
 	if( getifaddrs( &ifaddr ) < 0 )
 	{
-		log_context_errorf( HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL, "Unable to get interface addresses: %s", system_error_message( NETWORK_RESOLV_ERROR ) );
+		log_errorf( HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL, "Unable to get interface addresses: %s", system_error_message( NETWORK_RESOLV_ERROR ) );
 		error_context_pop();
 		return 0;
 	}

@@ -567,12 +567,12 @@ socket_state_t _socket_poll_state( socket_base_t* sockbase )
 		case SOCKETSTATE_CONNECTING:
 		{
 			struct timeval tv;
-			struct fd_set fdwrite, fderr;
+			fd_set fdwrite, fderr;
 
 			FD_ZERO( &fdwrite );
 			FD_ZERO( &fderr );
-			FD_SET( (SOCKET)sockbase->fd, &fdwrite );
-			FD_SET( (SOCKET)sockbase->fd, &fderr   );
+			FD_SET( sockbase->fd, &fdwrite );
+			FD_SET( sockbase->fd, &fderr   );
 				
 			tv.tv_sec  = 0;
 			tv.tv_usec = 0;

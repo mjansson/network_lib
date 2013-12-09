@@ -154,13 +154,13 @@ object_t tcp_socket_accept( object_t id, unsigned int timeoutms )
 #endif
 			{
 				struct timeval tval;
-				struct fd_set fdread, fderr;
+				fd_set fdread, fderr;
 				int ret;
 
 				FD_ZERO( &fdread );
 				FD_ZERO( &fderr );
-				FD_SET( (SOCKET)sockbase->fd, &fdread );
-				FD_SET( (SOCKET)sockbase->fd, &fderr );
+				FD_SET( sockbase->fd, &fdread );
+				FD_SET( sockbase->fd, &fderr );
 
 				tval.tv_sec  = timeoutms / 1000;
 				tval.tv_usec = ( timeoutms % 1000 ) * 1000;
@@ -330,8 +330,8 @@ static int _tcp_socket_connect( socket_t* sock, const network_address_t* address
 
 				FD_ZERO( &fdwrite );
 				FD_ZERO( &fderr );
-				FD_SET( (SOCKET)sockbase->fd, &fdwrite );
-				FD_SET( (SOCKET)sockbase->fd, &fderr );
+				FD_SET( sockbase->fd, &fdwrite );
+				FD_SET( sockbase->fd, &fderr );
 				
 				tv.tv_sec  = timeoutms / 1000;
 				tv.tv_usec = ( timeoutms % 1000 ) * 1000;

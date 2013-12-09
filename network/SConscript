@@ -8,13 +8,13 @@ Import("env")
 
 networksources = [
 
-	'address.c', 'event.c', 'http.c', 'network.c', 'poll.c', 'socket.c', 'tcp.c'
+	'address.c', 'event.c', 'network.c', 'poll.c', 'socket.c', 'tcp.c'
 
 	]
 
 networkheaders = [
 
-	'address.h', 'build.h', 'event.h', 'http.h', 'internal.h', 'network.h', 'poll.h', 'socket.h', 'tcp.h', 'types.h'
+	'address.h', 'build.h', 'event.h', 'internal.h', 'network.h', 'poll.h', 'socket.h', 'tcp.h', 'types.h'
 
 	]
 
