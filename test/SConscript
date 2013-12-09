@@ -8,7 +8,7 @@ testenv    = env.Clone()
 
 testenv.Append( CPPPATH=[testenv['foundationpath'] + '/test'] )
 testenv.Append( LIBPATH=['#/lib/${platform}${platformsuffix}/${buildprofile}'] )
-testenv.Append( LIBS=[ 'test', 'network', 'lua', 'luajit', 'foundation' ] )
+testenv.Append( LIBS=[ 'test', 'network', 'foundation' ] )
 
 if testenv['platform'] == 'linux':
 	testenv.Append( LIBS=[ 'dl', 'rt', 'm' ] )
