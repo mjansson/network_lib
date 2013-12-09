@@ -1,10 +1,12 @@
-/* main.c  -  Network library tcp test  -  Internal use only  -  2013 Mattias Jansson / Rampant Pixels
+/* main.c  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
  * 
- * This library provides a network abstraction built on foundation streams.
+ * This library provides a network abstraction built on foundation streams. The latest source code is
+ * always available at
+ * 
+ * https://github.com/rampantpixels/network_lib
+ * 
+ * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
- * All rights reserved. No part of this library, code or built products may be used without
- * the explicit consent from Rampant Pixels AB
- * 
  */
 
 #include <network/network.h>

@@ -173,7 +173,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..\..\lua_lib;..\..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CompileAsManaged>false</CompileAsManaged>
       <CompileAsWinRT>false</CompileAsWinRT>
@@ -208,7 +208,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..\..\lua_lib;..\..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CompileAsManaged>false</CompileAsManaged>
       <CompileAsWinRT>false</CompileAsWinRT>
@@ -245,7 +245,7 @@
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..\..\lua_lib;..\..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..</AdditionalIncludeDirectories>
       <CompileAsManaged>false</CompileAsManaged>
       <CompileAsWinRT>false</CompileAsWinRT>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -282,7 +282,7 @@
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..\..\lua_lib;..\..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..</AdditionalIncludeDirectories>
       <CompileAsManaged>false</CompileAsManaged>
       <CompileAsWinRT>false</CompileAsWinRT>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -319,7 +319,7 @@
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..\..\lua_lib;..\..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..</AdditionalIncludeDirectories>
       <CompileAsManaged>false</CompileAsManaged>
       <CompileAsWinRT>false</CompileAsWinRT>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -356,7 +356,7 @@
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..\..\lua_lib;..\..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..</AdditionalIncludeDirectories>
       <CompileAsManaged>false</CompileAsManaged>
       <CompileAsWinRT>false</CompileAsWinRT>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -394,7 +394,7 @@
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..\..\lua_lib;..\..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..</AdditionalIncludeDirectories>
       <CompileAsManaged>false</CompileAsManaged>
       <CompileAsWinRT>false</CompileAsWinRT>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -432,7 +432,7 @@
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..\..\lua_lib;..\..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..</AdditionalIncludeDirectories>
       <CompileAsManaged>false</CompileAsManaged>
       <CompileAsWinRT>false</CompileAsWinRT>
       <TreatWarningAsError>true</TreatWarningAsError>
