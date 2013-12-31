@@ -57,7 +57,7 @@ socket_t* _socket_allocate( void )
 
 	sock = memory_allocate_zero_context( MEMORYCONTEXT_NETWORK, sizeof( socket_t ), 16, MEMORY_PERSISTENT );
 	
-	log_debugf( HASH_NETWORK, "Allocated socket 0x%llx (" STRING_FORMAT_POINTER ")", object, sock );
+	log_debugf( HASH_NETWORK, "Allocated socket 0x%llx (0x%" PRIfixPTR ")", object, sock );
 
 	sock->id = object;
 	sock->ref = 1;
@@ -119,7 +119,7 @@ static void _socket_deallocate( socket_t* sock )
 	int fd = SOCKET_INVALID;
 	if( sock->base >= 0 )
 		fd = _socket_base[ sock->base ].fd;
-	log_debugf( HASH_NETWORK, "Deallocating socket 0x%llx (" STRING_FORMAT_POINTER " : %d)", object, sock, fd );
+	log_debugf( HASH_NETWORK, "Deallocating socket 0x%llx (0x%" PRIfixPTR " : %d)", object, sock, fd );
 #endif
 
 	objectmap_free( _socket_map, object );
@@ -139,7 +139,7 @@ int _socket_create_fd( socket_t* sock, int family )
 
 	if( _socket_allocate_base( sock ) < 0 )
 	{
-		log_errorf( HASH_NETWORK, ERROR_OUT_OF_MEMORY, "Unable to allocate base for socket " STRING_FORMAT_POINTER, sock );
+		log_errorf( HASH_NETWORK, ERROR_OUT_OF_MEMORY, "Unable to allocate base for socket 0x%" PRIfixPTR, sock );
 		return SOCKET_INVALID;
 	}
 
@@ -216,7 +216,7 @@ bool socket_bind( object_t id, const network_address_t* address )
 #if BUILD_ENABLE_LOG
 		int sockerr = NETWORK_SOCKET_ERROR;
 		char* address_str = network_address_to_string( address, true );
-		log_warnf( HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL, "Unable to bind socket 0x%llx (" STRING_FORMAT_POINTER " : %d) to local address %s: %s", id, sock, sockbase->fd, address_str, system_error_message( sockerr ) );
+		log_warnf( HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL, "Unable to bind socket 0x%llx (0x%" PRIfixPTR " : %d) to local address %s: %s", id, sock, sockbase->fd, address_str, system_error_message( sockerr ) );
 		string_deallocate( address_str );
 #endif
 	}
@@ -253,7 +253,7 @@ bool socket_connect( object_t id, const network_address_t* address, unsigned int
 	{
 #if BUILD_ENABLE_LOG
 		char* address_str = network_address_to_string( address, true );
-		log_warnf( HASH_NETWORK, WARNING_SUSPICIOUS, "Unable to connect already connected socket 0x%llx (" STRING_FORMAT_POINTER " : %d) to remote address %s", id, sock, sockbase->fd, address_str );
+		log_warnf( HASH_NETWORK, WARNING_SUSPICIOUS, "Unable to connect already connected socket 0x%llx (0x%" PRIfixPTR " : %d) to remote address %s", id, sock, sockbase->fd, address_str );
 		string_deallocate( address_str );
 #endif
 		goto exit;
@@ -267,7 +267,7 @@ bool socket_connect( object_t id, const network_address_t* address, unsigned int
 	{
 #if BUILD_ENABLE_LOG
 		char* address_str = network_address_to_string( address, true );
-		log_warnf( HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL, "Unable to connect socket 0x%llx (" STRING_FORMAT_POINTER " : %d) to remote address %s: %s", id, sock, sockbase->fd, address_str, system_error_message( err ) );
+		log_warnf( HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL, "Unable to connect socket 0x%llx (0x%" PRIfixPTR " : %d) to remote address %s: %s", id, sock, sockbase->fd, address_str, system_error_message( err ) );
 		string_deallocate( address_str );
 #endif
 	}
@@ -456,7 +456,7 @@ void _socket_close( socket_t* sock )
 		sockbase->flags  = 0;
 	}
 
-	log_debugf( HASH_NETWORK, "Closing socket 0x%llx (" STRING_FORMAT_POINTER " : %d)", sock->id, sock, fd );
+	log_debugf( HASH_NETWORK, "Closing socket 0x%llx (0x%" PRIfixPTR " : %d)", sock->id, sock, fd );
 	
 	sock->address_local  = 0;
 	sock->address_remote = 0;
@@ -583,7 +583,7 @@ socket_state_t _socket_poll_state( socket_base_t* sockbase )
 			{
 				if( !sock )
 					sock = _socket_lookup( sockbase->object );
-				log_debugf( HASH_NETWORK, "Socket 0x%llx (" STRING_FORMAT_POINTER " : %d): error in state CONNECTING", sockbase->object, sock, sockbase->fd );
+				log_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d): error in state CONNECTING", sockbase->object, sock, sockbase->fd );
 				if( sock )
 					_socket_close( sock );
 				//network_event_post( NETWORKEVENT_ERROR, sock );
@@ -593,7 +593,7 @@ socket_state_t _socket_poll_state( socket_base_t* sockbase )
 #if BUILD_ENABLE_DEBUG_LOG
 				if( !sock )
 					sock = _socket_lookup( sockbase->object );
-				log_debugf( HASH_NETWORK, "Socket 0x%llx (" STRING_FORMAT_POINTER " : %d): CONNECTING -> CONNECTED", sockbase->object, sock, sockbase->fd );
+				log_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d): CONNECTING -> CONNECTED", sockbase->object, sock, sockbase->fd );
 #endif
 				//if( sock->state == SOCKETSTATE_CONNECTING )
 				//	network_event_post( NETWORKEVENT_CONNECTED, sock );
@@ -611,7 +611,7 @@ socket_state_t _socket_poll_state( socket_base_t* sockbase )
 #if BUILD_ENABLE_DEBUG_LOG
 				if( !sock )
 					sock = _socket_lookup( sockbase->object );
-				log_debugf( HASH_NETWORK, "Socket 0x%llx (" STRING_FORMAT_POINTER " : %d): hangup in CONNECTED", sockbase->object, sock, sockbase->fd );
+				log_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d): hangup in CONNECTED", sockbase->object, sock, sockbase->fd );
 #endif
 				sockbase->state = SOCKETSTATE_DISCONNECTED;
 				//network_event_post( NETWORKEVENT_HANGUP, sock );
@@ -627,7 +627,7 @@ socket_state_t _socket_poll_state( socket_base_t* sockbase )
 				sock = _socket_lookup( sockbase->object );
 			if( !_socket_buffered_in( sock ) )
 			{
-				log_debugf( HASH_NETWORK, "Socket 0x%llx (" STRING_FORMAT_POINTER " : %d): all data read in DISCONNECTED", sockbase->object, sock, sockbase->fd );
+				log_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d): all data read in DISCONNECTED", sockbase->object, sock, sockbase->fd );
 				if( sock )
 					_socket_close( sock );
 			}
@@ -669,7 +669,7 @@ void _socket_store_address_local( socket_t* sock, int family )
 	}
 	else
 	{
-		FOUNDATION_ASSERT_FAILFORMAT_LOG( HASH_NETWORK, "Unable to get local address for socket 0x%llx (" STRING_FORMAT_POINTER " : %d): Unsupported address family %u", sock->id, sock, sockbase->fd, family );
+		FOUNDATION_ASSERT_FAILFORMAT_LOG( HASH_NETWORK, "Unable to get local address for socket 0x%llx (0x%" PRIfixPTR " : %d): Unsupported address family %u", sock->id, sock, sockbase->fd, family );
 		return;
 	}
 	getsockname( sockbase->fd, &address_local->saddr, (socklen_t*)&address_local->address_size );
@@ -716,7 +716,7 @@ static void _socket_stream_deallocate( stream_t* stream )
 		socket_t* sock = _socket_lookup( id );
 		if( sock )
 		{
-			FOUNDATION_ASSERT_MSGFORMAT( sock->stream == sockstream, "Socket %llx (" STRING_FORMAT_POINTER " : %d): Deallocating stream mismatch, stream is " STRING_FORMAT_POINTER ", socket stream is " STRING_FORMAT_POINTER, id, sock, ( sock->base >= 0 ) ? _socket_base[ sock->base ].fd : SOCKET_INVALID, sockstream, sock->stream );
+			FOUNDATION_ASSERT_MSGFORMAT( sock->stream == sockstream, "Socket %llx (0x%" PRIfixPTR " : %d): Deallocating stream mismatch, stream is 0x%" PRIfixPTR ", socket stream is 0x%" PRIfixPTR, id, sock, ( sock->base >= 0 ) ? _socket_base[ sock->base ].fd : SOCKET_INVALID, sockstream, sock->stream );
 			sock->stream = 0;
 			socket_free( id );
 		}
@@ -807,7 +807,7 @@ static uint64_t _socket_read( stream_t* stream, void* buffer, uint64_t size )
 	if( was_read < size )
 	{
 		if( was_read )
-			log_warnf( HASH_NETWORK, WARNING_SUSPICIOUS, "Socket 0x%llx (" STRING_FORMAT_POINTER " : %d): partial read %d of %d bytes", sock->id, sock, sockbase->fd, was_read, size );
+			log_warnf( HASH_NETWORK, WARNING_SUSPICIOUS, "Socket 0x%llx (0x%" PRIfixPTR " : %d): partial read %d of %d bytes", sock->id, sock, sockbase->fd, was_read, size );
 		_socket_poll_state( sockbase );
 	}
 
@@ -875,7 +875,7 @@ static uint64_t _socket_write( stream_t* stream, const void* buffer, uint64_t si
 
 		if( sockbase->state != SOCKETSTATE_CONNECTED )
 		{
-			log_warnf( HASH_NETWORK, WARNING_SUSPICIOUS, "Socket %llx (" STRING_FORMAT_POINTER " : %d): partial write %d of %d bytes", sock->id, sock, sockbase->fd, was_written, (unsigned int)size );
+			log_warnf( HASH_NETWORK, WARNING_SUSPICIOUS, "Socket %llx (0x%" PRIfixPTR " : %d): partial write %d of %d bytes", sock->id, sock, sockbase->fd, was_written, (unsigned int)size );
 			break;
 		}
 

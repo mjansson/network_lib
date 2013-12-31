@@ -77,7 +77,7 @@ bool tcp_socket_listen( object_t id )
 	{
 #if BUILD_ENABLE_LOG
 		char* address_str = network_address_to_string( sock->address_local, true );
-		log_infof( HASH_NETWORK, "Listening on TCP/IP socket 0x%llx (" STRING_FORMAT_POINTER " : %d) local address %s", sock->id, sock, sockbase->fd, address_str );
+		log_infof( HASH_NETWORK, "Listening on TCP/IP socket 0x%llx (0x%" PRIfixPTR " : %d) local address %s", sock->id, sock, sockbase->fd, address_str );
 		string_deallocate( address_str );
 #endif
 		sockbase->state = SOCKETSTATE_LISTENING;
@@ -89,7 +89,7 @@ bool tcp_socket_listen( object_t id )
 	{
 		char* address_str = network_address_to_string( sock->address_local, true );
 		int sockerr = NETWORK_SOCKET_ERROR;
-		log_errorf( HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL, "Unable to listen on TCP/IP socket 0x%llx (" STRING_FORMAT_POINTER " : %d) on local address %s: %s", id, sock, sockbase->fd, address_str, system_error_message( sockerr ) );
+		log_errorf( HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL, "Unable to listen on TCP/IP socket 0x%llx (0x%" PRIfixPTR " : %d) on local address %s: %s", id, sock, sockbase->fd, address_str, system_error_message( sockerr ) );
 		string_deallocate( address_str );
 	}
 #endif
@@ -212,7 +212,7 @@ object_t tcp_socket_accept( object_t id, unsigned int timeoutms )
 	{
 		char* address_local_str = network_address_to_string( sock->address_local, true );
 		char* address_remote_str = network_address_to_string( accepted->address_remote, true );
-		log_infof( HASH_NETWORK, "Accepted connection on TCP/IP socket 0x%llx (" STRING_FORMAT_POINTER " : %d) with local address %s: created socket 0x%llx (" STRING_FORMAT_POINTER " : %d) remote address %s", sock->id, sock, sockbase->fd, address_local_str, accepted->id, accepted, acceptbase->fd, address_remote_str );
+		log_infof( HASH_NETWORK, "Accepted connection on TCP/IP socket 0x%llx (0x%" PRIfixPTR " : %d) with local address %s: created socket 0x%llx (0x%" PRIfixPTR " : %d) remote address %s", sock->id, sock, sockbase->fd, address_local_str, accepted->id, accepted, acceptbase->fd, address_remote_str );
 		string_deallocate( address_remote_str );
 		string_deallocate( address_local_str );
 	}
@@ -268,12 +268,12 @@ static void _tcp_socket_open( socket_t* sock, unsigned int family )
 
 	if( sockbase->fd < 0 )
 	{
-		log_errorf( HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL, "Unable to open TCP/IP socket 0x%llx (" STRING_FORMAT_POINTER " : %d): %s", sock->id, sock, sockbase->fd, system_error_message( NETWORK_SOCKET_ERROR ) );
+		log_errorf( HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL, "Unable to open TCP/IP socket 0x%llx (0x%" PRIfixPTR " : %d): %s", sock->id, sock, sockbase->fd, system_error_message( NETWORK_SOCKET_ERROR ) );
 		sockbase->fd = SOCKET_INVALID;
 	}
 	else
 	{
-		log_debugf( HASH_NETWORK, "Opened TCP/IP socket 0x%llx (" STRING_FORMAT_POINTER " : %d)", sock->id, sock, sockbase->fd );
+		log_debugf( HASH_NETWORK, "Opened TCP/IP socket 0x%llx (0x%" PRIfixPTR " : %d)", sock->id, sock, sockbase->fd );
 
 		_socket_set_blocking( sock, sockbase->flags & SOCKETFLAG_BLOCKING );
 		_tcp_socket_set_delay( sock, sockbase->flags & SOCKETFLAG_TCPDELAY );
@@ -396,7 +396,7 @@ static int _tcp_socket_connect( socket_t* sock, const network_address_t* address
 #if BUILD_ENABLE_DEBUG_LOG
 	{
 		char* address_str = network_address_to_string( address, true );
-		log_debugf( HASH_NETWORK, "%s socket 0x%llx (" STRING_FORMAT_POINTER " : %d) to remote host %s", ( sockbase->state == SOCKETSTATE_CONNECTING ) ? "Connecting" : "Connected", sock->id, sock, sockbase->fd, address_str );
+		log_debugf( HASH_NETWORK, "%s socket 0x%llx (0x%" PRIfixPTR " : %d) to remote host %s", ( sockbase->state == SOCKETSTATE_CONNECTING ) ? "Connecting" : "Connected", sock->id, sock, sockbase->fd, address_str );
 		string_deallocate( address_str );
 	}
 #endif
@@ -460,7 +460,7 @@ static void _tcp_socket_buffer_read( socket_t* sock, unsigned int wanted_size )
 	{
 #if BUILD_ENABLE_DEBUG_LOG
 		char* address_str = network_address_to_string( sock->address_remote, true );
-		log_debugf( HASH_NETWORK, "Socket closed gracefully on remote end 0x%llx (" STRING_FORMAT_POINTER " : %d): %s", sock->id, sock, sockbase->fd, address_str );
+		log_debugf( HASH_NETWORK, "Socket closed gracefully on remote end 0x%llx (0x%" PRIfixPTR " : %d): %s", sock->id, sock, sockbase->fd, address_str );
 		string_deallocate( address_str );
 #endif
 		_socket_close( sock );
@@ -478,7 +478,7 @@ static void _tcp_socket_buffer_read( socket_t* sock, unsigned int wanted_size )
 		const unsigned char* src = (const unsigned char*)sock->buffer_in + sock->offset_write_in;
 		char dump_buffer[66];
 #endif
-		log_debugf( HASH_NETWORK, "Socket 0x%llx (" STRING_FORMAT_POINTER " : %d) read %d of %u (%u were available) bytes from TCP/IP socket to buffer position %d", sock->id, sock, sockbase->fd, ret, try_read, available, sock->offset_write_in );
+		log_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d) read %d of %u (%u were available) bytes from TCP/IP socket to buffer position %d", sock->id, sock, sockbase->fd, ret, try_read, available, sock->offset_write_in );
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 		for( long row = 0; row <= ( ret / 8 ); ++row )
 		{
@@ -513,7 +513,7 @@ static void _tcp_socket_buffer_read( socket_t* sock, unsigned int wanted_size )
 		if( sockerr != EAGAIN )
 #endif
 		{
-			log_warnf( HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL, "Socket recv() failed on 0x%llx (" STRING_FORMAT_POINTER " : %d): %s (%d)", sock->id, sock, sockbase->fd, system_error_message( sockerr ), sockerr );
+			log_warnf( HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL, "Socket recv() failed on 0x%llx (0x%" PRIfixPTR " : %d): %s (%d)", sock->id, sock, sockbase->fd, system_error_message( sockerr ), sockerr );
 		}
 
 #if FOUNDATION_PLATFORM_WINDOWS
@@ -557,7 +557,7 @@ static void _tcp_socket_buffer_write( socket_t* sock )
 			const unsigned char* src = (const unsigned char*)sock->buffer_out + sent;
 			char buffer[34];
 #endif
-			log_context_debugf( HASH_NETWORK, "Socket 0x%llx (" STRING_FORMAT_POINTER " : %d) wrote %d of %d bytes bytes to TCP/IP socket from buffer position %d", sock->id, sock, sockbase->fd, res, sock->offset_write_out - sent, sent );
+			log_context_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d) wrote %d of %d bytes bytes to TCP/IP socket from buffer position %d", sock->id, sock, sockbase->fd, res, sock->offset_write_out - sent, sent );
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 			for( long row = 0; row <= ( res / 8 ); ++row )
 			{
@@ -601,12 +601,12 @@ static void _tcp_socket_buffer_write( socket_t* sock )
 				if( sockerr == EAGAIN )
 #endif
 				{
-					log_warnf( HASH_NETWORK, WARNING_SUSPICIOUS, "Partial TCP socket send() on 0x%llx (" STRING_FORMAT_POINTER " : %d): %d of %d bytes written to socket (SO_ERROR %d)", sock->id, sock, sockbase->fd, sent, sock->offset_write_out, serr );
+					log_warnf( HASH_NETWORK, WARNING_SUSPICIOUS, "Partial TCP socket send() on 0x%llx (0x%" PRIfixPTR " : %d): %d of %d bytes written to socket (SO_ERROR %d)", sock->id, sock, sockbase->fd, sent, sock->offset_write_out, serr );
 					sockbase->flags |= SOCKETFLAG_REFLUSH;
 				}
 				else
 				{
-					log_warnf( HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL, "Socket send() failed on 0x%llx (" STRING_FORMAT_POINTER " : %d): %s (%d) (SO_ERROR %d)", sock->id, sock, sockbase->fd, system_error_message( sockerr ), sockerr, serr );
+					log_warnf( HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL, "Socket send() failed on 0x%llx (0x%" PRIfixPTR " : %d): %s (%d) (SO_ERROR %d)", sock->id, sock, sockbase->fd, system_error_message( sockerr ), sockerr, serr );
 				}
 
 #if FOUNDATION_PLATFORM_WINDOWS
