@@ -55,7 +55,7 @@ socket_t* _socket_allocate( void )
 	if( !object )
 		return 0;
 
-	sock = memory_allocate_zero_context( MEMORYCONTEXT_NETWORK, sizeof( socket_t ), 16, MEMORY_PERSISTENT );
+	sock = memory_allocate_zero_context( HASH_NETWORK, sizeof( socket_t ), 16, MEMORY_PERSISTENT );
 	
 	log_debugf( HASH_NETWORK, "Allocated socket 0x%llx (0x%" PRIfixPTR ")", object, sock );
 
@@ -657,13 +657,13 @@ void _socket_store_address_local( socket_t* sock, int family )
 	sockbase = _socket_base + sock->base;
 	if( family == NETWORK_ADDRESSFAMILY_IPV4 )
 	{
-		address_local = memory_allocate_zero_context( MEMORYCONTEXT_NETWORK, sizeof( network_address_ipv4_t ), 0, MEMORY_PERSISTENT );
+		address_local = memory_allocate_zero_context( HASH_NETWORK, sizeof( network_address_ipv4_t ), 0, MEMORY_PERSISTENT );
 		address_local->family = NETWORK_ADDRESSFAMILY_IPV4;
 		address_local->address_size = sizeof( struct sockaddr_in );
 	}
 	else if( family == NETWORK_ADDRESSFAMILY_IPV6 )
 	{
-		address_local = memory_allocate_zero_context( MEMORYCONTEXT_NETWORK, sizeof( network_address_ipv6_t ), 0, MEMORY_PERSISTENT );
+		address_local = memory_allocate_zero_context( HASH_NETWORK, sizeof( network_address_ipv6_t ), 0, MEMORY_PERSISTENT );
 		address_local->family = NETWORK_ADDRESSFAMILY_IPV6;
 		address_local->address_size = sizeof( struct sockaddr_in6 );
 	}
@@ -680,7 +680,7 @@ void _socket_store_address_local( socket_t* sock, int family )
 
 static socket_stream_t* _socket_stream_allocate( object_t id )
 {
-	socket_stream_t* sockstream = memory_allocate_zero_context( MEMORYCONTEXT_NETWORK, sizeof( socket_stream_t ), 0, MEMORY_PERSISTENT );
+	socket_stream_t* sockstream = memory_allocate_zero_context( HASH_NETWORK, sizeof( socket_stream_t ), 0, MEMORY_PERSISTENT );
 	stream_t* stream = (stream_t*)sockstream;
 
 	//Network streams are always little endian by default
@@ -1077,7 +1077,7 @@ int _socket_initialize( unsigned int max_sockets )
 
 	if( !_socket_base )
 	{
-		_socket_base = memory_allocate_zero_context( MEMORYCONTEXT_NETWORK, sizeof( socket_base_t ) * max_sockets, 16, MEMORY_PERSISTENT );
+		_socket_base = memory_allocate_zero_context( HASH_NETWORK, sizeof( socket_base_t ) * max_sockets, 16, MEMORY_PERSISTENT );
 		_socket_base_size = (int)max_sockets;
 		_socket_base_next = 0;
 	}
