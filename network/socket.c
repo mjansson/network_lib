@@ -61,7 +61,6 @@ socket_t* _socket_allocate( void )
 
 	sock->id = object;
 	sock->ref = 1;
-	sock->objecttype = SOCKET_OBJECTTYPE;
 	sock->base = -1;
 
 	objectmap_set( _socket_map, object, sock );

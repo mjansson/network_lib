@@ -91,9 +91,6 @@ typedef struct _network_address_ipv6
 #endif
 
 
-#define SOCKET_OBJECTTYPE  0x00020001U
-
-
 typedef struct ALIGN(16) _socket_base    socket_base_t;
 typedef struct ALIGN(16) _socket         socket_t;
 typedef struct ALIGN(16) _socket_stream  socket_stream_t;
