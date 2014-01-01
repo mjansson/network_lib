@@ -50,7 +50,7 @@ event_stream_t* network_event_stream( void )
 
 void network_event_post( network_event_id id, object_t sock )
 {
-	event_post( _network_events, SYSTEM_NETWORK, id, 0, sock, 0, 0 );
+	event_post( _network_events, id, 0, sock, 0, 0 );
 }
 
 
