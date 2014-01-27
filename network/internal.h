@@ -98,8 +98,8 @@ typedef struct ALIGN(16) _socket_stream  socket_stream_t;
 
 typedef void (*socket_open_fn)( socket_t*, unsigned int );
 typedef int  (*socket_connect_fn)( socket_t*, const network_address_t*, unsigned int );
-typedef void (*socket_buffer_read_fn)( socket_t*, unsigned int );
-typedef void (*socket_buffer_write_fn)( socket_t* );
+typedef unsigned int (*socket_buffer_read_fn)( socket_t*, unsigned int );
+typedef unsigned int (*socket_buffer_write_fn)( socket_t* );
 typedef void (*socket_stream_initialize_fn)( socket_t*, stream_t* );
 
 

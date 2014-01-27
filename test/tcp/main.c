@@ -34,7 +34,7 @@ memory_system_t test_tcp_memory_system( void )
 
 int test_tcp_initialize( void )
 {
-	//log_suppress( ERRORLEVEL_NONE );	
+	log_set_suppress( HASH_NETWORK, ERRORLEVEL_INFO );
 	return network_initialize( 300 );
 }
 
@@ -45,7 +45,7 @@ void test_tcp_shutdown( void )
 }
 
 
-static void* io_thread( object_t thread, void* arg )
+static void* io_blocking_thread( object_t thread, void* arg )
 {
 	int iloop;
 
@@ -58,9 +58,10 @@ static void* io_thread( object_t thread, void* arg )
 
 	for( iloop = 0; iloop < 512; ++iloop )
 	{
-		stream_write( stream, buffer_out, 317 );
+		EXPECT_EQ( stream_write( stream, buffer_out, 317 ), 317 );
 		stream_flush( stream );	
-		stream_read( stream, buffer_in, 317 );
+		EXPECT_EQ( stream_read( stream, buffer_in, 317 ), 317 );
+		thread_yield();
 	}
 
 	log_debugf( HASH_NETWORK, "IO complete on socket 0x%llx", sock );
@@ -368,8 +369,11 @@ DECLARE_TEST( tcp, io_ipv4 )
 	socket_free( sock_listen );
 	EXPECT_FALSE( socket_is_socket( sock_listen ) );
 
-	threads[0] = thread_create( io_thread, "io_thread", THREAD_PRIORITY_NORMAL, 0 );
-	threads[1] = thread_create( io_thread, "io_thread", THREAD_PRIORITY_NORMAL, 0 );
+	socket_set_blocking( sock_client, true );
+	socket_set_blocking( sock_server, true );	
+
+	threads[0] = thread_create( io_blocking_thread, "io_thread", THREAD_PRIORITY_NORMAL, 0 );
+	threads[1] = thread_create( io_blocking_thread, "io_thread", THREAD_PRIORITY_NORMAL, 0 );
 
 	thread_start( threads[0], &sock_server );
 	thread_start( threads[1], &sock_client );
@@ -437,9 +441,12 @@ DECLARE_TEST( tcp, io_ipv6 )
 
 	socket_free( sock_listen );
 	EXPECT_FALSE( socket_is_socket( sock_listen ) );
+
+	socket_set_blocking( sock_client, true );
+	socket_set_blocking( sock_server, true );	
 	
-	threads[0] = thread_create( io_thread, "io_thread", THREAD_PRIORITY_NORMAL, 0 );
-	threads[1] = thread_create( io_thread, "io_thread", THREAD_PRIORITY_NORMAL, 0 );
+	threads[0] = thread_create( io_blocking_thread, "io_thread", THREAD_PRIORITY_NORMAL, 0 );
+	threads[1] = thread_create( io_blocking_thread, "io_thread", THREAD_PRIORITY_NORMAL, 0 );
 
 	thread_start( threads[0], &sock_server );
 	thread_start( threads[1], &sock_client );

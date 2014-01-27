@@ -687,9 +687,6 @@ static socket_stream_t* _socket_stream_allocate( object_t id )
 
 	stream->type = STREAMTYPE_SOCKET;
 	stream->sequential = 1;
-	stream->inorder = 1;
-	stream->reliable = 1;
-	stream->path = string_format( "socket://%llx", id );
 	stream->mode = STREAM_OUT | STREAM_IN | STREAM_BINARY;
 	stream->vtable = &_socket_stream_vtable;
 
@@ -798,7 +795,7 @@ static uint64_t _socket_read( stream_t* stream, void* buffer, uint64_t size )
 		if( was_read < size )
 		{
 			if( ( !blocking && !polled ) || blocking )
-				sock->read_fn( sock, (unsigned int)( size - was_read ) );
+				try_again |= ( sock->read_fn( sock, (unsigned int)( size - was_read ) ) > 0 );
 		}
 
 	} while( ( was_read < size ) && ( try_again || ( ++loop_counter < 2 ) ) );

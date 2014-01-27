@@ -464,12 +464,17 @@ int network_poll( network_poll_t* pollobj )
 					network_event_post( NETWORKEVENT_CONNECTION, sock );
 				}
 			}
-			else //SOCKETSTATE_CONNECTED
+			else
 			{
-				if( ( sock->state != SOCKETSTATE_NOTCONNECTED ) && ( sock->state != SOCKETSTATE_DISCONNECTED ) )
+				unsigned int has_buffered = 0;
+				if( sock->state == SOCKETSTATE_CONNECTED )
+				{
 					sock->read_fn( sock, 0 );
-					
-				unsigned int has_buffered = socket_buffered_in( sock );
+					has_buffered = socket_buffered_in( sock );
+				}
+				else
+					has_buffered = _socket_available_fd( );
+				
 				if( ( sock->state == SOCKETSTATE_CONNECTED ) && has_buffered )
 				{
 					if( has_buffered != sock->last_buffered_event )
@@ -546,10 +551,10 @@ int network_poll( network_poll_t* pollobj )
 					network_event_post( NETWORKEVENT_CONNECTION, sockobj );
 				}
 			}
-			else //SOCKETSTATE_CONNECTED
+			else
 			{
 				int sockavail = _socket_available_fd( fd );
-				if( ( sockbase->state == SOCKETSTATE_CONNECTED ) && ( sockavail > 0 ) )
+				if( sockavail > 0 )
 				{
 					if( sockavail != sockbase->last_event )
 					{

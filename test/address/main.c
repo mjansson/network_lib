@@ -33,6 +33,7 @@ memory_system_t test_address_memory_system( void )
 
 int test_address_initialize( void )
 {
+	log_set_suppress( HASH_NETWORK, ERRORLEVEL_INFO );
 	return network_initialize( 32 );
 }
 

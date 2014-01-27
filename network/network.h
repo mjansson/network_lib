@@ -22,6 +22,7 @@
 #include <network/poll.h>
 #include <network/socket.h>
 #include <network/tcp.h>
+#include <network/udp.h>
 
 
 //! Entry point

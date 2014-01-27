@@ -1,4 +1,4 @@
-/* tcp.c  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
+/* udp.c  -  Network library  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
  * 
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
@@ -9,7 +9,7 @@
  *
  */
 
-#include <network/tcp.h>
+#include <network/udp.h>
 #include <network/address.h>
 #include <network/event.h>
 #include <network/internal.h>
@@ -17,247 +17,41 @@
 #include <foundation/foundation.h>
 
 #if FOUNDATION_PLATFORM_POSIX
-#  include <netinet/tcp.h>
+#  include <netinet/udp.h>
 #endif
 
-static socket_t* _tcp_socket_allocate( void );
-static void _tcp_socket_open( socket_t*, unsigned int );
-static int  _tcp_socket_connect( socket_t*, const network_address_t*, unsigned int );
-static void _tcp_socket_set_delay( socket_t*, bool );
-static unsigned int _tcp_socket_buffer_read( socket_t*, unsigned int );
-static unsigned int _tcp_socket_buffer_write( socket_t* );
-static void _tcp_stream_initialize( socket_t*, stream_t* );
+static socket_t* _udp_socket_allocate( void );
+static void _udp_socket_open( socket_t*, unsigned int );
+static int  _udp_socket_connect( socket_t*, const network_address_t*, unsigned int );
+static unsigned int _udp_socket_buffer_read( socket_t*, unsigned int );
+static unsigned int _udp_socket_buffer_write( socket_t* );
+static void _udp_stream_initialize( socket_t*, stream_t* );
 
 
-static socket_t* _tcp_socket_allocate( void )
+static socket_t* _udp_socket_allocate( void )
 {
 	socket_t* sock = _socket_allocate();
 	if( !sock )
 		return 0;
-
-	sock->open_fn = _tcp_socket_open;
-	sock->connect_fn = _tcp_socket_connect;
-	sock->read_fn = _tcp_socket_buffer_read;
-	sock->write_fn = _tcp_socket_buffer_write;
-	sock->stream_initialize_fn = _tcp_stream_initialize;
+	
+	sock->open_fn = _udp_socket_open;
+	sock->connect_fn = _udp_socket_connect;
+	sock->read_fn = _udp_socket_buffer_read;
+	sock->write_fn = _udp_socket_buffer_write;
+	sock->stream_initialize_fn = _udp_stream_initialize;
 	
 	return sock;
 }
 
 
-object_t tcp_socket_create( void )
+object_t udp_socket_create( void )
 {
-	socket_t* sock = _tcp_socket_allocate();
+	socket_t* sock = _udp_socket_allocate();
 	return sock ? sock->id : 0;
 }
 
 
-bool tcp_socket_listen( object_t id )
-{
-	socket_base_t* sockbase;
-	socket_t* sock = _socket_lookup( id );
-
-	if( !sock )
-		return false;
-
-	if( sock->base < 0 )
-	{
-		socket_free( id );
-		return false;
-	}
-	
-	sockbase = _socket_base + sock->base;
-	if( ( sockbase->state != SOCKETSTATE_NOTCONNECTED ) ||
-	    ( sockbase->fd == SOCKET_INVALID ) ||
-	    !sock->address_local ) //Must be locally bound
-	{
-		socket_free( id );
-		return false;
-	}
-
-	if( listen( sockbase->fd, SOMAXCONN ) == 0 )
-	{
-#if BUILD_ENABLE_LOG
-		char* address_str = network_address_to_string( sock->address_local, true );
-		log_infof( HASH_NETWORK, "Listening on TCP/IP socket 0x%llx (0x%" PRIfixPTR " : %d) %s", sock->id, sock, sockbase->fd, address_str );
-		string_deallocate( address_str );
-#endif
-		sockbase->state = SOCKETSTATE_LISTENING;
-		socket_free( id );
-		return true;
-	}
-	
-#if BUILD_ENABLE_LOG
-	{
-		char* address_str = network_address_to_string( sock->address_local, true );
-		int sockerr = NETWORK_SOCKET_ERROR;
-		log_errorf( HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL, "Unable to listen on TCP/IP socket 0x%llx (0x%" PRIfixPTR " : %d) %s: %s", id, sock, sockbase->fd, address_str, system_error_message( sockerr ) );
-		string_deallocate( address_str );
-	}
-#endif
-
-	socket_free( id );
-	
-	return false;
-}
-
-
-object_t tcp_socket_accept( object_t id, unsigned int timeoutms )
-{
-	socket_base_t* sockbase;
-	socket_base_t* acceptbase;
-	socket_t* sock;
-	socket_t* accepted;
-	network_address_t* address_remote;
-	network_address_ip_t* address_ip;
-	socklen_t address_len;
-	int err = 0;
-	int fd;
-	bool blocking;
-
-	sock = _socket_lookup( id );
-	if( !sock )
-		return 0;
-
-	if( sock->base < 0 )
-	{
-		socket_free( id );
-		return 0;
-	}
-
-	sockbase = _socket_base + sock->base;
-	if( ( sockbase->state != SOCKETSTATE_LISTENING ) ||
-	    ( sockbase->fd == SOCKET_INVALID ) ||
-	    !sock->address_local ) //Must be locally bound
-	{
-		socket_free( id );
-		return 0;
-	}
-
-	blocking = ( ( sockbase->flags & SOCKETFLAG_BLOCKING ) != 0 );
-
-	if( ( timeoutms > 0 ) && blocking )
-		_socket_set_blocking( sock, false );
-
-	address_remote = network_address_clone( sock->address_local );
-	address_ip = (network_address_ip_t*)address_remote;
-	address_len = address_remote->address_size;
-
-	fd = (int)accept( sockbase->fd, &address_ip->saddr, &address_len );
-	if( fd < 0 )
-	{
-		err = NETWORK_SOCKET_ERROR;
-		if( timeoutms > 0 )
-		{
-#if FOUNDATION_PLATFORM_WINDOWS
-			if( err == WSAEWOULDBLOCK )
-#else
-			if( err == EAGAIN )
-#endif
-			{
-				struct timeval tval;
-				fd_set fdread, fderr;
-				int ret;
-
-				FD_ZERO( &fdread );
-				FD_ZERO( &fderr );
-				FD_SET( sockbase->fd, &fdread );
-				FD_SET( sockbase->fd, &fderr );
-
-				tval.tv_sec  = timeoutms / 1000;
-				tval.tv_usec = ( timeoutms % 1000 ) * 1000;
-
-				ret = select( sockbase->fd + 1, &fdread, 0, &fderr, &tval );
-				if( ret > 0 )
-				{
-					address_len = address_remote->address_size;
-					fd = (int)accept( sockbase->fd, &address_ip->saddr, &address_len );
-				}
-			}
-		}
-	}
-	
-	if( ( timeoutms > 0 ) && blocking )
-		_socket_set_blocking( sock, true );
-
-	sockbase->flags &= SOCKETFLAG_CONNECTION_PENDING;
-
-	if( fd < 0 )
-	{
-		memory_deallocate( address_remote );
-		socket_free( id );
-		return 0;
-	}
-
-	accepted = _tcp_socket_allocate();
-	if( !accepted )
-	{
-		socket_free( id );		
-		return 0;
-	}
-
-	if( _socket_allocate_base( accepted ) < 0 )
-	{
-		socket_free( accepted->id );
-		socket_free( id );
-		return 0;
-	}
-
-	acceptbase = _socket_base + accepted->base;
-	acceptbase->fd = fd;
-	acceptbase->state = SOCKETSTATE_CONNECTED;
-	accepted->address_remote = (network_address_t*)address_remote;
-	
-	_socket_store_address_local( accepted, address_ip->family );
-
-#if BUILD_ENABLE_LOG
-	{
-		char* address_listen_str = network_address_to_string( sock->address_local, true );
-		char* address_local_str = network_address_to_string( accepted->address_local, true );
-		char* address_remote_str = network_address_to_string( accepted->address_remote, true );
-		log_infof( HASH_NETWORK, "Accepted connection on TCP/IP socket 0x%llx (0x%" PRIfixPTR " : %d) %s: created socket 0x%llx (0x%" PRIfixPTR " : %d) %s with remote address %s", sock->id, sock, sockbase->fd, address_listen_str, accepted->id, accepted, acceptbase->fd, address_local_str, address_remote_str );
-		string_deallocate( address_remote_str );
-		string_deallocate( address_local_str );
-		string_deallocate( address_listen_str );
-	}
-#endif
-
-	socket_free( id );
-	
-	return accepted->id;
-}
-
-
-bool tcp_socket_delay( object_t id )
-{
-	bool delay = false;
-	socket_t* sock = _socket_lookup( id );
-	if( sock && ( sock->base >= 0 ) )
-	{
-		socket_base_t* sockbase = _socket_base + sock->base;
-		delay = ( ( sockbase->flags & SOCKETFLAG_TCPDELAY ) != 0 );
-		socket_free( id );
-	}
-	return delay;
-}
-
-
-void tcp_socket_set_delay( object_t id, bool delay )
-{
-	socket_t* sock = _socket_lookup( id );
-	if( !sock )
-	{
-		log_errorf( HASH_NETWORK, ERROR_INVALID_VALUE, "Trying to set delay flag on an invalid socket 0x%llx", id );
-		return;
-	}
-
-	_tcp_socket_set_delay( sock, delay );
-	
-	socket_free( id );
-}
-
-
-static void _tcp_socket_open( socket_t* sock, unsigned int family )
+static void _udp_socket_open( socket_t* sock, unsigned int family )
 {
 	socket_base_t* sockbase;
 
@@ -266,26 +60,25 @@ static void _tcp_socket_open( socket_t* sock, unsigned int family )
 	
 	sockbase = _socket_base + sock->base;
 	if( family == NETWORK_ADDRESSFAMILY_IPV6 )
-		sockbase->fd = (int)socket( AF_INET6, SOCK_STREAM, IPPROTO_TCP );
+		sockbase->fd = (int)socket( AF_INET6, SOCK_DGRAM, IPPROTO_UDP );
 	else
-		sockbase->fd = (int)socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
+		sockbase->fd = (int)socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
 
 	if( sockbase->fd < 0 )
 	{
-		log_errorf( HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL, "Unable to open TCP/IP socket 0x%llx (0x%" PRIfixPTR " : %d): %s", sock->id, sock, sockbase->fd, system_error_message( NETWORK_SOCKET_ERROR ) );
+		log_errorf( HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL, "Unable to open UDP socket 0x%llx (0x%" PRIfixPTR " : %d): %s", sock->id, sock, sockbase->fd, system_error_message( NETWORK_SOCKET_ERROR ) );
 		sockbase->fd = SOCKET_INVALID;
 	}
 	else
 	{
-		log_debugf( HASH_NETWORK, "Opened TCP/IP socket 0x%llx (0x%" PRIfixPTR " : %d)", sock->id, sock, sockbase->fd );
+		log_debugf( HASH_NETWORK, "Opened UDP socket 0x%llx (0x%" PRIfixPTR " : %d)", sock->id, sock, sockbase->fd );
 
 		_socket_set_blocking( sock, sockbase->flags & SOCKETFLAG_BLOCKING );
-		_tcp_socket_set_delay( sock, sockbase->flags & SOCKETFLAG_TCPDELAY );
 	}
 }
 
 
-static int _tcp_socket_connect( socket_t* sock, const network_address_t* address, unsigned int timeoutms )
+static int _udp_socket_connect( socket_t* sock, const network_address_t* address, unsigned int timeoutms )
 {
 	socket_base_t* sockbase;
 	const network_address_ip_t* address_ip;
@@ -409,22 +202,7 @@ static int _tcp_socket_connect( socket_t* sock, const network_address_t* address
 }
 
 
-static void _tcp_socket_set_delay( socket_t* sock, bool delay )
-{
-	socket_base_t* sockbase;
-	int flag;
-	FOUNDATION_ASSERT( sock );
-	if( sock->base < 0 )
-		return;
-	sockbase = _socket_base + sock->base;
-	sockbase->flags = ( delay ? sockbase->flags | SOCKETFLAG_TCPDELAY : sockbase->flags & ~SOCKETFLAG_TCPDELAY );
-	flag = ( delay ? 0 : 1 );
-	if( sockbase->fd != SOCKET_INVALID )
-		setsockopt( sockbase->fd, IPPROTO_TCP, TCP_NODELAY, (const char*)&flag, sizeof( int ) );
-}
-
-
-static unsigned int _tcp_socket_buffer_read( socket_t* sock, unsigned int wanted_size )
+static unsigned int _udp_socket_buffer_read( socket_t* sock, unsigned int wanted_size )
 {
 	socket_base_t* sockbase;
 	unsigned int available;
@@ -435,8 +213,13 @@ static unsigned int _tcp_socket_buffer_read( socket_t* sock, unsigned int wanted
 
 	if( sock->base < 0 )
 		return 0;
-	
-	if( sock->offset_write_in >= sock->offset_read_in )
+
+	if( sock->offset_write_in == sock->offset_read_in )
+	{
+		sock->offset_write_in = sock->offset_read_in = 0;
+		max_read = BUILD_SIZE_SOCKET_READBUFFER - 1;
+	}
+	else if( sock->offset_write_in > sock->offset_read_in )
 	{
 		max_read = BUILD_SIZE_SOCKET_READBUFFER - sock->offset_write_in;
 		if( !sock->offset_read_in )
@@ -453,6 +236,13 @@ static unsigned int _tcp_socket_buffer_read( socket_t* sock, unsigned int wanted
 		try_read = wanted_size;
 
 	sockbase = _socket_base + sock->base;
+	if( sockbase->state != SOCKETSTATE_CONNECTED )
+	{
+		//Must use recvfrom for unconnected datagram I/O
+		FOUNDATION_ASSERT_FAILFORMAT_LOG( HASH_NETWORK, "Trying to stream read from an unconnected UDP socket 0x%llx (0x%" PRIfixPTR " : %d) in state %u", sock->id, sock, sockbase->fd, sockbase->state );
+		return 0;
+	}
+	
 	available = _socket_available_fd( sockbase->fd );
 	if( !available && ( !wanted_size || ( ( sockbase->flags & SOCKETFLAG_BLOCKING ) == 0 ) ) )
 		return 0;
@@ -483,7 +273,7 @@ static unsigned int _tcp_socket_buffer_read( socket_t* sock, unsigned int wanted
 		const unsigned char* src = (const unsigned char*)sock->buffer_in + sock->offset_write_in;
 		char dump_buffer[66];
 #endif
-		log_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d) read %d of %u (%u were available) bytes from TCP/IP socket to buffer position %d", sock->id, sock, sockbase->fd, ret, try_read, available, sock->offset_write_in );
+		log_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d) read %d of %u (%u were available) bytes from UDP socket to buffer position %d", sock->id, sock, sockbase->fd, ret, try_read, available, sock->offset_write_in );
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 		for( long row = 0; row <= ( ret / 8 ); ++row )
 		{
@@ -519,7 +309,7 @@ static unsigned int _tcp_socket_buffer_read( socket_t* sock, unsigned int wanted
 		if( sockerr != EAGAIN )
 #endif
 		{
-			log_warnf( HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL, "Socket recv() failed on TPC/IP socket 0x%llx (0x%" PRIfixPTR " : %d): %s (%d)", sock->id, sock, sockbase->fd, system_error_message( sockerr ), sockerr );
+			log_warnf( HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL, "Socket recv() failed on UDP socket 0x%llx (0x%" PRIfixPTR " : %d): %s (%d)", sock->id, sock, sockbase->fd, system_error_message( sockerr ), sockerr );
 		}
 
 #if FOUNDATION_PLATFORM_WINDOWS
@@ -541,21 +331,27 @@ static unsigned int _tcp_socket_buffer_read( socket_t* sock, unsigned int wanted
 
 	//If we were at end of read buffer, try more data if wanted
 	if( ( sockbase->state == SOCKETSTATE_CONNECTED ) && ( try_read < wanted_size ) && ( available > try_read ) && ( sock->offset_write_in == 0 ) && ( sock->offset_read_in > 1 ) && ( ret > 0 ) )
-		total_read += _tcp_socket_buffer_read( sock, wanted_size - try_read );
+		total_read += _udp_socket_buffer_read( sock, wanted_size - try_read );
 
 	return total_read;
 }
 
 
-static unsigned int _tcp_socket_buffer_write( socket_t* sock )
+static unsigned int _udp_socket_buffer_write( socket_t* sock )
 {
 	socket_base_t* sockbase;
 	unsigned int sent = 0;
-	
 	if( sock->base < 0 )
 		return 0;
 	
 	sockbase = _socket_base + sock->base;
+	if( sockbase->state != SOCKETSTATE_CONNECTED )
+	{
+		//Must use recvfrom for unconnected datagram I/O
+		FOUNDATION_ASSERT_FAILFORMAT_LOG( HASH_NETWORK, "Trying to stream send from an unconnected UDP socket 0x%llx (0x%" PRIfixPTR " : %d) in state %u", sock->id, sock, sockbase->fd, sockbase->state );
+		return 0;
+	}
+
 	while( sent < sock->offset_write_out )
 	{
 		long res = send( sockbase->fd, (const char*)sock->buffer_out + sent, sock->offset_write_out - sent, 0 );
@@ -566,7 +362,7 @@ static unsigned int _tcp_socket_buffer_write( socket_t* sock )
 			const unsigned char* src = (const unsigned char*)sock->buffer_out + sent;
 			char buffer[34];
 #endif
-			log_context_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d) wrote %d of %d bytes bytes to TCP/IP socket from buffer position %d", sock->id, sock, sockbase->fd, res, sock->offset_write_out - sent, sent );
+			log_context_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d) wrote %d of %d bytes bytes to UDP socket from buffer position %d", sock->id, sock, sockbase->fd, res, sock->offset_write_out - sent, sent );
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 			for( long row = 0; row <= ( res / 8 ); ++row )
 			{
@@ -610,12 +406,12 @@ static unsigned int _tcp_socket_buffer_write( socket_t* sock )
 				if( sockerr == EAGAIN )
 #endif
 				{
-					log_warnf( HASH_NETWORK, WARNING_SUSPICIOUS, "Partial TCP socket send() on 0x%llx (0x%" PRIfixPTR " : %d): %d of %d bytes written to socket (SO_ERROR %d)", sock->id, sock, sockbase->fd, sent, sock->offset_write_out, serr );
+					log_warnf( HASH_NETWORK, WARNING_SUSPICIOUS, "Partial UDP socket send() on 0x%llx (0x%" PRIfixPTR " : %d): %d of %d bytes written to socket (SO_ERROR %d)", sock->id, sock, sockbase->fd, sent, sock->offset_write_out, serr );
 					sockbase->flags |= SOCKETFLAG_REFLUSH;
 				}
 				else
 				{
-					log_warnf( HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL, "Socket send() failed on TCP/IP socket 0x%llx (0x%" PRIfixPTR " : %d): %s (%d) (SO_ERROR %d)", sock->id, sock, sockbase->fd, system_error_message( sockerr ), sockerr, serr );
+					log_warnf( HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL, "Socket send() failed on UDP socket 0x%llx (0x%" PRIfixPTR " : %d): %s (%d) (SO_ERROR %d)", sock->id, sock, sockbase->fd, system_error_message( sockerr ), sockerr, serr );
 				}
 
 #if FOUNDATION_PLATFORM_WINDOWS
@@ -653,10 +449,24 @@ static unsigned int _tcp_socket_buffer_write( socket_t* sock )
 }
 
 
-void _tcp_stream_initialize( socket_t* sock, stream_t* stream )
+void _udp_stream_initialize( socket_t* sock, stream_t* stream )
 {
-	stream->inorder = 1;
-	stream->reliable = 1;
-	stream->path = string_format( "tcp://%llx", sock->id );
+	stream->inorder = 0;
+	stream->reliable = 0;
+	stream->path = string_format( "udp://%llx", sock->id );
+}
+
+
+network_datagram_t udp_socket_recvfrom( object_t sock, network_address_t** address )
+{
+	network_datagram_t datagram = {0};
+	//...
+	return datagram;
+}
+
+
+uint64_t udp_socket_sendto( object_t sock, const network_datagram_t datagram, network_address_t* address )
+{
+	return 0;
 }
 

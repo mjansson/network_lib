@@ -34,6 +34,7 @@ memory_system_t test_socket_memory_system( void )
 
 int test_socket_initialize( void )
 {
+	log_set_suppress( HASH_NETWORK, ERRORLEVEL_INFO );
 	return network_initialize( 1024 );
 }
 

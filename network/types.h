@@ -68,3 +68,15 @@ typedef enum _network_event_id
 typedef struct _network_address     network_address_t;
 typedef struct _network_poll        network_poll_t;
 
+
+struct _network_datagram
+{
+	void*                           data;
+
+	uint64_t                        size;
+	
+	network_address_t*              address;
+};
+
+
+typedef struct _network_datagram    network_datagram_t;

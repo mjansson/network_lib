@@ -23,6 +23,11 @@
 #define BUILD_ENABLE_NETWORK_DUMP_TRAFFIC     0
 
 
+//! Default thresholds
+#define BUILD_DEFAULT_TCP_PACKETSIZE          1024
+#define BUILD_DEFAULT_UDP_PACKETSIZE          1024
+
+
 // Allocation sizes
 #define BUILD_SIZE_NETWORK_EVENT_STREAM       4096
 
