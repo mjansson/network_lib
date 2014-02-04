@@ -209,6 +209,11 @@ bool socket_bind( object_t id, const network_address_t* address )
 		//Store local address
 		_socket_store_address_local( sock, address_ip->family );
 		success = true;
+#if BUILD_ENABLE_LOG
+		char* address_str = network_address_to_string( sock->address_local, true );
+		log_infof( HASH_NETWORK, "Bound socket 0x%llx (0x%" PRIfixPTR " : %d) to local address %s", sock->id, sock, sockbase->fd, address_str );
+		string_deallocate( address_str );
+#endif
 	}
 	else
 	{
@@ -782,6 +787,10 @@ static uint64_t _socket_read( stream_t* stream, void* buffer, uint64_t size )
 			{
 				if( buffer )
 					memcpy( buffer, sock->buffer_in + sock->offset_read_in, (size_t)copy );
+
+#if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
+				log_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d) read %d of %d bytes bytes from buffer position %d", sock->id, sock, sockbase->fd, copy, want_read, sock->offset_read_in );
+#endif
 
 				was_read += copy;
 				sock->offset_read_in += copy;

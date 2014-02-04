@@ -58,9 +58,15 @@ static void* io_blocking_thread( object_t thread, void* arg )
 
 	for( iloop = 0; iloop < 512; ++iloop )
 	{
-		EXPECT_EQ( stream_write( stream, buffer_out, 317 ), 317 );
+		log_infof( HASH_NETWORK, "UDP write pass %d", iloop );
+		EXPECT_EQ( stream_write( stream, buffer_out, 127 ), 127 );
+		EXPECT_EQ( stream_write( stream, buffer_out + 127, 180 ), 180 );
 		stream_flush( stream );	
-		EXPECT_EQ( stream_read( stream, buffer_in, 317 ), 317 );
+		EXPECT_EQ( stream_write( stream, buffer_out + 307, 10 ), 10 );
+		stream_flush( stream );	
+		log_infof( HASH_NETWORK, "UDP read pass %d", iloop );
+		EXPECT_EQ( stream_read( stream, buffer_in, 235 ), 235 );
+		EXPECT_EQ( stream_read( stream, buffer_in + 235, 82 ), 82 );
 		thread_yield();
 	}
 
@@ -130,6 +136,9 @@ DECLARE_TEST( udp, io_ipv4 )
 	state = socket_state( sock_client );
 	EXPECT_TRUE( state == SOCKETSTATE_CONNECTED );
 
+	socket_set_blocking( sock_server, true );
+	socket_set_blocking( sock_client, true );
+
 	threads[0] = thread_create( io_blocking_thread, "io_thread", THREAD_PRIORITY_NORMAL, 0 );
 	threads[1] = thread_create( io_blocking_thread, "io_thread", THREAD_PRIORITY_NORMAL, 0 );
 
@@ -155,54 +164,66 @@ DECLARE_TEST( udp, io_ipv4 )
 
 DECLARE_TEST( udp, io_ipv6 )
 {
-	/*network_address_t* address_bind;
 	network_address_t** address_local;
-	network_address_t* address_connect;
+	network_address_t* address;
 
+	int server_port, client_port;
 	int state, iaddr, asize;
 	object_t threads[2] = {0};
 
-	object_t sock_listen = udp_socket_create();
-	object_t sock_server = 0;
+	object_t sock_server = udp_socket_create();
 	object_t sock_client = udp_socket_create();
 
-	EXPECT_TRUE( socket_is_socket( sock_listen ) );
+	EXPECT_TRUE( socket_is_socket( sock_server ) );
 	EXPECT_TRUE( socket_is_socket( sock_client ) );
 
-	address_bind = network_address_ipv6_any();
-	socket_bind( sock_listen, address_bind );
-	memory_deallocate( address_bind );
-
-	udp_socket_listen( sock_listen );
-	EXPECT_EQ( socket_state( sock_listen ), SOCKETSTATE_LISTENING );
-
 	address_local = network_address_local();
-	address_connect = 0;
 	for( iaddr = 0, asize = array_size( address_local ); iaddr < asize; ++iaddr )
 	{
 		if( network_address_family( address_local[iaddr] ) == NETWORK_ADDRESSFAMILY_IPV6 )
 		{
-			address_connect = address_local[iaddr];
+			address = address_local[iaddr];
 			break;
 		}
 	}
-	EXPECT_NE( address_connect, 0 );
-	network_address_ip_set_port( address_connect, network_address_ip_port( socket_address_local( sock_listen ) ) );
-	socket_set_blocking( sock_client, false );
-	socket_connect( sock_client, address_connect, 0 );
-	state = socket_state( sock_client );
-	EXPECT_TRUE( ( state == SOCKETSTATE_CONNECTING ) || ( state == SOCKETSTATE_CONNECTED ) );
+	EXPECT_NE( address, 0 );
 
-	sock_server = udp_socket_accept( sock_listen, 0 );
-	EXPECT_EQ( socket_state( sock_client ), SOCKETSTATE_CONNECTED );
-	EXPECT_EQ( socket_state( sock_server ), SOCKETSTATE_CONNECTED );
+	do
+	{
+		server_port = random32_range( 1024, 35535 );
+		network_address_ip_set_port( address, server_port );
+		if( socket_bind( sock_server, address ) )
+			break;
+	} while( true );
 
-	socket_free( sock_listen );
-	EXPECT_FALSE( socket_is_socket( sock_listen ) );
-
-	socket_set_blocking( sock_client, true );
-	socket_set_blocking( sock_server, true );	
+	do
+	{
+		client_port = random32_range( 1024, 35535 );
+		network_address_ip_set_port( address, client_port );
+		if( socket_bind( sock_client, address ) )
+			break;
+	} while( true );
 	
+	socket_set_blocking( sock_server, false );
+	socket_set_blocking( sock_client, false );
+
+	network_address_ip_set_port( address, client_port );
+	socket_connect( sock_server, address, 0 );
+
+	network_address_ip_set_port( address, server_port );
+	socket_connect( sock_client, address, 0 );
+
+	network_address_array_deallocate( address_local );
+	
+	state = socket_state( sock_server );
+	EXPECT_TRUE( state == SOCKETSTATE_CONNECTED );
+	
+	state = socket_state( sock_client );
+	EXPECT_TRUE( state == SOCKETSTATE_CONNECTED );
+
+	socket_set_blocking( sock_server, true );
+	socket_set_blocking( sock_client, true );
+
 	threads[0] = thread_create( io_blocking_thread, "io_thread", THREAD_PRIORITY_NORMAL, 0 );
 	threads[1] = thread_create( io_blocking_thread, "io_thread", THREAD_PRIORITY_NORMAL, 0 );
 
@@ -220,7 +241,7 @@ DECLARE_TEST( udp, io_ipv6 )
 	socket_free( sock_client );
 
 	EXPECT_FALSE( socket_is_socket( sock_server ) );
-	EXPECT_FALSE( socket_is_socket( sock_client ) );*/
+	EXPECT_FALSE( socket_is_socket( sock_client ) );
 	
 	return 0;
 }

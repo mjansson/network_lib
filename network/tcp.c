@@ -483,7 +483,7 @@ static unsigned int _tcp_socket_buffer_read( socket_t* sock, unsigned int wanted
 		const unsigned char* src = (const unsigned char*)sock->buffer_in + sock->offset_write_in;
 		char dump_buffer[66];
 #endif
-		log_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d) read %d of %u (%u were available) bytes from TCP/IP socket to buffer position %d", sock->id, sock, sockbase->fd, ret, try_read, available, sock->offset_write_in );
+		log_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d) read %d of %u (%u were available, %u wanted) bytes from TCP/IP socket to buffer position %d", sock->id, sock, sockbase->fd, ret, try_read, available, wanted_size, sock->offset_write_in );
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 		for( long row = 0; row <= ( ret / 8 ); ++row )
 		{
@@ -498,7 +498,7 @@ static unsigned int _tcp_socket_buffer_read( socket_t* sock, unsigned int wanted
 			if( ofs )
 			{
 				*( dump_buffer + ofs - 1 ) = 0;
-				log_context_debug( HASH_NETWORK, dump_buffer );
+				log_debug( HASH_NETWORK, dump_buffer );
 			}
 		}
 #endif
@@ -566,7 +566,7 @@ static unsigned int _tcp_socket_buffer_write( socket_t* sock )
 			const unsigned char* src = (const unsigned char*)sock->buffer_out + sent;
 			char buffer[34];
 #endif
-			log_context_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d) wrote %d of %d bytes bytes to TCP/IP socket from buffer position %d", sock->id, sock, sockbase->fd, res, sock->offset_write_out - sent, sent );
+			log_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d) wrote %d of %d bytes bytes to TCP/IP socket from buffer position %d", sock->id, sock, sockbase->fd, res, sock->offset_write_out - sent, sent );
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 			for( long row = 0; row <= ( res / 8 ); ++row )
 			{
@@ -581,7 +581,7 @@ static unsigned int _tcp_socket_buffer_write( socket_t* sock )
 				if( ofs )
 				{
 					*( buffer + ofs - 1 ) = 0;
-					log_context_debug( HASH_NETWORK, buffer );
+					log_debug( HASH_NETWORK, buffer );
 				}
 			}
 #endif

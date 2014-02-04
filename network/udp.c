@@ -209,6 +209,7 @@ static unsigned int _udp_socket_buffer_read( socket_t* sock, unsigned int wanted
 	unsigned int max_read = 0;
 	unsigned int try_read;
 	unsigned int total_read = 0;
+	bool is_blocking = false;
 	long ret;
 
 	if( sock->base < 0 )
@@ -231,10 +232,6 @@ static unsigned int _udp_socket_buffer_read( socket_t* sock, unsigned int wanted
 	if( !max_read )
 		return 0;
 
-	try_read = max_read;
-	if( wanted_size && ( try_read > wanted_size ) )
-		try_read = wanted_size;
-
 	sockbase = _socket_base + sock->base;
 	if( sockbase->state != SOCKETSTATE_CONNECTED )
 	{
@@ -243,12 +240,18 @@ static unsigned int _udp_socket_buffer_read( socket_t* sock, unsigned int wanted
 		return 0;
 	}
 	
+	is_blocking = ( ( sockbase->flags & SOCKETFLAG_BLOCKING ) != 0 );
 	available = _socket_available_fd( sockbase->fd );
-	if( !available && ( !wanted_size || ( ( sockbase->flags & SOCKETFLAG_BLOCKING ) == 0 ) ) )
-		return 0;
-
-	if( available > try_read )
+	if( available )
+	{
 		try_read = ( max_read < available ) ? max_read : available;
+	}
+	else
+	{
+		if( !wanted_size || !is_blocking ) 
+			return 0;
+		try_read = max_read;
+	}
 
 	ret = recv( sockbase->fd, (char*)sock->buffer_in + sock->offset_write_in, try_read, 0 );
 	if( !ret )
@@ -268,12 +271,16 @@ static unsigned int _udp_socket_buffer_read( socket_t* sock, unsigned int wanted
 	}
 	else if( ret > 0 )
 	{
+#if BUILD_ENABLE_LOG
+		if( !available && ( ret == try_read ) )
+			log_warnf( HASH_NETWORK, WARNING_SUSPICIOUS, "Socket 0x%llx (0x%" PRIfixPTR " : %d): potential partial blocking UDP read %d of %d bytes (%u available)", sock->id, sock, sockbase->fd, ret, try_read, available );
+#endif
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 		const unsigned char* src = (const unsigned char*)sock->buffer_in + sock->offset_write_in;
 		char dump_buffer[66];
 #endif
-		log_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d) read %d of %u (%u were available) bytes from UDP socket to buffer position %d", sock->id, sock, sockbase->fd, ret, try_read, available, sock->offset_write_in );
+		log_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d) read %d of %u (%u were available, %u wanted) bytes from UDP socket to buffer position %d", sock->id, sock, sockbase->fd, ret, try_read, available, wanted_size, sock->offset_write_in );
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 		for( long row = 0; row <= ( ret / 8 ); ++row )
 		{
@@ -288,7 +295,7 @@ static unsigned int _udp_socket_buffer_read( socket_t* sock, unsigned int wanted
 			if( ofs )
 			{
 				*( dump_buffer + ofs - 1 ) = 0;
-				log_context_debug( HASH_NETWORK, dump_buffer );
+				log_debug( HASH_NETWORK, dump_buffer );
 			}
 		}
 #endif
@@ -362,7 +369,7 @@ static unsigned int _udp_socket_buffer_write( socket_t* sock )
 			const unsigned char* src = (const unsigned char*)sock->buffer_out + sent;
 			char buffer[34];
 #endif
-			log_context_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d) wrote %d of %d bytes bytes to UDP socket from buffer position %d", sock->id, sock, sockbase->fd, res, sock->offset_write_out - sent, sent );
+			log_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d) wrote %d of %d bytes bytes to UDP socket from buffer position %d", sock->id, sock, sockbase->fd, res, sock->offset_write_out - sent, sent );
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 			for( long row = 0; row <= ( res / 8 ); ++row )
 			{
@@ -377,7 +384,7 @@ static unsigned int _udp_socket_buffer_write( socket_t* sock )
 				if( ofs )
 				{
 					*( buffer + ofs - 1 ) = 0;
-					log_context_debug( HASH_NETWORK, buffer );
+					log_debug( HASH_NETWORK, buffer );
 				}
 			}
 #endif
