@@ -63,6 +63,7 @@ int main_initialize( void )
 extern int test_address_run( void );
 extern int test_socket_run( void );
 extern int test_tcp_run( void );
+extern int test_udp_run( void );
 typedef int (*test_run_fn)( void );
 #endif
 
@@ -87,6 +88,7 @@ int main_run( void* main_arg )
 		test_address_run,
 		test_socket_run,
 		test_tcp_run,
+		test_udp_run,
 		0
 	};
 

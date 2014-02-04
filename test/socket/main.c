@@ -149,11 +149,119 @@ DECLARE_TEST( tcp, bind )
 }
 
 
+DECLARE_TEST( udp, create )
+{
+	object_t sock = udp_socket_create();
+
+	EXPECT_TRUE( socket_is_socket( sock ) );
+	
+	socket_free( sock );
+
+	EXPECT_FALSE( socket_is_socket( sock ) );
+	
+	return 0;
+}
+
+
+DECLARE_TEST( udp, blocking )
+{
+	object_t sock = udp_socket_create();
+	
+	EXPECT_TRUE( socket_is_socket( sock ) );
+
+	socket_set_blocking( sock, false );
+	EXPECT_FALSE( socket_blocking( sock ) );
+	
+	socket_set_blocking( sock, true );
+	EXPECT_TRUE( socket_blocking( sock ) );
+	
+	socket_free( sock );
+
+	EXPECT_FALSE( socket_is_socket( sock ) );
+	
+	return 0;
+}
+
+
+DECLARE_TEST( udp, bind )
+{
+	bool was_bound = false;
+	int port;
+
+	object_t sock = udp_socket_create();
+	
+	EXPECT_TRUE( socket_is_socket( sock ) );
+
+	EXPECT_EQ( socket_address_local( sock ), 0 );
+	EXPECT_EQ( socket_address_remote( sock ), 0 );
+	EXPECT_EQ( socket_state( sock ), SOCKETSTATE_NOTCONNECTED );
+
+	for( port = 31890; !was_bound && ( port < 32890 ); ++port )	
+	{
+		network_address_t* address = network_address_ipv4_any();
+		network_address_ip_set_port( address, port );
+		
+		if( socket_bind( sock, address ) )
+		{
+			EXPECT_NE( socket_address_local( sock ), 0 );
+			EXPECT_EQ( socket_address_remote( sock ), 0 );
+			EXPECT_EQ( socket_state( sock ), SOCKETSTATE_NOTCONNECTED );
+
+			EXPECT_TRUE( network_address_equal( socket_address_local( sock ), address ) );
+
+			was_bound = true;
+		}
+
+		memory_deallocate( address );
+	}
+	EXPECT_TRUE( was_bound );
+
+	socket_free( sock );
+
+	EXPECT_FALSE( socket_is_socket( sock ) );
+
+	sock = udp_socket_create();
+	
+	EXPECT_TRUE( socket_is_socket( sock ) );
+	
+	was_bound = false;
+	for( port = 31890; !was_bound && ( port < 32890 ); ++port )	
+	{
+		network_address_t* address = network_address_ipv6_any();
+		network_address_ip_set_port( address, port );
+		
+		if( socket_bind( sock, address ) )
+		{
+			EXPECT_NE( socket_address_local( sock ), 0 );
+			EXPECT_EQ( socket_address_remote( sock ), 0 );
+			EXPECT_EQ( socket_state( sock ), SOCKETSTATE_NOTCONNECTED );
+
+			EXPECT_TRUE( network_address_equal( socket_address_local( sock ), address ) );
+
+			was_bound = true;
+		}
+
+		memory_deallocate( address );
+	}
+	EXPECT_TRUE( was_bound );
+	
+	socket_free( sock );
+
+	EXPECT_FALSE( socket_is_socket( sock ) );
+	
+	return 0;
+}
+
+
 void test_socket_declare( void )
 {
 	ADD_TEST( tcp, create );
 	ADD_TEST( tcp, blocking );
 	ADD_TEST( tcp, bind );
+
+	ADD_TEST( udp, create );
+	ADD_TEST( udp, blocking );
+	ADD_TEST( udp, bind );
 }
 
 

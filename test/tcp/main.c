@@ -199,6 +199,7 @@ DECLARE_TEST( tcp, connect_ipv6 )
 {
 	int iaddr;
 	bool success = false;
+	bool connecting = false;
 	object_t sock_client;
 	network_address_t** addresses;
 
@@ -309,9 +310,11 @@ DECLARE_TEST( tcp, connect_ipv6 )
 	for( iaddr = 0; iaddr < array_size( addresses ); ++iaddr )
 		memory_deallocate( addresses[iaddr] );
 	array_deallocate( addresses );
+
+	connecting = ( socket_state( sock_client ) == SOCKETSTATE_CONNECTING ) || ( socket_state( sock_client ) == SOCKETSTATE_CONNECTED );
 	
 	EXPECT_TRUE( success );
-	EXPECT_EQ( socket_state( sock_client ), SOCKETSTATE_CONNECTING );
+	EXPECT_TRUE( connecting );
 
 	socket_free( sock_client );
 
@@ -471,7 +474,7 @@ DECLARE_TEST( tcp, io_ipv6 )
 void test_tcp_declare( void )
 {
 	ADD_TEST( tcp, connect_ipv4 );
-	//ADD_TEST( tcp, connect_ipv6 );
+	ADD_TEST( tcp, connect_ipv6 );
 	ADD_TEST( tcp, io_ipv4 );
 	ADD_TEST( tcp, io_ipv6 );
 }
