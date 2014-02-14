@@ -575,10 +575,6 @@ uint64_t udp_socket_sendto( object_t id, const network_datagram_t datagram, cons
 	socket_t* sock;
 	socket_base_t* sockbase;
 	const network_address_ip_t* addr_ip;
-	unsigned int available;
-	unsigned int max_read = BUILD_SIZE_SOCKET_READBUFFER;
-	unsigned int try_read;
-	bool is_blocking = false;
 	long res;
 
 	if( !address )
@@ -601,7 +597,7 @@ uint64_t udp_socket_sendto( object_t id, const network_datagram_t datagram, cons
 	}
 	addr_ip = (const network_address_ip_t*)address;
 
-	res = sendto( sockbase->fd, datagram.data, (size_t)datagram.size, 0, &addr_ip->saddr, addr_ip->address_size );
+	res = sendto( sockbase->fd, datagram.data, (int)datagram.size, 0, &addr_ip->saddr, addr_ip->address_size );
 	if( res > 0 )
 	{
 #if BUILD_ENABLE_LOG

@@ -225,9 +225,11 @@ bool socket_bind( object_t id, const network_address_t* address )
 		_socket_store_address_local( sock, address_ip->family );
 		success = true;
 #if BUILD_ENABLE_LOG
-		char* address_str = network_address_to_string( sock->address_local, true );
-		log_infof( HASH_NETWORK, "Bound socket 0x%llx (0x%" PRIfixPTR " : %d) to local address %s", sock->id, sock, sockbase->fd, address_str );
-		string_deallocate( address_str );
+		{
+			char* address_str = network_address_to_string( sock->address_local, true );
+			log_infof( HASH_NETWORK, "Bound socket 0x%llx (0x%" PRIfixPTR " : %d) to local address %s", sock->id, sock, sockbase->fd, address_str );
+			string_deallocate( address_str );
+		}
 #endif
 	}
 	else

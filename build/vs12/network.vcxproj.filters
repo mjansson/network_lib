@@ -7,6 +7,7 @@
     <ClCompile Include="..\..\network\poll.c" />
     <ClCompile Include="..\..\network\socket.c" />
     <ClCompile Include="..\..\network\tcp.c" />
+    <ClCompile Include="..\..\network\udp.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\network\address.h" />
@@ -19,6 +20,7 @@
     <ClInclude Include="..\..\network\event.h" />
     <ClInclude Include="..\..\network\hashstrings.h" />
     <ClInclude Include="..\..\network\tcp.h" />
+    <ClInclude Include="..\..\network\udp.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\network\hashstrings.txt" />
