@@ -65,17 +65,19 @@ typedef enum _network_event_id
 	NETWORKEVENT_TIMEOUT
 } network_event_id;
 
+
+// OPAQUE COMPLEX TYPES
+
 typedef struct _network_address     network_address_t;
 typedef struct _network_poll        network_poll_t;
 
 
+// COMPLEX TYPES
+
 struct _network_datagram
 {
 	void*                           data;
-
 	uint64_t                        size;
-	
-	network_address_t*              address;
 };
 
 

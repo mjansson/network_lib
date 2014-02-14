@@ -279,7 +279,6 @@ static void _tcp_socket_open( socket_t* sock, unsigned int family )
 	{
 		log_debugf( HASH_NETWORK, "Opened TCP/IP socket 0x%llx (0x%" PRIfixPTR " : %d)", sock->id, sock, sockbase->fd );
 
-		_socket_set_blocking( sock, sockbase->flags & SOCKETFLAG_BLOCKING );
 		_tcp_socket_set_delay( sock, sockbase->flags & SOCKETFLAG_TCPDELAY );
 	}
 }

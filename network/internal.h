@@ -45,10 +45,15 @@ typedef enum _socket_flag
 	SOCKETFLAG_REFLUSH              = 0x00000040
 } socket_flag_t;
 
+#if FOUNDATION_PLATFORM_POSIX
+typedef socklen_t network_address_size_t;
+#else
+typedef int       network_address_size_t;
+#endif
 
 #define NETWORK_DECLARE_NETWORK_ADDRESS      \
 	network_address_family_t   family;       \
-	int                        address_size
+	network_address_size_t     address_size
 
 struct _network_address
 {
@@ -125,7 +130,8 @@ struct ALIGN(16) _socket
 	FOUNDATION_DECLARE_OBJECT;
 
 	int                            base;
-	
+	network_address_family_t       family;
+
 	network_address_t*             address_local;
 	network_address_t*             address_remote;
 
@@ -151,6 +157,7 @@ NETWORK_EXTERN socket_base_t*      _socket_base;
 NETWORK_EXTERN int32_t             _socket_base_size;
 NETWORK_EXTERN int32_t             _socket_base_next;
 
+NETWORK_API int                    _socket_create_fd( socket_t* sock, network_address_family_t family );
 NETWORK_API socket_t*              _socket_allocate( void );
 NETWORK_API int                    _socket_allocate_base( socket_t* sock );
 NETWORK_API socket_t*              _socket_lookup( object_t id );

@@ -17,21 +17,20 @@
 #include <foundation/foundation.h>
 
 
-socket_base_t*  _socket_base = 0;
-int32_t         _socket_base_next = 0;
-int32_t         _socket_base_size = 0;
+socket_base_t*           _socket_base = 0;
+int32_t                  _socket_base_next = 0;
+int32_t                  _socket_base_size = 0;
 
-static objectmap_t*    _socket_map = 0;
-static stream_vtable_t _socket_stream_vtable = {0};
+static objectmap_t*      _socket_map = 0;
+static stream_vtable_t   _socket_stream_vtable = {0};
 
 //! Deallocate socket and free memory
-static void            _socket_deallocate( socket_t* sock );
-static unsigned int    _socket_buffered_in( const socket_t* sock );
-static unsigned int    _socket_buffered_out( const socket_t* sock );
-static void            _socket_doflush( socket_t* sock );
-static int             _socket_create_fd( socket_t* sock, int family );
+static void              _socket_deallocate( socket_t* sock );
+static unsigned int      _socket_buffered_in( const socket_t* sock );
+static unsigned int      _socket_buffered_out( const socket_t* sock );
+static void              _socket_doflush( socket_t* sock );
 
-static void            _socket_set_blocking_fd( int fd, bool block );
+static void              _socket_set_blocking_fd( int fd, bool block );
 
 static socket_stream_t*  _socket_stream_allocate( object_t id );
 static void              _socket_stream_deallocate( stream_t* stream );
@@ -132,7 +131,7 @@ static void _socket_deallocate( socket_t* sock )
 }
 
 
-int _socket_create_fd( socket_t* sock, int family )
+int _socket_create_fd( socket_t* sock, network_address_family_t family )
 {
 	socket_base_t* sockbase;
 
@@ -144,8 +143,24 @@ int _socket_create_fd( socket_t* sock, int family )
 
 	sockbase = _socket_base + sock->base;
 	
+	if( sockbase->fd != SOCKET_INVALID )
+	{
+		if( sock->family != family )
+		{
+			FOUNDATION_ASSERT_FAILFORMAT_LOG( HASH_NETWORK, "Trying to switch family on existing socket 0x%llx (0x%" PRIfixPTR " : %d) from %u to %u", sock->id, sock, sockbase->fd, sock->family, family );
+			return SOCKET_INVALID;
+		}
+	}
+
 	if( sockbase->fd == SOCKET_INVALID )
+	{
 		sock->open_fn( sock, family );
+		if( sockbase->fd != SOCKET_INVALID )
+		{
+			sock->family = family;
+			_socket_set_blocking( sock, sockbase->flags & SOCKETFLAG_BLOCKING );
+		}
+	}
 
 	return sockbase->fd;
 }

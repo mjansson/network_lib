@@ -72,8 +72,6 @@ static void _udp_socket_open( socket_t* sock, unsigned int family )
 	else
 	{
 		log_debugf( HASH_NETWORK, "Opened UDP socket 0x%llx (0x%" PRIfixPTR " : %d)", sock->id, sock, sockbase->fd );
-
-		_socket_set_blocking( sock, sockbase->flags & SOCKETFLAG_BLOCKING );
 	}
 }
 
@@ -464,16 +462,208 @@ void _udp_stream_initialize( socket_t* sock, stream_t* stream )
 }
 
 
-network_datagram_t udp_socket_recvfrom( object_t sock, network_address_t** address )
+network_datagram_t udp_socket_recvfrom( object_t id, network_address_t const** address )
 {
 	network_datagram_t datagram = {0};
-	//...
+	
+	socket_t* sock;
+	socket_base_t* sockbase;
+	network_address_ip_t* addr_ip;
+	unsigned int available;
+	unsigned int max_read = BUILD_SIZE_SOCKET_READBUFFER;
+	unsigned int try_read;
+	bool is_blocking = false;
+	long ret;
+
+	if( address )
+		*address = 0;
+
+	sock = _socket_lookup( id );
+	if( !sock || ( sock->base < 0 ) )
+		return datagram;
+
+	sockbase = _socket_base + sock->base;
+	if( sockbase->state != SOCKETSTATE_NOTCONNECTED )
+	{
+		FOUNDATION_ASSERT_FAILFORMAT_LOG( HASH_NETWORK, "Trying to datagram read from a connected UDP socket 0x%llx (0x%" PRIfixPTR " : %d) in state %u", sock->id, sock, sockbase->fd, sockbase->state );
+		return datagram;
+	}
+	if( ( sockbase->fd == SOCKET_INVALID ) || !sock->address_local )
+	{
+		FOUNDATION_ASSERT_FAILFORMAT_LOG( HASH_NETWORK, "Trying to datagram read from an unbound UDP socket 0x%llx (0x%" PRIfixPTR " : %d) in state %u", sock->id, sock, sockbase->fd, sockbase->state );
+		return datagram;
+	}
+
+	is_blocking = ( ( sockbase->flags & SOCKETFLAG_BLOCKING ) != 0 );
+	available = _socket_available_fd( sockbase->fd );
+	if( available )
+	{
+		try_read = ( max_read < available ) ? max_read : available;
+	}
+	else
+	{
+		if( !is_blocking ) 
+			return datagram;
+		try_read = max_read;
+	}
+
+	if( !sock->address_remote || ( sock->address_remote->family != sock->address_local->family ) )
+	{
+		if( sock->address_remote )
+			memory_deallocate( sock->address_remote );
+		sock->address_remote = network_address_clone( sock->address_local );
+	}
+	addr_ip = (network_address_ip_t*)sock->address_remote;
+
+	ret = recvfrom( sockbase->fd, (char*)sock->buffer_in, try_read, 0, &addr_ip->saddr, &addr_ip->address_size );
+	if( ret > 0 )
+	{
+#if BUILD_ENABLE_LOG
+		if( !available && ( ret == try_read ) )
+			log_warnf( HASH_NETWORK, WARNING_SUSPICIOUS, "Socket 0x%llx (0x%" PRIfixPTR " : %d): potential partial blocking UDP datagram read %d of %d bytes (%u available)", sock->id, sock, sockbase->fd, ret, try_read, available );
+#endif
+#if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
+#if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
+		const unsigned char* src = (const unsigned char*)sock->buffer_in;
+		char dump_buffer[66];
+#endif
+		log_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d) read %d of %u (%u were available) bytes from UDP socket to datagram", sock->id, sock, sockbase->fd, ret, try_read, available );
+#if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
+		for( long row = 0; row <= ( ret / 8 ); ++row )
+		{
+			long ofs = 0, col = 0, cols = 8;
+			if( ( row + 1 ) * 8 > ret )
+				cols = ret - ( row * 8 );
+			for( ; col < cols; ++col, ofs +=3 )
+			{
+				string_format_buffer( dump_buffer + ofs, 66 - ofs, "%02x", *( src + ( row * 8 ) + col ) );
+				*( dump_buffer + ofs + 2 ) = ' ';
+			}
+			if( ofs )
+			{
+				*( dump_buffer + ofs - 1 ) = 0;
+				log_debug( HASH_NETWORK, dump_buffer );
+			}
+		}
+#endif
+#endif
+		datagram.data = sock->buffer_in;
+		datagram.size = ret;
+
+		if( address )
+			*address = sock->address_remote;
+	}
+	else
+	{
+		int sockerr = NETWORK_SOCKET_ERROR;
+#if FOUNDATION_PLATFORM_WINDOWS
+		if( sockerr != WSAEWOULDBLOCK )
+#else
+		if( sockerr != EAGAIN )
+#endif
+		{
+			log_warnf( HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL, "Socket recvfrom() failed on UDP socket 0x%llx (0x%" PRIfixPTR " : %d): %s (%d)", sock->id, sock, sockbase->fd, system_error_message( sockerr ), sockerr );
+		}
+	}
+
 	return datagram;
 }
 
 
-uint64_t udp_socket_sendto( object_t sock, const network_datagram_t datagram, network_address_t* address )
+uint64_t udp_socket_sendto( object_t id, const network_datagram_t datagram, const network_address_t* address )
 {
-	return 0;
+	socket_t* sock;
+	socket_base_t* sockbase;
+	const network_address_ip_t* addr_ip;
+	unsigned int available;
+	unsigned int max_read = BUILD_SIZE_SOCKET_READBUFFER;
+	unsigned int try_read;
+	bool is_blocking = false;
+	long res;
+
+	if( !address )
+		return 0;
+
+	sock = _socket_lookup( id );
+	if( !sock || ( sock->base < 0 ) )
+		return 0;
+
+	sockbase = _socket_base + sock->base;
+	if( sockbase->state != SOCKETSTATE_NOTCONNECTED )
+	{
+		FOUNDATION_ASSERT_FAILFORMAT_LOG( HASH_NETWORK, "Trying to datagram send from a connected UDP socket 0x%llx (0x%" PRIfixPTR " : %d) in state %u", sock->id, sock, sockbase->fd, sockbase->state );
+		return 0;
+	}
+	if( _socket_create_fd( sock, address->family ) == SOCKET_INVALID )
+	{
+		FOUNDATION_ASSERT_FAILFORMAT_LOG( HASH_NETWORK, "Trying to datagram send from an invalid UDP socket 0x%llx (0x%" PRIfixPTR " : %d) in state %u", sock->id, sock, sockbase->fd, sockbase->state );
+		return 0;
+	}
+	addr_ip = (const network_address_ip_t*)address;
+
+	res = sendto( sockbase->fd, datagram.data, (size_t)datagram.size, 0, &addr_ip->saddr, addr_ip->address_size );
+	if( res > 0 )
+	{
+#if BUILD_ENABLE_LOG
+		if( (uint64_t)res != datagram.size )
+			log_warnf( HASH_NETWORK, WARNING_SUSPICIOUS, "Socket 0x%llx (0x%" PRIfixPTR " : %d): partial UDP datagram write %d of %d bytes", sock->id, sock, sockbase->fd, res, (unsigned int)datagram.size );
+#endif
+#if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
+#if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
+		const unsigned char* src = (const unsigned char*)sock->buffer_out + sent;
+		char buffer[34];
+#endif
+		log_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d) wrote %d of %d bytes bytes to UDP socket", sock->id, sock, sockbase->fd, res, (unsigned int)datagram.size );
+#if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
+		for( long row = 0; row <= ( res / 8 ); ++row )
+		{
+			long ofs = 0, col = 0, cols = 8;
+			if( ( row + 1 ) * 8 > res )
+				cols = res - ( row * 8 );
+			for( ; col < cols; ++col, ofs +=3 )
+			{
+				string_format_buffer( buffer + ofs, 34 - ofs, "%02x", *( src + ( row * 8 ) + col ) );
+				*( buffer + ofs + 2 ) = ' ';
+			}
+			if( ofs )
+			{
+				*( buffer + ofs - 1 ) = 0;
+				log_debug( HASH_NETWORK, buffer );
+			}
+		}
+#endif
+#endif
+	}
+	else
+	{
+		int sockerr = NETWORK_SOCKET_ERROR;
+
+#if FOUNDATION_PLATFORM_WINDOWS
+		int serr = 0;
+		int slen = sizeof( int );
+		getsockopt( sockbase->fd, SOL_SOCKET, SO_ERROR, (char*)&serr, &slen );
+#else
+		int serr = 0;
+		socklen_t slen = sizeof( int );
+		getsockopt( sockbase->fd, SOL_SOCKET, SO_ERROR, (void*)&serr, &slen );
+#endif
+
+#if FOUNDATION_PLATFORM_WINDOWS
+		if( sockerr == WSAEWOULDBLOCK )
+#else
+		if( sockerr == EAGAIN )
+#endif
+		{
+			log_warnf( HASH_NETWORK, WARNING_SUSPICIOUS, "Unable to UDP socket non-block sendto() on 0x%llx (0x%" PRIfixPTR " : %d) (SO_ERROR %d)", sock->id, sock, sockbase->fd, serr );
+		}
+		else
+		{
+			log_warnf( HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL, "Socket sendto() failed on UDP socket 0x%llx (0x%" PRIfixPTR " : %d): %s (%d) (SO_ERROR %d)", sock->id, sock, sockbase->fd, system_error_message( sockerr ), sockerr, serr );
+		}
+
+		res = 0;
+	}
+
+	return res;
 }
 
