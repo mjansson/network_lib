@@ -15,6 +15,13 @@
 #include <test/test.h>
 
 
+typedef struct _test_datagram_arg
+{
+	object_t              sock;
+	network_address_t*    target;
+} test_datagram_arg_t;
+
+
 application_t test_udp_application( void )
 {
 	application_t app = {0};
@@ -45,7 +52,7 @@ void test_udp_shutdown( void )
 }
 
 
-static void* io_blocking_thread( object_t thread, void* arg )
+static void* stream_blocking_thread( object_t thread, void* arg )
 {
 	int iloop;
 
@@ -77,7 +84,57 @@ static void* io_blocking_thread( object_t thread, void* arg )
 }
 
 
-DECLARE_TEST( udp, io_ipv4 )
+static void* datagram_server_blocking_thread( object_t thread, void* arg )
+{
+	int iloop;
+	const network_address_t* from;
+	object_t sock = *(object_t*)arg;
+	network_datagram_t datagram;
+
+	for( iloop = 0; iloop < 512 * 4; ++iloop )
+	{
+		log_infof( HASH_NETWORK, "UDP mirror pass %d", iloop );
+		datagram = udp_socket_recvfrom( sock, &from );
+		EXPECT_EQ( datagram.size, 973 );
+		EXPECT_EQ( udp_socket_sendto( sock, datagram, from ), datagram.size );
+		thread_yield();
+	}
+
+	log_debugf( HASH_NETWORK, "IO complete on socket 0x%llx", sock );
+	
+	return 0;
+}
+
+
+static void* datagram_client_blocking_thread( object_t thread, void* arg )
+{
+	int iloop;
+
+	test_datagram_arg_t* darg = arg;
+	object_t sock = darg->sock;
+	network_address_t* target = darg->target;
+	const network_address_t* address;
+
+	char buffer[1024] = {0};
+	network_datagram_t datagram = { buffer, 973 };
+	
+	for( iloop = 0; iloop < 512; ++iloop )
+	{
+		log_infof( HASH_NETWORK, "UDP read/write pass %d", iloop );
+		EXPECT_EQ( udp_socket_sendto( sock, datagram, target ), datagram.size );
+		datagram = udp_socket_recvfrom( sock, &address );
+		EXPECT_EQ( datagram.size, 973 );
+		EXPECT_TRUE( network_address_equal( target, address ) );
+		thread_yield();
+	}
+
+	log_debugf( HASH_NETWORK, "IO complete on socket 0x%llx", sock );
+	
+	return 0;
+}
+
+
+DECLARE_TEST( udp, stream_ipv4 )
 {
 	network_address_t** address_local;
 	network_address_t* address;
@@ -139,8 +196,8 @@ DECLARE_TEST( udp, io_ipv4 )
 	socket_set_blocking( sock_server, true );
 	socket_set_blocking( sock_client, true );
 
-	threads[0] = thread_create( io_blocking_thread, "io_thread", THREAD_PRIORITY_NORMAL, 0 );
-	threads[1] = thread_create( io_blocking_thread, "io_thread", THREAD_PRIORITY_NORMAL, 0 );
+	threads[0] = thread_create( stream_blocking_thread, "io_thread", THREAD_PRIORITY_NORMAL, 0 );
+	threads[1] = thread_create( stream_blocking_thread, "io_thread", THREAD_PRIORITY_NORMAL, 0 );
 
 	thread_start( threads[0], &sock_server );
 	thread_start( threads[1], &sock_client );
@@ -162,7 +219,7 @@ DECLARE_TEST( udp, io_ipv4 )
 }
 
 
-DECLARE_TEST( udp, io_ipv6 )
+DECLARE_TEST( udp, stream_ipv6 )
 {
 	network_address_t** address_local;
 	network_address_t* address;
@@ -224,8 +281,8 @@ DECLARE_TEST( udp, io_ipv6 )
 	socket_set_blocking( sock_server, true );
 	socket_set_blocking( sock_client, true );
 
-	threads[0] = thread_create( io_blocking_thread, "io_thread", THREAD_PRIORITY_NORMAL, 0 );
-	threads[1] = thread_create( io_blocking_thread, "io_thread", THREAD_PRIORITY_NORMAL, 0 );
+	threads[0] = thread_create( stream_blocking_thread, "io_thread", THREAD_PRIORITY_NORMAL, 0 );
+	threads[1] = thread_create( stream_blocking_thread, "io_thread", THREAD_PRIORITY_NORMAL, 0 );
 
 	thread_start( threads[0], &sock_server );
 	thread_start( threads[1], &sock_client );
@@ -247,10 +304,238 @@ DECLARE_TEST( udp, io_ipv6 )
 }
 
 
+DECLARE_TEST( udp, datagram_ipv4 )
+{
+	network_address_t** address_local;
+	network_address_t* address;
+	network_address_t* address_server;
+	test_datagram_arg_t client_arg;
+
+	int server_port;
+	int state, iaddr, asize;
+	object_t threads[5] = {0};
+
+	object_t sock_server = udp_socket_create();
+	object_t sock_client[4] = { udp_socket_create(), udp_socket_create(), udp_socket_create(), udp_socket_create() };
+
+	EXPECT_TRUE( socket_is_socket( sock_server ) );
+	EXPECT_TRUE( socket_is_socket( sock_client[0] ) );
+	EXPECT_TRUE( socket_is_socket( sock_client[1] ) );
+	EXPECT_TRUE( socket_is_socket( sock_client[2] ) );
+	EXPECT_TRUE( socket_is_socket( sock_client[3] ) );
+
+	address_local = network_address_local();
+	for( iaddr = 0, asize = array_size( address_local ); iaddr < asize; ++iaddr )
+	{
+		if( network_address_family( address_local[iaddr] ) == NETWORK_ADDRESSFAMILY_IPV4 )
+		{
+			address = address_local[iaddr];
+			break;
+		}
+	}
+	EXPECT_NE( address, 0 );
+
+	do
+	{
+		server_port = random32_range( 1024, 35535 );
+		network_address_ip_set_port( address, server_port );
+		if( socket_bind( sock_server, address ) )
+			break;
+	} while( true );
+	
+	address_server = network_address_clone( address );
+	network_address_ip_set_port( address_server, server_port );
+
+	network_address_array_deallocate( address_local );
+	
+	state = socket_state( sock_server );
+	EXPECT_TRUE( state == SOCKETSTATE_NOTCONNECTED );
+	
+	state = socket_state( sock_client[0] );
+	EXPECT_TRUE( state == SOCKETSTATE_NOTCONNECTED );
+	
+	state = socket_state( sock_client[1] );
+	EXPECT_TRUE( state == SOCKETSTATE_NOTCONNECTED );
+	
+	state = socket_state( sock_client[2] );
+	EXPECT_TRUE( state == SOCKETSTATE_NOTCONNECTED );
+	
+	state = socket_state( sock_client[3] );
+	EXPECT_TRUE( state == SOCKETSTATE_NOTCONNECTED );
+
+	socket_set_blocking( sock_server, true );
+	socket_set_blocking( sock_client[0], true );
+	socket_set_blocking( sock_client[1], true );
+	socket_set_blocking( sock_client[2], true );
+	socket_set_blocking( sock_client[3], true );
+
+	threads[0] = thread_create( datagram_server_blocking_thread, "server_thread", THREAD_PRIORITY_NORMAL, 0 );
+	threads[1] = thread_create( datagram_client_blocking_thread, "client_thread", THREAD_PRIORITY_NORMAL, 0 );
+	threads[2] = thread_create( datagram_client_blocking_thread, "client_thread", THREAD_PRIORITY_NORMAL, 0 );
+	threads[3] = thread_create( datagram_client_blocking_thread, "client_thread", THREAD_PRIORITY_NORMAL, 0 );
+	threads[4] = thread_create( datagram_client_blocking_thread, "client_thread", THREAD_PRIORITY_NORMAL, 0 );
+
+	thread_start( threads[0], &sock_server );
+
+	client_arg.sock = sock_client[0]; client_arg.target = address_server;
+	thread_start( threads[1], &client_arg );
+
+	client_arg.sock = sock_client[1]; client_arg.target = address_server;
+	thread_start( threads[2], &client_arg );
+
+	client_arg.sock = sock_client[2]; client_arg.target = address_server;
+	thread_start( threads[3], &client_arg );
+
+	client_arg.sock = sock_client[3]; client_arg.target = address_server;
+	thread_start( threads[4], &client_arg );
+	
+	test_wait_for_threads_startup( threads, 5 );
+
+	thread_destroy( threads[0] );
+	thread_destroy( threads[1] );
+	thread_destroy( threads[2] );
+	thread_destroy( threads[3] );
+	thread_destroy( threads[4] );
+
+	test_wait_for_threads_exit( threads, 5 );
+	
+	socket_free( sock_server );
+	socket_free( sock_client[0] );
+	socket_free( sock_client[1] );
+	socket_free( sock_client[2] );
+	socket_free( sock_client[3] );
+
+	EXPECT_FALSE( socket_is_socket( sock_server ) );
+	EXPECT_FALSE( socket_is_socket( sock_client[0] ) );
+	EXPECT_FALSE( socket_is_socket( sock_client[1] ) );
+	EXPECT_FALSE( socket_is_socket( sock_client[2] ) );
+	EXPECT_FALSE( socket_is_socket( sock_client[3] ) );
+
+	memory_deallocate( address_server );
+	
+	return 0;
+}
+
+
+DECLARE_TEST( udp, datagram_ipv6 )
+{
+	network_address_t** address_local;
+	network_address_t* address;
+	network_address_t* address_server;
+	test_datagram_arg_t client_arg;
+
+	int server_port;
+	int state, iaddr, asize;
+	object_t threads[5] = {0};
+
+	object_t sock_server = udp_socket_create();
+	object_t sock_client[4] = { udp_socket_create(), udp_socket_create(), udp_socket_create(), udp_socket_create() };
+
+	EXPECT_TRUE( socket_is_socket( sock_server ) );
+	EXPECT_TRUE( socket_is_socket( sock_client[0] ) );
+	EXPECT_TRUE( socket_is_socket( sock_client[1] ) );
+	EXPECT_TRUE( socket_is_socket( sock_client[2] ) );
+	EXPECT_TRUE( socket_is_socket( sock_client[3] ) );
+
+	address_local = network_address_local();
+	for( iaddr = 0, asize = array_size( address_local ); iaddr < asize; ++iaddr )
+	{
+		if( network_address_family( address_local[iaddr] ) == NETWORK_ADDRESSFAMILY_IPV6 )
+		{
+			address = address_local[iaddr];
+			break;
+		}
+	}
+	EXPECT_NE( address, 0 );
+
+	do
+	{
+		server_port = random32_range( 1024, 35535 );
+		network_address_ip_set_port( address, server_port );
+		if( socket_bind( sock_server, address ) )
+			break;
+	} while( true );
+	
+	address_server = network_address_clone( address );
+	network_address_ip_set_port( address_server, server_port );
+
+	network_address_array_deallocate( address_local );
+	
+	state = socket_state( sock_server );
+	EXPECT_TRUE( state == SOCKETSTATE_NOTCONNECTED );
+	
+	state = socket_state( sock_client[0] );
+	EXPECT_TRUE( state == SOCKETSTATE_NOTCONNECTED );
+	
+	state = socket_state( sock_client[1] );
+	EXPECT_TRUE( state == SOCKETSTATE_NOTCONNECTED );
+	
+	state = socket_state( sock_client[2] );
+	EXPECT_TRUE( state == SOCKETSTATE_NOTCONNECTED );
+	
+	state = socket_state( sock_client[3] );
+	EXPECT_TRUE( state == SOCKETSTATE_NOTCONNECTED );
+
+	socket_set_blocking( sock_server, true );
+	socket_set_blocking( sock_client[0], true );
+	socket_set_blocking( sock_client[1], true );
+	socket_set_blocking( sock_client[2], true );
+	socket_set_blocking( sock_client[3], true );
+
+	threads[0] = thread_create( datagram_server_blocking_thread, "server_thread", THREAD_PRIORITY_NORMAL, 0 );
+	threads[1] = thread_create( datagram_client_blocking_thread, "client_thread", THREAD_PRIORITY_NORMAL, 0 );
+	threads[2] = thread_create( datagram_client_blocking_thread, "client_thread", THREAD_PRIORITY_NORMAL, 0 );
+	threads[3] = thread_create( datagram_client_blocking_thread, "client_thread", THREAD_PRIORITY_NORMAL, 0 );
+	threads[4] = thread_create( datagram_client_blocking_thread, "client_thread", THREAD_PRIORITY_NORMAL, 0 );
+
+	thread_start( threads[0], &sock_server );
+
+	client_arg.sock = sock_client[0]; client_arg.target = address_server;
+	thread_start( threads[1], &client_arg );
+
+	client_arg.sock = sock_client[1]; client_arg.target = address_server;
+	thread_start( threads[2], &client_arg );
+
+	client_arg.sock = sock_client[2]; client_arg.target = address_server;
+	thread_start( threads[3], &client_arg );
+
+	client_arg.sock = sock_client[3]; client_arg.target = address_server;
+	thread_start( threads[4], &client_arg );
+	
+	test_wait_for_threads_startup( threads, 5 );
+
+	thread_destroy( threads[0] );
+	thread_destroy( threads[1] );
+	thread_destroy( threads[2] );
+	thread_destroy( threads[3] );
+	thread_destroy( threads[4] );
+
+	test_wait_for_threads_exit( threads, 5 );
+	
+	socket_free( sock_server );
+	socket_free( sock_client[0] );
+	socket_free( sock_client[1] );
+	socket_free( sock_client[2] );
+	socket_free( sock_client[3] );
+
+	EXPECT_FALSE( socket_is_socket( sock_server ) );
+	EXPECT_FALSE( socket_is_socket( sock_client[0] ) );
+	EXPECT_FALSE( socket_is_socket( sock_client[1] ) );
+	EXPECT_FALSE( socket_is_socket( sock_client[2] ) );
+	EXPECT_FALSE( socket_is_socket( sock_client[3] ) );
+
+	memory_deallocate( address_server );
+	
+	return 0;
+}
+
+
 void test_udp_declare( void )
 {
-	ADD_TEST( udp, io_ipv4 );
-	ADD_TEST( udp, io_ipv6 );
+	ADD_TEST( udp, stream_ipv4 );
+	ADD_TEST( udp, stream_ipv6 );
+	ADD_TEST( udp, datagram_ipv4 );
+	ADD_TEST( udp, datagram_ipv6 );
 }
 
 
