@@ -108,11 +108,11 @@ static int _network_poll_process_pending( network_poll_t* pollobj )
 				{
 					FOUNDATION_ASSERT( sockptr->base >= 0 );
 					_socket_base[ sockptr->base ].flags &= ~SOCKETFLAG_POLLED;
-					socket_free( sock );
+					socket_destroy( sock );
 				}
 			}
 			//Free the reference created when socket was added to poll
-			socket_free( sock );
+			socket_destroy( sock );
 		}
 	}
 		
@@ -164,7 +164,7 @@ static int _network_poll_process_pending( network_poll_t* pollobj )
 				++num_events;
 			}
 
-			socket_free( sockobj );
+			socket_destroy( sockobj );
 		}
 	}
 
@@ -201,7 +201,7 @@ void network_poll_deallocate( network_poll_t* pollobj )
 			object_t sock = pollobj->queue_add[iqueue];
 			pollobj->queue_add[iqueue] = 0;
 
-			socket_free( sock );
+			socket_destroy( sock );
 		}
 	}
 
@@ -215,10 +215,10 @@ void network_poll_deallocate( network_poll_t* pollobj )
 			{
 				FOUNDATION_ASSERT( sock->base >= 0 );
 				_socket_base[ sock->base ].flags &= ~SOCKETFLAG_POLLED;
-				socket_free( sockobj );
+				socket_destroy( sockobj );
 			}
 
-			socket_free( sockobj );
+			socket_destroy( sockobj );
 		}
 	}
 

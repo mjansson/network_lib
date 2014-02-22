@@ -209,8 +209,8 @@ DECLARE_TEST( udp, stream_ipv4 )
 
 	test_wait_for_threads_exit( threads, 2 );
 	
-	socket_free( sock_server );
-	socket_free( sock_client );
+	socket_destroy( sock_server );
+	socket_destroy( sock_client );
 
 	EXPECT_FALSE( socket_is_socket( sock_server ) );
 	EXPECT_FALSE( socket_is_socket( sock_client ) );
@@ -294,8 +294,8 @@ DECLARE_TEST( udp, stream_ipv6 )
 
 	test_wait_for_threads_exit( threads, 2 );
 	
-	socket_free( sock_server );
-	socket_free( sock_client );
+	socket_destroy( sock_server );
+	socket_destroy( sock_client );
 
 	EXPECT_FALSE( socket_is_socket( sock_server ) );
 	EXPECT_FALSE( socket_is_socket( sock_client ) );
@@ -399,11 +399,11 @@ DECLARE_TEST( udp, datagram_ipv4 )
 
 	test_wait_for_threads_exit( threads, 5 );
 	
-	socket_free( sock_server );
-	socket_free( sock_client[0] );
-	socket_free( sock_client[1] );
-	socket_free( sock_client[2] );
-	socket_free( sock_client[3] );
+	socket_destroy( sock_server );
+	socket_destroy( sock_client[0] );
+	socket_destroy( sock_client[1] );
+	socket_destroy( sock_client[2] );
+	socket_destroy( sock_client[3] );
 
 	EXPECT_FALSE( socket_is_socket( sock_server ) );
 	EXPECT_FALSE( socket_is_socket( sock_client[0] ) );
@@ -512,11 +512,11 @@ DECLARE_TEST( udp, datagram_ipv6 )
 
 	test_wait_for_threads_exit( threads, 5 );
 	
-	socket_free( sock_server );
-	socket_free( sock_client[0] );
-	socket_free( sock_client[1] );
-	socket_free( sock_client[2] );
-	socket_free( sock_client[3] );
+	socket_destroy( sock_server );
+	socket_destroy( sock_client[0] );
+	socket_destroy( sock_client[1] );
+	socket_destroy( sock_client[2] );
+	socket_destroy( sock_client[3] );
 
 	EXPECT_FALSE( socket_is_socket( sock_server ) );
 	EXPECT_FALSE( socket_is_socket( sock_client[0] ) );

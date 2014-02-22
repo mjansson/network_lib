@@ -166,7 +166,7 @@ int _socket_create_fd( socket_t* sock, network_address_family_t family )
 }
 
 
-void socket_free( object_t id )
+void socket_destroy( object_t id )
 {
 	socket_t* sock;
 	int32_t ref;
@@ -193,7 +193,7 @@ bool socket_is_socket( object_t id )
 	socket_t* sock = _socket_lookup( id );
 	if( sock )
 		is_socket = true;
-	socket_free( id );
+	socket_destroy( id );
 	return is_socket;
 }
 
@@ -244,7 +244,7 @@ bool socket_bind( object_t id, const network_address_t* address )
 
 exit:
 
-	socket_free( id );
+	socket_destroy( id );
 	
 	return success;
 }
@@ -301,7 +301,7 @@ bool socket_connect( object_t id, const network_address_t* address, unsigned int
 	
 exit:
 
-	socket_free( id );
+	socket_destroy( id );
 
 	return success;
 }
@@ -315,7 +315,7 @@ bool socket_blocking( object_t id )
 	{
 		socket_base_t* sockbase = _socket_base + sock->base;
 		blocking = ( ( sockbase->flags & SOCKETFLAG_BLOCKING ) != 0 );
-		socket_free( id );
+		socket_destroy( id );
 	}
 	return blocking;
 }
@@ -332,7 +332,7 @@ void socket_set_blocking( object_t id, bool block )
 
 	_socket_set_blocking( sock, block );
 	
-	socket_free( id );
+	socket_destroy( id );
 }
 
 
@@ -343,7 +343,7 @@ const network_address_t* socket_address_local( object_t id )
 	if( sock )
 	{
 		addr = sock->address_local;
-		socket_free( id );
+		socket_destroy( id );
 	}
 	return addr;
 }
@@ -356,7 +356,7 @@ const network_address_t* socket_address_remote( object_t id )
 	if( sock )
 	{
 		addr = sock->address_remote;
-		socket_free( id );
+		socket_destroy( id );
 	}
 	return addr;
 }
@@ -369,7 +369,7 @@ socket_state_t socket_state( object_t id )
 	if( sock )
 	{
 		state = _socket_poll_state( _socket_base + sock->base );
-		socket_free( id );
+		socket_destroy( id );
 	}
 	return state;
 }
@@ -394,7 +394,7 @@ stream_t* socket_stream( object_t id )
 	else
 	{
 		stream = sock->stream;
-		socket_free( id );
+		socket_destroy( id );
 	}
 	
 	return (stream_t*)stream;
@@ -454,7 +454,7 @@ void socket_close( object_t id )
 	if( sock )
 	{
 		_socket_close( sock );
-		socket_free( id );
+		socket_destroy( id );
 	}
 }
 
@@ -660,7 +660,7 @@ socket_state_t _socket_poll_state( socket_base_t* sockbase )
 	}
 
 	if( sock )
-		socket_free( sock->id );
+		socket_destroy( sock->id );
 	
 	return sockbase->state;
 }
@@ -736,14 +736,14 @@ static void _socket_stream_deallocate( stream_t* stream )
 		{
 			FOUNDATION_ASSERT_MSGFORMAT( sock->stream == sockstream, "Socket %llx (0x%" PRIfixPTR " : %d): Deallocating stream mismatch, stream is 0x%" PRIfixPTR ", socket stream is 0x%" PRIfixPTR, id, sock, ( sock->base >= 0 ) ? _socket_base[ sock->base ].fd : SOCKET_INVALID, sockstream, sock->stream );
 			sock->stream = 0;
-			socket_free( id );
+			socket_destroy( id );
 		}
 	}
 	
 	sockstream->socket = 0;
 
 	if( id )
-		socket_free( id );
+		socket_destroy( id );
 }
 
 
@@ -837,7 +837,7 @@ static uint64_t _socket_read( stream_t* stream, void* buffer, uint64_t size )
 
 exit:
 
-	socket_free( sockstream->socket );
+	socket_destroy( sockstream->socket );
 	
 	return was_read;
 }
@@ -909,7 +909,7 @@ static uint64_t _socket_write( stream_t* stream, const void* buffer, uint64_t si
 
 exit:
 
-	socket_free( sockstream->socket );
+	socket_destroy( sockstream->socket );
 	
 	return was_written;
 }
@@ -938,7 +938,7 @@ static bool _socket_eos( stream_t* stream )
 	if( ( ( state != SOCKETSTATE_CONNECTED ) || ( sockbase->fd == SOCKET_INVALID ) ) && !_socket_available_nonblock_read( sock ) )
 		eos = true;
 
-	socket_free( sockstream->socket );
+	socket_destroy( sockstream->socket );
 	
 	return false;
 }
@@ -962,7 +962,7 @@ static uint64_t _socket_available_read( stream_t* stream )
 
 	available = _socket_available_nonblock_read( sock );
 
-	socket_free( sockstream->socket );
+	socket_destroy( sockstream->socket );
 
 	return available;
 }
@@ -997,7 +997,7 @@ static void _socket_buffer_read( stream_t* stream )
 
 exit:
 	
-	socket_free( sockstream->socket );
+	socket_destroy( sockstream->socket );
 }
 
 
@@ -1016,7 +1016,7 @@ static void _socket_flush( stream_t* stream )
 
 	_socket_doflush( sock );
 
-	socket_free( sockstream->socket );
+	socket_destroy( sockstream->socket );
 }
 
 
@@ -1057,7 +1057,7 @@ static void _socket_seek( stream_t* stream, int64_t offset, stream_seek_mode_t d
 		_socket_read( stream, 0, offset );
 	}
 
-	socket_free( sockstream->socket );
+	socket_destroy( sockstream->socket );
 }
 
 
@@ -1077,7 +1077,7 @@ static int64_t _socket_tell( stream_t* stream )
 
 	pos = (int64_t)sock->bytes_read;
 
-	socket_free( sockstream->socket );
+	socket_destroy( sockstream->socket );
 
 	return pos;
 }

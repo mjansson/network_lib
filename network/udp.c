@@ -569,7 +569,7 @@ network_datagram_t udp_socket_recvfrom( object_t id, network_address_t const** a
 exit:
 
 	if( sock )
-		socket_free( id );	
+		socket_destroy( id );	
 
 	return datagram;
 }
@@ -671,7 +671,7 @@ uint64_t udp_socket_sendto( object_t id, const network_datagram_t datagram, cons
 exit:
 
 	if( sock )
-		socket_free( id );
+		socket_destroy( id );
 
 	return res;
 }

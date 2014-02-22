@@ -42,6 +42,24 @@ network_address_t** network_address_resolve( const char* address )
 		return addresses;
 	
 	error_context_push( "resolving network address", address );
+
+	//Special case - port only
+	if( string_find_first_not_of( address, "0123456789", 0 ) == STRING_NPOS )
+	{
+		int port = string_to_int( address );
+		if( ( port > 0 ) && ( port <= 65535 ) )
+		{
+			network_address_t* any = network_address_ipv4_any();
+			network_address_ip_set_port( any, port );
+			array_push( addresses, any );
+
+			any = network_address_ipv6_any();
+			network_address_ip_set_port( any, port );
+			array_push( addresses, any );
+
+			return addresses;
+		}
+	}
 	
 	portdelim = string_rfind( address, ':', STRING_NPOS );
 	

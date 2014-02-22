@@ -51,7 +51,7 @@ DECLARE_TEST( tcp, create )
 
 	EXPECT_TRUE( socket_is_socket( sock ) );
 	
-	socket_free( sock );
+	socket_destroy( sock );
 
 	EXPECT_FALSE( socket_is_socket( sock ) );
 	
@@ -71,7 +71,7 @@ DECLARE_TEST( tcp, blocking )
 	socket_set_blocking( sock, true );
 	EXPECT_TRUE( socket_blocking( sock ) );
 	
-	socket_free( sock );
+	socket_destroy( sock );
 
 	EXPECT_FALSE( socket_is_socket( sock ) );
 	
@@ -112,7 +112,7 @@ DECLARE_TEST( tcp, bind )
 	}
 	EXPECT_TRUE( was_bound );
 
-	socket_free( sock );
+	socket_destroy( sock );
 
 	EXPECT_FALSE( socket_is_socket( sock ) );
 
@@ -141,7 +141,7 @@ DECLARE_TEST( tcp, bind )
 	}
 	EXPECT_TRUE( was_bound );
 	
-	socket_free( sock );
+	socket_destroy( sock );
 
 	EXPECT_FALSE( socket_is_socket( sock ) );
 	
@@ -155,7 +155,7 @@ DECLARE_TEST( udp, create )
 
 	EXPECT_TRUE( socket_is_socket( sock ) );
 	
-	socket_free( sock );
+	socket_destroy( sock );
 
 	EXPECT_FALSE( socket_is_socket( sock ) );
 	
@@ -175,7 +175,7 @@ DECLARE_TEST( udp, blocking )
 	socket_set_blocking( sock, true );
 	EXPECT_TRUE( socket_blocking( sock ) );
 	
-	socket_free( sock );
+	socket_destroy( sock );
 
 	EXPECT_FALSE( socket_is_socket( sock ) );
 	
@@ -216,7 +216,7 @@ DECLARE_TEST( udp, bind )
 	}
 	EXPECT_TRUE( was_bound );
 
-	socket_free( sock );
+	socket_destroy( sock );
 
 	EXPECT_FALSE( socket_is_socket( sock ) );
 
@@ -245,7 +245,7 @@ DECLARE_TEST( udp, bind )
 	}
 	EXPECT_TRUE( was_bound );
 	
-	socket_free( sock );
+	socket_destroy( sock );
 
 	EXPECT_FALSE( socket_is_socket( sock ) );
 	
