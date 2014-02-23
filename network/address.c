@@ -57,6 +57,8 @@ network_address_t** network_address_resolve( const char* address )
 			network_address_ip_set_port( any, port );
 			array_push( addresses, any );
 
+			error_context_pop();
+
 			return addresses;
 		}
 	}
