@@ -18,7 +18,7 @@
 
 
 socket_base_t*           _socket_base = 0;
-int32_t                  _socket_base_next = 0;
+atomic32_t               _socket_base_next = {0};
 int32_t                  _socket_base_size = 0;
 
 static objectmap_t*      _socket_map = 0;
@@ -59,8 +59,8 @@ socket_t* _socket_allocate( void )
 	log_debugf( HASH_NETWORK, "Allocated socket 0x%llx (0x%" PRIfixPTR ")", object, sock );
 
 	sock->id = object;
-	sock->ref = 1;
 	sock->base = -1;
+	atomic_store32( &sock->ref, 1 );
 
 	objectmap_set( _socket_map, object, sock );
 
@@ -79,7 +79,7 @@ int _socket_allocate_base( socket_t* sock )
 		return sock->base;
 
 	//TODO: Better allocation scheme
-	startbase = _socket_base_next;
+	startbase = atomic_load32( &_socket_base_next );
 	maxbase = _socket_base_size;
 	do
 	{
@@ -93,7 +93,7 @@ int _socket_allocate_base( socket_t* sock )
 		if( sockbase->object )
 			continue;
 
-		if( atomic_cas64( (volatile int64_t*)&sockbase->object, sock->id, 0 ) )
+		if( atomic_cas64( (atomic64_t*)&sockbase->object, sock->id, 0 ) )
 		{
 			sock->base = base;
 			sockbase->fd = SOCKET_INVALID;
@@ -168,22 +168,15 @@ int _socket_create_fd( socket_t* sock, network_address_family_t family )
 
 void socket_destroy( object_t id )
 {
-	socket_t* sock;
-	int32_t ref;
-	do
+	socket_t* sock = objectmap_lookup( _socket_map, id );
+	if( sock )
 	{
-		sock = objectmap_lookup( _socket_map, id );
-		if( sock )
-		{
-			ref = sock->ref;
-			if( atomic_cas32( &sock->ref, ref - 1, ref ) )
-			{
-				if( ref == 1 )
-					_socket_deallocate( sock );
-				break;
-			}
-		}
-	} while( sock );
+		//Note that socket lifetime management is only thread-safe
+		//in a sense that ref count is thread-safe. Socket deallocation
+		//(ref count reaching 0) is not thread-safe.
+		if( atomic_decr32( &sock->ref ) == 0 )
+			_socket_deallocate( sock );
+	}
 }
 
 
@@ -403,20 +396,15 @@ stream_t* socket_stream( object_t id )
 
 socket_t* _socket_lookup( object_t id )
 {
-	socket_t* sock;
-	int32_t ref;
-	do
+	//Socket lifetime management is only thread-safe in a sense that
+	//ref count is thread-safe. Once a socket deallocation is triggered
+	//the deallocation sequence itself is not thread-safe.
+	socket_t* sock = objectmap_lookup( _socket_map, id );
+	if( sock )
 	{
-		sock = objectmap_lookup( _socket_map, id );
-		if( sock )
-		{
-			ref = sock->ref;
-			if( ref <= 0 )
-				break;
-			if( atomic_cas32( &sock->ref, ref + 1, ref ) )
-				return sock;
-		}
-	} while( sock );
+		atomic_incr32( &sock->ref );
+		return sock;
+	}
 	return 0;
 }
 
@@ -1101,7 +1089,7 @@ int _socket_initialize( unsigned int max_sockets )
 	{
 		_socket_base = memory_allocate_zero_context( HASH_NETWORK, sizeof( socket_base_t ) * max_sockets, 16, MEMORY_PERSISTENT );
 		_socket_base_size = (int)max_sockets;
-		_socket_base_next = 0;
+		atomic_store32( &_socket_base_next, 0 );
 	}
 	
 	_socket_stream_vtable.read = _socket_read;
