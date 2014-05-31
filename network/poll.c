@@ -19,13 +19,16 @@
 
 #if FOUNDATION_PLATFORM_POSIX
 #  include <unistd.h>
-#  include <sys/epoll.h>
 #  include <errno.h>
 #elif FOUNDATION_PLATFORM_WINDOWS
 #  include <foundation/windows.h>
 #  define FAR
 #endif
-
+#if FOUNDATION_PLATFORM_LINUX
+#  include <sys/epoll.h>
+#elif FOUNDATION_PLATFORM_MACOSX || FOUNDATION_PLATFORM_IOS
+#  include <sys/poll.h>
+#endif
 
 typedef struct _network_poll_slot
 {
