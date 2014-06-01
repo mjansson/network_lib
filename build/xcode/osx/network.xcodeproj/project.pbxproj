@@ -67,6 +67,7 @@
 				4513872A193A800D00BA2092 /* lib */,
 			);
 			sourceTree = "<group>";
+			usesTabs = 1;
 		};
 		4513872A193A800D00BA2092 /* lib */ = {
 			isa = PBXGroup;

@@ -27,7 +27,7 @@ static stream_vtable_t   _socket_stream_vtable = {0};
 //! Deallocate socket and free memory
 static void              _socket_deallocate( socket_t* sock );
 static unsigned int      _socket_buffered_in( const socket_t* sock );
-static unsigned int      _socket_buffered_out( const socket_t* sock );
+//static unsigned int      _socket_buffered_out( const socket_t* sock );
 static void              _socket_doflush( socket_t* sock );
 
 static void              _socket_set_blocking_fd( int fd, bool block );
@@ -529,11 +529,11 @@ static unsigned int _socket_buffered_in( const socket_t* sock )
 }
 
 
-static unsigned int _socket_buffered_out( const socket_t* sock )
+/*static unsigned int _socket_buffered_out( const socket_t* sock )
 {
 	FOUNDATION_ASSERT( sock );
 	return sock->offset_write_out;
-}
+}*/
 
 
 unsigned int _socket_available_nonblock_read( const socket_t* sock )

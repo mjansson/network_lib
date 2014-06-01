@@ -187,6 +187,9 @@ network_address_t* network_address_ipv4_any( void )
 #else
 	address->saddr.sin_addr.s_addr = 0;//INADDR_ANY;
 #endif
+#if FOUNDATION_PLATFORM_APPLE
+    address->saddr.sin_len = sizeof( address->saddr );
+#endif
 	address->saddr.sin_family = AF_INET;
 	address->family = NETWORK_ADDRESSFAMILY_IPV4;
 	address->address_size = sizeof( struct sockaddr_in );
@@ -201,6 +204,9 @@ network_address_t* network_address_ipv6_any( void )
 	address->saddr.sin6_addr = in6addr_any;
 #else
 	address->saddr.sin6_addr = in6addr_any;
+#endif
+#if FOUNDATION_PLATFORM_APPLE
+    address->saddr.sin6_len = sizeof( address->saddr );
 #endif
 	address->saddr.sin6_family = AF_INET6;
 	address->family = NETWORK_ADDRESSFAMILY_IPV6;

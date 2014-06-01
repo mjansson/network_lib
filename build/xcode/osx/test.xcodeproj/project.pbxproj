@@ -12,10 +12,97 @@
 		45138776193A835500BA2092 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138772193A835500BA2092 /* Carbon.framework */; };
 		45138777193A835500BA2092 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138773193A835500BA2092 /* Cocoa.framework */; };
 		45138778193A835500BA2092 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138774193A835500BA2092 /* CoreFoundation.framework */; };
+		451387A2193B256E00BA2092 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 451387A1193B256E00BA2092 /* main.c */; };
+		451387A3193B265700BA2092 /* libnetwork.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138771193A835500BA2092 /* libnetwork.a */; };
+		451387A4193B265700BA2092 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138772193A835500BA2092 /* Carbon.framework */; };
+		451387A5193B265700BA2092 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138773193A835500BA2092 /* Cocoa.framework */; };
+		451387A6193B265700BA2092 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138774193A835500BA2092 /* CoreFoundation.framework */; };
+		451387AB193B949000BA2092 /* libnetwork.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138771193A835500BA2092 /* libnetwork.a */; };
+		451387AC193B949000BA2092 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138772193A835500BA2092 /* Carbon.framework */; };
+		451387AD193B949000BA2092 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138773193A835500BA2092 /* Cocoa.framework */; };
+		451387AE193B949000BA2092 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138774193A835500BA2092 /* CoreFoundation.framework */; };
+		451387B7193B94DA00BA2092 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 451387B6193B94DA00BA2092 /* main.c */; };
+		451387BC193B94F900BA2092 /* libnetwork.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138771193A835500BA2092 /* libnetwork.a */; };
+		451387BD193B94F900BA2092 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138772193A835500BA2092 /* Carbon.framework */; };
+		451387BE193B94F900BA2092 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138773193A835500BA2092 /* Cocoa.framework */; };
+		451387BF193B94F900BA2092 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138774193A835500BA2092 /* CoreFoundation.framework */; };
+		451387C8193B951C00BA2092 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 451387C7193B951C00BA2092 /* main.c */; };
+		451387CD193B952F00BA2092 /* libnetwork.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138771193A835500BA2092 /* libnetwork.a */; };
+		451387CE193B952F00BA2092 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138772193A835500BA2092 /* Carbon.framework */; };
+		451387CF193B952F00BA2092 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138773193A835500BA2092 /* Cocoa.framework */; };
+		451387D0193B952F00BA2092 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138774193A835500BA2092 /* CoreFoundation.framework */; };
+		451387D9193B954400BA2092 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 451387D8193B954400BA2092 /* main.c */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		451387DA193B956400BA2092 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 45138756193A81B000BA2092 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 45138795193B255A00BA2092;
+			remoteInfo = "test-address";
+		};
+		451387DC193B956400BA2092 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 45138756193A81B000BA2092 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 451387A7193B949000BA2092;
+			remoteInfo = "test-socket";
+		};
+		451387DE193B956400BA2092 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 45138756193A81B000BA2092 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 451387B8193B94F900BA2092;
+			remoteInfo = "test-tcp";
+		};
+		451387E0193B956400BA2092 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 45138756193A81B000BA2092 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 451387C9193B952F00BA2092;
+			remoteInfo = "test-udp";
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		45138762193A824900BA2092 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		45138794193B255A00BA2092 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		451387AF193B949000BA2092 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		451387C0193B94F900BA2092 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		451387D1193B952F00BA2092 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = /usr/share/man/man1/;
@@ -33,6 +120,14 @@
 		45138772193A835500BA2092 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
 		45138773193A835500BA2092 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		45138774193A835500BA2092 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
+		45138796193B255A00BA2092 /* test-address */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "test-address"; sourceTree = BUILT_PRODUCTS_DIR; };
+		451387A1193B256E00BA2092 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = ../../../test/address/main.c; sourceTree = "<group>"; };
+		451387B5193B949000BA2092 /* test-socket */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "test-socket"; sourceTree = BUILT_PRODUCTS_DIR; };
+		451387B6193B94DA00BA2092 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = ../../../test/socket/main.c; sourceTree = "<group>"; };
+		451387C6193B94F900BA2092 /* test-tcp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "test-tcp"; sourceTree = BUILT_PRODUCTS_DIR; };
+		451387C7193B951C00BA2092 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = ../../../test/tcp/main.c; sourceTree = "<group>"; };
+		451387D7193B952F00BA2092 /* test-udp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "test-udp"; sourceTree = BUILT_PRODUCTS_DIR; };
+		451387D8193B954400BA2092 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = ../../../test/udp/main.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -47,6 +142,50 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		45138793193B255A00BA2092 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				451387A3193B265700BA2092 /* libnetwork.a in Frameworks */,
+				451387A4193B265700BA2092 /* Carbon.framework in Frameworks */,
+				451387A5193B265700BA2092 /* Cocoa.framework in Frameworks */,
+				451387A6193B265700BA2092 /* CoreFoundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		451387AA193B949000BA2092 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				451387AB193B949000BA2092 /* libnetwork.a in Frameworks */,
+				451387AC193B949000BA2092 /* Carbon.framework in Frameworks */,
+				451387AD193B949000BA2092 /* Cocoa.framework in Frameworks */,
+				451387AE193B949000BA2092 /* CoreFoundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		451387BB193B94F900BA2092 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				451387BC193B94F900BA2092 /* libnetwork.a in Frameworks */,
+				451387BD193B94F900BA2092 /* Carbon.framework in Frameworks */,
+				451387BE193B94F900BA2092 /* Cocoa.framework in Frameworks */,
+				451387BF193B94F900BA2092 /* CoreFoundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		451387CC193B952F00BA2092 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				451387CD193B952F00BA2092 /* libnetwork.a in Frameworks */,
+				451387CE193B952F00BA2092 /* Carbon.framework in Frameworks */,
+				451387CF193B952F00BA2092 /* Cocoa.framework in Frameworks */,
+				451387D0193B952F00BA2092 /* CoreFoundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -54,16 +193,25 @@
 			isa = PBXGroup;
 			children = (
 				4513876E193A833A00BA2092 /* all */,
+				4513877F193B250200BA2092 /* address */,
+				45138780193B250E00BA2092 /* socket */,
+				45138781193B251300BA2092 /* tcp */,
+				45138782193B251800BA2092 /* udp */,
 				45138779193A836700BA2092 /* lib */,
 				45138765193A824900BA2092 /* bin */,
 				4513877A193A837100BA2092 /* framework */,
 			);
 			sourceTree = "<group>";
+			usesTabs = 1;
 		};
 		45138765193A824900BA2092 /* bin */ = {
 			isa = PBXGroup;
 			children = (
 				45138764193A824900BA2092 /* test-all */,
+				45138796193B255A00BA2092 /* test-address */,
+				451387B5193B949000BA2092 /* test-socket */,
+				451387C6193B94F900BA2092 /* test-tcp */,
+				451387D7193B952F00BA2092 /* test-udp */,
 			);
 			name = bin;
 			sourceTree = "<group>";
@@ -95,6 +243,38 @@
 			name = framework;
 			sourceTree = "<group>";
 		};
+		4513877F193B250200BA2092 /* address */ = {
+			isa = PBXGroup;
+			children = (
+				451387A1193B256E00BA2092 /* main.c */,
+			);
+			name = address;
+			sourceTree = "<group>";
+		};
+		45138780193B250E00BA2092 /* socket */ = {
+			isa = PBXGroup;
+			children = (
+				451387B6193B94DA00BA2092 /* main.c */,
+			);
+			name = socket;
+			sourceTree = "<group>";
+		};
+		45138781193B251300BA2092 /* tcp */ = {
+			isa = PBXGroup;
+			children = (
+				451387C7193B951C00BA2092 /* main.c */,
+			);
+			name = tcp;
+			sourceTree = "<group>";
+		};
+		45138782193B251800BA2092 /* udp */ = {
+			isa = PBXGroup;
+			children = (
+				451387D8193B954400BA2092 /* main.c */,
+			);
+			name = udp;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -109,10 +289,82 @@
 			buildRules = (
 			);
 			dependencies = (
+				451387DB193B956400BA2092 /* PBXTargetDependency */,
+				451387DD193B956400BA2092 /* PBXTargetDependency */,
+				451387DF193B956400BA2092 /* PBXTargetDependency */,
+				451387E1193B956400BA2092 /* PBXTargetDependency */,
 			);
 			name = "test-all";
 			productName = "test-all";
 			productReference = 45138764193A824900BA2092 /* test-all */;
+			productType = "com.apple.product-type.tool";
+		};
+		45138795193B255A00BA2092 /* test-address */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4513879C193B255A00BA2092 /* Build configuration list for PBXNativeTarget "test-address" */;
+			buildPhases = (
+				45138792193B255A00BA2092 /* Sources */,
+				45138793193B255A00BA2092 /* Frameworks */,
+				45138794193B255A00BA2092 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "test-address";
+			productName = "test-address";
+			productReference = 45138796193B255A00BA2092 /* test-address */;
+			productType = "com.apple.product-type.tool";
+		};
+		451387A7193B949000BA2092 /* test-socket */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 451387B0193B949000BA2092 /* Build configuration list for PBXNativeTarget "test-socket" */;
+			buildPhases = (
+				451387A8193B949000BA2092 /* Sources */,
+				451387AA193B949000BA2092 /* Frameworks */,
+				451387AF193B949000BA2092 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "test-socket";
+			productName = "test-address";
+			productReference = 451387B5193B949000BA2092 /* test-socket */;
+			productType = "com.apple.product-type.tool";
+		};
+		451387B8193B94F900BA2092 /* test-tcp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 451387C1193B94F900BA2092 /* Build configuration list for PBXNativeTarget "test-tcp" */;
+			buildPhases = (
+				451387B9193B94F900BA2092 /* Sources */,
+				451387BB193B94F900BA2092 /* Frameworks */,
+				451387C0193B94F900BA2092 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "test-tcp";
+			productName = "test-address";
+			productReference = 451387C6193B94F900BA2092 /* test-tcp */;
+			productType = "com.apple.product-type.tool";
+		};
+		451387C9193B952F00BA2092 /* test-udp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 451387D2193B952F00BA2092 /* Build configuration list for PBXNativeTarget "test-udp" */;
+			buildPhases = (
+				451387CA193B952F00BA2092 /* Sources */,
+				451387CC193B952F00BA2092 /* Frameworks */,
+				451387D1193B952F00BA2092 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "test-udp";
+			productName = "test-address";
+			productReference = 451387D7193B952F00BA2092 /* test-udp */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -136,6 +388,10 @@
 			projectRoot = "";
 			targets = (
 				45138763193A824900BA2092 /* test-all */,
+				45138795193B255A00BA2092 /* test-address */,
+				451387A7193B949000BA2092 /* test-socket */,
+				451387B8193B94F900BA2092 /* test-tcp */,
+				451387C9193B952F00BA2092 /* test-udp */,
 			);
 		};
 /* End PBXProject section */
@@ -149,7 +405,62 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		45138792193B255A00BA2092 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				451387A2193B256E00BA2092 /* main.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		451387A8193B949000BA2092 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				451387B7193B94DA00BA2092 /* main.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		451387B9193B94F900BA2092 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				451387C8193B951C00BA2092 /* main.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		451387CA193B952F00BA2092 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				451387D9193B954400BA2092 /* main.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		451387DB193B956400BA2092 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 45138795193B255A00BA2092 /* test-address */;
+			targetProxy = 451387DA193B956400BA2092 /* PBXContainerItemProxy */;
+		};
+		451387DD193B956400BA2092 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 451387A7193B949000BA2092 /* test-socket */;
+			targetProxy = 451387DC193B956400BA2092 /* PBXContainerItemProxy */;
+		};
+		451387DF193B956400BA2092 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 451387B8193B94F900BA2092 /* test-tcp */;
+			targetProxy = 451387DE193B956400BA2092 /* PBXContainerItemProxy */;
+		};
+		451387E1193B956400BA2092 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 451387C9193B952F00BA2092 /* test-udp */;
+			targetProxy = 451387E0193B956400BA2092 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		4513875A193A81B000BA2092 /* Debug */ = {
@@ -167,10 +478,12 @@
 				GCC_FAST_MATH = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = "BUILD_DEBUG=1";
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_THREADSAFE_STATICS = NO;
 				HEADER_SEARCH_PATHS = (
 					../../..,
 					../../../../foundation_lib,
+					../../../../foundation_lib/test,
 					"$(inherited)",
 				);
 				LIBRARY_SEARCH_PATHS = (
@@ -198,11 +511,13 @@
 				GCC_FAST_MATH = YES;
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_PREPROCESSOR_DEFINITIONS = "BUILD_RELEASE=1";
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_THREADSAFE_STATICS = NO;
 				GCC_UNROLL_LOOPS = YES;
 				HEADER_SEARCH_PATHS = (
 					../../..,
 					../../../../foundation_lib,
+					../../../../foundation_lib/test,
 					"$(inherited)",
 				);
 				LIBRARY_SEARCH_PATHS = (
@@ -238,6 +553,7 @@
 					"$(inherited)",
 					/Users/mjansson/projects/network_lib/lib/macosx/debug,
 				);
+				OTHER_LDFLAGS = "-lfoundation";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -265,9 +581,616 @@
 					"$(inherited)",
 					/Users/mjansson/projects/network_lib/lib/macosx/debug,
 				);
+				OTHER_LDFLAGS = "-lfoundation";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
+		};
+		4513877B193B166B00BA2092 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CONFIGURATION_BUILD_DIR = ../../../bin/macosx/profile;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = c11;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+				GCC_ENABLE_CPP_RTTI = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = NO;
+				GCC_FAST_MATH = YES;
+				GCC_OPTIMIZATION_LEVEL = fast;
+				GCC_PREPROCESSOR_DEFINITIONS = "BUILD_PROFILE=1";
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_THREADSAFE_STATICS = NO;
+				GCC_UNROLL_LOOPS = YES;
+				HEADER_SEARCH_PATHS = (
+					../../..,
+					../../../../foundation_lib,
+					../../../../foundation_lib/test,
+					"$(inherited)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					../../../lib/macosx/profile,
+					../../../../foundation_lib/lib/macosx/profile,
+					"$(inherited)",
+				);
+				LLVM_LTO = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				SDKROOT = macosx;
+			};
+			name = Profile;
+		};
+		4513877C193B166B00BA2092 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/mjansson/projects/network_lib/lib/macosx/debug,
+				);
+				OTHER_LDFLAGS = "-lfoundation";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Profile;
+		};
+		4513877D193B167100BA2092 /* Deploy */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CONFIGURATION_BUILD_DIR = ../../../bin/macosx/deploy;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = c11;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+				GCC_ENABLE_CPP_RTTI = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = NO;
+				GCC_FAST_MATH = YES;
+				GCC_OPTIMIZATION_LEVEL = fast;
+				GCC_PREPROCESSOR_DEFINITIONS = "BUILD_DEPLOY=1";
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_THREADSAFE_STATICS = NO;
+				GCC_UNROLL_LOOPS = YES;
+				HEADER_SEARCH_PATHS = (
+					../../..,
+					../../../../foundation_lib,
+					../../../../foundation_lib/test,
+					"$(inherited)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					../../../lib/macosx/deploy,
+					../../../../foundation_lib/lib/macosx/deploy,
+					"$(inherited)",
+				);
+				LLVM_LTO = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				SDKROOT = macosx;
+			};
+			name = Deploy;
+		};
+		4513877E193B167100BA2092 /* Deploy */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/mjansson/projects/network_lib/lib/macosx/debug,
+				);
+				OTHER_LDFLAGS = "-lfoundation";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Deploy;
+		};
+		4513879D193B255A00BA2092 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/mjansson/projects/network_lib/lib/macosx/debug,
+				);
+				OTHER_LDFLAGS = (
+					"-ltest",
+					"-lfoundation",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		4513879E193B255A00BA2092 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/mjansson/projects/network_lib/lib/macosx/debug,
+				);
+				OTHER_LDFLAGS = (
+					"-ltest",
+					"-lfoundation",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		4513879F193B255A00BA2092 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/mjansson/projects/network_lib/lib/macosx/debug,
+				);
+				OTHER_LDFLAGS = (
+					"-ltest",
+					"-lfoundation",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Profile;
+		};
+		451387A0193B255A00BA2092 /* Deploy */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/mjansson/projects/network_lib/lib/macosx/debug,
+				);
+				OTHER_LDFLAGS = (
+					"-ltest",
+					"-lfoundation",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Deploy;
+		};
+		451387B1193B949000BA2092 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/mjansson/projects/network_lib/lib/macosx/debug,
+				);
+				OTHER_LDFLAGS = (
+					"-ltest",
+					"-lfoundation",
+				);
+				PRODUCT_NAME = "test-socket";
+			};
+			name = Debug;
+		};
+		451387B2193B949000BA2092 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/mjansson/projects/network_lib/lib/macosx/debug,
+				);
+				OTHER_LDFLAGS = (
+					"-ltest",
+					"-lfoundation",
+				);
+				PRODUCT_NAME = "test-socket";
+			};
+			name = Release;
+		};
+		451387B3193B949000BA2092 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/mjansson/projects/network_lib/lib/macosx/debug,
+				);
+				OTHER_LDFLAGS = (
+					"-ltest",
+					"-lfoundation",
+				);
+				PRODUCT_NAME = "test-socket";
+			};
+			name = Profile;
+		};
+		451387B4193B949000BA2092 /* Deploy */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/mjansson/projects/network_lib/lib/macosx/debug,
+				);
+				OTHER_LDFLAGS = (
+					"-ltest",
+					"-lfoundation",
+				);
+				PRODUCT_NAME = "test-socket";
+			};
+			name = Deploy;
+		};
+		451387C2193B94F900BA2092 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/mjansson/projects/network_lib/lib/macosx/debug,
+				);
+				OTHER_LDFLAGS = (
+					"-ltest",
+					"-lfoundation",
+				);
+				PRODUCT_NAME = "test-tcp";
+			};
+			name = Debug;
+		};
+		451387C3193B94F900BA2092 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/mjansson/projects/network_lib/lib/macosx/debug,
+				);
+				OTHER_LDFLAGS = (
+					"-ltest",
+					"-lfoundation",
+				);
+				PRODUCT_NAME = "test-tcp";
+			};
+			name = Release;
+		};
+		451387C4193B94F900BA2092 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/mjansson/projects/network_lib/lib/macosx/debug,
+				);
+				OTHER_LDFLAGS = (
+					"-ltest",
+					"-lfoundation",
+				);
+				PRODUCT_NAME = "test-tcp";
+			};
+			name = Profile;
+		};
+		451387C5193B94F900BA2092 /* Deploy */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/mjansson/projects/network_lib/lib/macosx/debug,
+				);
+				OTHER_LDFLAGS = (
+					"-ltest",
+					"-lfoundation",
+				);
+				PRODUCT_NAME = "test-tcp";
+			};
+			name = Deploy;
+		};
+		451387D3193B952F00BA2092 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/mjansson/projects/network_lib/lib/macosx/debug,
+				);
+				OTHER_LDFLAGS = (
+					"-ltest",
+					"-lfoundation",
+				);
+				PRODUCT_NAME = "test-udp";
+			};
+			name = Debug;
+		};
+		451387D4193B952F00BA2092 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/mjansson/projects/network_lib/lib/macosx/debug,
+				);
+				OTHER_LDFLAGS = (
+					"-ltest",
+					"-lfoundation",
+				);
+				PRODUCT_NAME = "test-udp";
+			};
+			name = Release;
+		};
+		451387D5193B952F00BA2092 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/mjansson/projects/network_lib/lib/macosx/debug,
+				);
+				OTHER_LDFLAGS = (
+					"-ltest",
+					"-lfoundation",
+				);
+				PRODUCT_NAME = "test-udp";
+			};
+			name = Profile;
+		};
+		451387D6193B952F00BA2092 /* Deploy */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/mjansson/projects/network_lib/lib/macosx/debug,
+				);
+				OTHER_LDFLAGS = (
+					"-ltest",
+					"-lfoundation",
+				);
+				PRODUCT_NAME = "test-udp";
+			};
+			name = Deploy;
 		};
 /* End XCBuildConfiguration section */
 
@@ -277,17 +1200,65 @@
 			buildConfigurations = (
 				4513875A193A81B000BA2092 /* Debug */,
 				4513875B193A81B000BA2092 /* Release */,
+				4513877B193B166B00BA2092 /* Profile */,
+				4513877D193B167100BA2092 /* Deploy */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Deploy;
 		};
 		4513876D193A824900BA2092 /* Build configuration list for PBXNativeTarget "test-all" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				4513876B193A824900BA2092 /* Debug */,
 				4513876C193A824900BA2092 /* Release */,
+				4513877C193B166B00BA2092 /* Profile */,
+				4513877E193B167100BA2092 /* Deploy */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Deploy;
+		};
+		4513879C193B255A00BA2092 /* Build configuration list for PBXNativeTarget "test-address" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4513879D193B255A00BA2092 /* Debug */,
+				4513879E193B255A00BA2092 /* Release */,
+				4513879F193B255A00BA2092 /* Profile */,
+				451387A0193B255A00BA2092 /* Deploy */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		451387B0193B949000BA2092 /* Build configuration list for PBXNativeTarget "test-socket" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				451387B1193B949000BA2092 /* Debug */,
+				451387B2193B949000BA2092 /* Release */,
+				451387B3193B949000BA2092 /* Profile */,
+				451387B4193B949000BA2092 /* Deploy */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Deploy;
+		};
+		451387C1193B94F900BA2092 /* Build configuration list for PBXNativeTarget "test-tcp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				451387C2193B94F900BA2092 /* Debug */,
+				451387C3193B94F900BA2092 /* Release */,
+				451387C4193B94F900BA2092 /* Profile */,
+				451387C5193B94F900BA2092 /* Deploy */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Deploy;
+		};
+		451387D2193B952F00BA2092 /* Build configuration list for PBXNativeTarget "test-udp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				451387D3193B952F00BA2092 /* Debug */,
+				451387D4193B952F00BA2092 /* Release */,
+				451387D5193B952F00BA2092 /* Profile */,
+				451387D6193B952F00BA2092 /* Deploy */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Deploy;
 		};
 /* End XCConfigurationList section */
 	};
