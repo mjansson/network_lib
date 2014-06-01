@@ -274,7 +274,7 @@ test_suite_t test_socket_suite = {
 };
 
 
-#if FOUNDATION_PLATFORM_ANDROID
+#if FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_IOS
 
 int test_socket_run( void )
 {

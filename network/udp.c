@@ -16,9 +16,6 @@
 
 #include <foundation/foundation.h>
 
-#if FOUNDATION_PLATFORM_POSIX
-#  include <netinet/udp.h>
-#endif
 
 static socket_t* _udp_socket_allocate( void );
 static void _udp_socket_open( socket_t*, unsigned int );

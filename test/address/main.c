@@ -33,7 +33,7 @@ memory_system_t test_address_memory_system( void )
 
 int test_address_initialize( void )
 {
-	log_set_suppress( HASH_NETWORK, ERRORLEVEL_NONE );
+	log_set_suppress( HASH_NETWORK, ERRORLEVEL_INFO );
 	return network_initialize( 32 );
 }
 
@@ -332,7 +332,7 @@ test_suite_t test_address_suite = {
 };
 
 
-#if FOUNDATION_PLATFORM_ANDROID
+#if FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_IOS
 
 int test_address_run( void )
 {
