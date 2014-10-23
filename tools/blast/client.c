@@ -9,13 +9,7 @@
  *
  */
 
-#include <foundation/foundation.h>
-#include <network/network.h>
-
-#include "errorcodes.h"
-
-
-extern hash_t HASH_BLAST;
+#include "blast.h"
 
 
 int blast_client( network_address_t** target, char** files )

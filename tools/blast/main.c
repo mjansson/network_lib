@@ -9,13 +9,8 @@
  *
  */
 
-#include <foundation/foundation.h>
-#include <network/network.h>
+#include "blast.h"
 
-#include "errorcodes.h"
-
-
-hash_t                      HASH_BLAST = 0;
 
 typedef enum _blast_mode
 {
@@ -58,10 +53,8 @@ void                        blast_process_system_events( void );
 int main_initialize( void )
 {
 	int ret = 0;
-
-	HASH_BLAST = hash( "blast", 5 );
-
 	application_t application = {0};
+
 	application.name = "blast";
 	application.short_name = "blast";
 	application.config_dir = "blast";
