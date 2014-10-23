@@ -177,7 +177,7 @@ static int _network_poll_process_pending( network_poll_t* pollobj )
 
 network_poll_t* network_poll_allocate( unsigned int num_sockets, unsigned int timeoutms )
 {
-	network_poll_t* poll = memory_allocate_zero_context( HASH_NETWORK, sizeof( network_poll_t ) + sizeof( network_poll_slot_t ) * num_sockets, 8, MEMORY_PERSISTENT );
+	network_poll_t* poll = memory_allocate( HASH_NETWORK, sizeof( network_poll_t ) + sizeof( network_poll_slot_t ) * num_sockets, 8, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 	poll->timeout = timeoutms;
 	poll->max_sockets = num_sockets;
 #if FOUNDATION_PLATFORM_APPLE

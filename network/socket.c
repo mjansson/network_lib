@@ -54,7 +54,7 @@ socket_t* _socket_allocate( void )
 	if( !object )
 		return 0;
 
-	sock = memory_allocate_zero_context( HASH_NETWORK, sizeof( socket_t ), 16, MEMORY_PERSISTENT );
+	sock = memory_allocate( HASH_NETWORK, sizeof( socket_t ), 16, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 	
 	log_debugf( HASH_NETWORK, "Allocated socket 0x%llx (0x%" PRIfixPTR ")", object, sock );
 
@@ -306,8 +306,11 @@ bool socket_blocking( object_t id )
 	socket_t* sock = _socket_lookup( id );
 	if( sock )
 	{
-		socket_base_t* sockbase = _socket_base + sock->base;
-		blocking = ( ( sockbase->flags & SOCKETFLAG_BLOCKING ) != 0 );
+		if( sock->base >= 0 )
+		{
+			socket_base_t* sockbase = _socket_base + sock->base;
+			blocking = ( ( sockbase->flags & SOCKETFLAG_BLOCKING ) != 0 );
+		}
 		socket_destroy( id );
 	}
 	return blocking;
@@ -357,11 +360,12 @@ const network_address_t* socket_address_remote( object_t id )
 
 socket_state_t socket_state( object_t id )
 {
-	socket_state_t state = SOCKETSTATE_DISCONNECTED;
+	socket_state_t state = SOCKETSTATE_NOTCONNECTED;
 	socket_t* sock = _socket_lookup( id );
 	if( sock )
 	{
-		state = _socket_poll_state( _socket_base + sock->base );
+		if( sock->base >= 0 )
+			state = _socket_poll_state( _socket_base + sock->base );
 		socket_destroy( id );
 	}
 	return state;
@@ -666,13 +670,13 @@ void _socket_store_address_local( socket_t* sock, int family )
 	sockbase = _socket_base + sock->base;
 	if( family == NETWORK_ADDRESSFAMILY_IPV4 )
 	{
-		address_local = memory_allocate_zero_context( HASH_NETWORK, sizeof( network_address_ipv4_t ), 0, MEMORY_PERSISTENT );
+		address_local = memory_allocate( HASH_NETWORK, sizeof( network_address_ipv4_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 		address_local->family = NETWORK_ADDRESSFAMILY_IPV4;
 		address_local->address_size = sizeof( struct sockaddr_in );
 	}
 	else if( family == NETWORK_ADDRESSFAMILY_IPV6 )
 	{
-		address_local = memory_allocate_zero_context( HASH_NETWORK, sizeof( network_address_ipv6_t ), 0, MEMORY_PERSISTENT );
+		address_local = memory_allocate( HASH_NETWORK, sizeof( network_address_ipv6_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 		address_local->family = NETWORK_ADDRESSFAMILY_IPV6;
 		address_local->address_size = sizeof( struct sockaddr_in6 );
 	}
@@ -689,7 +693,7 @@ void _socket_store_address_local( socket_t* sock, int family )
 
 static socket_stream_t* _socket_stream_allocate( object_t id )
 {
-	socket_stream_t* sockstream = memory_allocate_zero_context( HASH_NETWORK, sizeof( socket_stream_t ), 0, MEMORY_PERSISTENT );
+	socket_stream_t* sockstream = memory_allocate( HASH_NETWORK, sizeof( socket_stream_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 	stream_t* stream = (stream_t*)sockstream;
 
 	//Network streams are always little endian by default
@@ -1087,7 +1091,7 @@ int _socket_initialize( unsigned int max_sockets )
 
 	if( !_socket_base )
 	{
-		_socket_base = memory_allocate_zero_context( HASH_NETWORK, sizeof( socket_base_t ) * max_sockets, 16, MEMORY_PERSISTENT );
+		_socket_base = memory_allocate( HASH_NETWORK, sizeof( socket_base_t ) * max_sockets, 16, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 		_socket_base_size = (int)max_sockets;
 		atomic_store32( &_socket_base_next, 0 );
 	}

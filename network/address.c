@@ -21,7 +21,7 @@ network_address_t* network_address_clone( const network_address_t* address )
 	network_address_t* cloned = 0;
 	if( address )
 	{
-		cloned = memory_allocate_context( HASH_NETWORK, sizeof( network_address_t ) + address->address_size, 0, MEMORY_PERSISTENT );
+		cloned = memory_allocate( HASH_NETWORK, sizeof( network_address_t ) + address->address_size, 0, MEMORY_PERSISTENT );
 		memcpy( cloned, address, sizeof( network_address_t ) + address->address_size );
 	}
 	return cloned;
@@ -104,7 +104,7 @@ network_address_t** network_address_resolve( const char* address )
 		{
 			if( curaddr->ai_family == AF_INET )
 			{
-				network_address_ipv4_t* ipv4 = memory_allocate_zero_context( HASH_NETWORK, sizeof( network_address_ipv4_t ), 0, MEMORY_PERSISTENT );
+				network_address_ipv4_t* ipv4 = memory_allocate( HASH_NETWORK, sizeof( network_address_ipv4_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 				ipv4->family = NETWORK_ADDRESSFAMILY_IPV4;
 				ipv4->address_size = sizeof( struct sockaddr_in );
 				ipv4->saddr.sin_family = AF_INET;
@@ -114,7 +114,7 @@ network_address_t** network_address_resolve( const char* address )
 			}
 			else if( curaddr->ai_family == AF_INET6 )
 			{
-				network_address_ipv6_t* ipv6 = memory_allocate_zero_context( HASH_NETWORK, sizeof( network_address_ipv6_t ), 0, MEMORY_PERSISTENT );
+				network_address_ipv6_t* ipv6 = memory_allocate( HASH_NETWORK, sizeof( network_address_ipv6_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 				ipv6->family = NETWORK_ADDRESSFAMILY_IPV6;
 				ipv6->address_size = sizeof( struct sockaddr_in6 );
 				ipv6->saddr.sin6_family = AF_INET6;
@@ -181,7 +181,7 @@ char* network_address_to_string( const network_address_t* address, bool numeric 
 
 network_address_t* network_address_ipv4_any( void )
 {
-	network_address_ipv4_t* address = memory_allocate_zero_context( HASH_NETWORK, sizeof( network_address_ipv4_t ), 0, MEMORY_PERSISTENT );
+	network_address_ipv4_t* address = memory_allocate( HASH_NETWORK, sizeof( network_address_ipv4_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 #if FOUNDATION_PLATFORM_WINDOWS
 	address->saddr.sin_addr.s_addr = INADDR_ANY;
 #else
@@ -199,7 +199,7 @@ network_address_t* network_address_ipv4_any( void )
 
 network_address_t* network_address_ipv6_any( void )
 {
-	network_address_ipv6_t* address = memory_allocate_zero_context( HASH_NETWORK, sizeof( network_address_ipv6_t ), 0, MEMORY_PERSISTENT );
+	network_address_ipv6_t* address = memory_allocate( HASH_NETWORK, sizeof( network_address_ipv6_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 #if FOUNDATION_PLATFORM_WINDOWS
 	address->saddr.sin6_addr = in6addr_any;
 #else
@@ -270,7 +270,7 @@ network_address_t** network_address_local( void )
 
 	do
 	{
-		adapter_address = memory_allocate_zero_context( HASH_NETWORK, (unsigned int)address_size, 0, MEMORY_TEMPORARY );
+		adapter_address = memory_allocate( HASH_NETWORK, (unsigned int)address_size, 0, MEMORY_TEMPORARY | MEMORY_ZERO_INITIALIZED );
 
 		ret = GetAdaptersAddresses( AF_UNSPEC, GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_ANYCAST, 0, adapter_address, &address_size );
 		if( ret == ERROR_BUFFER_OVERFLOW )
@@ -307,7 +307,7 @@ network_address_t** network_address_local( void )
 		{
 			if( unicast->Address.lpSockaddr->sa_family == AF_INET )
 			{
-				network_address_ipv4_t* ipv4 = memory_allocate_zero_context( HASH_NETWORK, sizeof( network_address_ipv4_t ), 0, MEMORY_PERSISTENT );
+				network_address_ipv4_t* ipv4 = memory_allocate( HASH_NETWORK, sizeof( network_address_ipv4_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 				ipv4->family = NETWORK_ADDRESSFAMILY_IPV4;
 				ipv4->address_size = sizeof( struct sockaddr_in );
 				ipv4->saddr.sin_family = AF_INET;
@@ -317,7 +317,7 @@ network_address_t** network_address_local( void )
 			}
 			else if( unicast->Address.lpSockaddr->sa_family == AF_INET6 )
 			{
-				network_address_ipv6_t* ipv6 = memory_allocate_zero_context( HASH_NETWORK, sizeof( network_address_ipv6_t ), 0, MEMORY_PERSISTENT );
+				network_address_ipv6_t* ipv6 = memory_allocate( HASH_NETWORK, sizeof( network_address_ipv6_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 				ipv6->family = NETWORK_ADDRESSFAMILY_IPV6;
 				ipv6->address_size = sizeof( struct sockaddr_in6 );
 				ipv6->saddr.sin6_family = AF_INET6;
