@@ -18,7 +18,7 @@
 
 
 socket_base_t*           _socket_base = 0;
-int32_t                  _socket_base_next = 0;
+atomic32_t               _socket_base_next = {0};
 int32_t                  _socket_base_size = 0;
 
 static objectmap_t*      _socket_map = 0;
@@ -27,7 +27,7 @@ static stream_vtable_t   _socket_stream_vtable = {0};
 //! Deallocate socket and free memory
 static void              _socket_deallocate( socket_t* sock );
 static unsigned int      _socket_buffered_in( const socket_t* sock );
-static unsigned int      _socket_buffered_out( const socket_t* sock );
+//static unsigned int      _socket_buffered_out( const socket_t* sock );
 static void              _socket_doflush( socket_t* sock );
 
 static void              _socket_set_blocking_fd( int fd, bool block );
@@ -59,8 +59,8 @@ socket_t* _socket_allocate( void )
 	log_debugf( HASH_NETWORK, "Allocated socket 0x%llx (0x%" PRIfixPTR ")", object, sock );
 
 	sock->id = object;
-	sock->ref = 1;
 	sock->base = -1;
+	atomic_store32( &sock->ref, 1 );
 
 	objectmap_set( _socket_map, object, sock );
 
@@ -79,7 +79,7 @@ int _socket_allocate_base( socket_t* sock )
 		return sock->base;
 
 	//TODO: Better allocation scheme
-	startbase = _socket_base_next;
+	startbase = atomic_load32( &_socket_base_next );
 	maxbase = _socket_base_size;
 	do
 	{
@@ -93,7 +93,7 @@ int _socket_allocate_base( socket_t* sock )
 		if( sockbase->object )
 			continue;
 
-		if( atomic_cas64( (volatile int64_t*)&sockbase->object, sock->id, 0 ) )
+		if( atomic_cas64( (atomic64_t*)&sockbase->object, sock->id, 0 ) )
 		{
 			sock->base = base;
 			sockbase->fd = SOCKET_INVALID;
@@ -166,24 +166,17 @@ int _socket_create_fd( socket_t* sock, network_address_family_t family )
 }
 
 
-void socket_free( object_t id )
+void socket_destroy( object_t id )
 {
-	socket_t* sock;
-	int32_t ref;
-	do
+	socket_t* sock = objectmap_lookup( _socket_map, id );
+	if( sock )
 	{
-		sock = objectmap_lookup( _socket_map, id );
-		if( sock )
-		{
-			ref = sock->ref;
-			if( atomic_cas32( &sock->ref, ref - 1, ref ) )
-			{
-				if( ref == 1 )
-					_socket_deallocate( sock );
-				break;
-			}
-		}
-	} while( sock );
+		//Note that socket lifetime management is only thread-safe
+		//in a sense that ref count is thread-safe. Socket deallocation
+		//(ref count reaching 0) is not thread-safe.
+		if( atomic_decr32( &sock->ref ) == 0 )
+			_socket_deallocate( sock );
+	}
 }
 
 
@@ -193,7 +186,7 @@ bool socket_is_socket( object_t id )
 	socket_t* sock = _socket_lookup( id );
 	if( sock )
 		is_socket = true;
-	socket_free( id );
+	socket_destroy( id );
 	return is_socket;
 }
 
@@ -244,7 +237,7 @@ bool socket_bind( object_t id, const network_address_t* address )
 
 exit:
 
-	socket_free( id );
+	socket_destroy( id );
 	
 	return success;
 }
@@ -301,7 +294,7 @@ bool socket_connect( object_t id, const network_address_t* address, unsigned int
 	
 exit:
 
-	socket_free( id );
+	socket_destroy( id );
 
 	return success;
 }
@@ -315,7 +308,7 @@ bool socket_blocking( object_t id )
 	{
 		socket_base_t* sockbase = _socket_base + sock->base;
 		blocking = ( ( sockbase->flags & SOCKETFLAG_BLOCKING ) != 0 );
-		socket_free( id );
+		socket_destroy( id );
 	}
 	return blocking;
 }
@@ -332,7 +325,7 @@ void socket_set_blocking( object_t id, bool block )
 
 	_socket_set_blocking( sock, block );
 	
-	socket_free( id );
+	socket_destroy( id );
 }
 
 
@@ -343,7 +336,7 @@ const network_address_t* socket_address_local( object_t id )
 	if( sock )
 	{
 		addr = sock->address_local;
-		socket_free( id );
+		socket_destroy( id );
 	}
 	return addr;
 }
@@ -356,7 +349,7 @@ const network_address_t* socket_address_remote( object_t id )
 	if( sock )
 	{
 		addr = sock->address_remote;
-		socket_free( id );
+		socket_destroy( id );
 	}
 	return addr;
 }
@@ -369,7 +362,7 @@ socket_state_t socket_state( object_t id )
 	if( sock )
 	{
 		state = _socket_poll_state( _socket_base + sock->base );
-		socket_free( id );
+		socket_destroy( id );
 	}
 	return state;
 }
@@ -394,7 +387,7 @@ stream_t* socket_stream( object_t id )
 	else
 	{
 		stream = sock->stream;
-		socket_free( id );
+		socket_destroy( id );
 	}
 	
 	return (stream_t*)stream;
@@ -403,20 +396,15 @@ stream_t* socket_stream( object_t id )
 
 socket_t* _socket_lookup( object_t id )
 {
-	socket_t* sock;
-	int32_t ref;
-	do
+	//Socket lifetime management is only thread-safe in a sense that
+	//ref count is thread-safe. Once a socket deallocation is triggered
+	//the deallocation sequence itself is not thread-safe.
+	socket_t* sock = objectmap_lookup( _socket_map, id );
+	if( sock )
 	{
-		sock = objectmap_lookup( _socket_map, id );
-		if( sock )
-		{
-			ref = sock->ref;
-			if( ref <= 0 )
-				break;
-			if( atomic_cas32( &sock->ref, ref + 1, ref ) )
-				return sock;
-		}
-	} while( sock );
+		atomic_incr32( &sock->ref );
+		return sock;
+	}
 	return 0;
 }
 
@@ -454,7 +442,7 @@ void socket_close( object_t id )
 	if( sock )
 	{
 		_socket_close( sock );
-		socket_free( id );
+		socket_destroy( id );
 	}
 }
 
@@ -541,11 +529,11 @@ static unsigned int _socket_buffered_in( const socket_t* sock )
 }
 
 
-static unsigned int _socket_buffered_out( const socket_t* sock )
+/*static unsigned int _socket_buffered_out( const socket_t* sock )
 {
 	FOUNDATION_ASSERT( sock );
 	return sock->offset_write_out;
-}
+}*/
 
 
 unsigned int _socket_available_nonblock_read( const socket_t* sock )
@@ -660,7 +648,7 @@ socket_state_t _socket_poll_state( socket_base_t* sockbase )
 	}
 
 	if( sock )
-		socket_free( sock->id );
+		socket_destroy( sock->id );
 	
 	return sockbase->state;
 }
@@ -736,14 +724,14 @@ static void _socket_stream_deallocate( stream_t* stream )
 		{
 			FOUNDATION_ASSERT_MSGFORMAT( sock->stream == sockstream, "Socket %llx (0x%" PRIfixPTR " : %d): Deallocating stream mismatch, stream is 0x%" PRIfixPTR ", socket stream is 0x%" PRIfixPTR, id, sock, ( sock->base >= 0 ) ? _socket_base[ sock->base ].fd : SOCKET_INVALID, sockstream, sock->stream );
 			sock->stream = 0;
-			socket_free( id );
+			socket_destroy( id );
 		}
 	}
 	
 	sockstream->socket = 0;
 
 	if( id )
-		socket_free( id );
+		socket_destroy( id );
 }
 
 
@@ -837,7 +825,7 @@ static uint64_t _socket_read( stream_t* stream, void* buffer, uint64_t size )
 
 exit:
 
-	socket_free( sockstream->socket );
+	socket_destroy( sockstream->socket );
 	
 	return was_read;
 }
@@ -909,7 +897,7 @@ static uint64_t _socket_write( stream_t* stream, const void* buffer, uint64_t si
 
 exit:
 
-	socket_free( sockstream->socket );
+	socket_destroy( sockstream->socket );
 	
 	return was_written;
 }
@@ -938,7 +926,7 @@ static bool _socket_eos( stream_t* stream )
 	if( ( ( state != SOCKETSTATE_CONNECTED ) || ( sockbase->fd == SOCKET_INVALID ) ) && !_socket_available_nonblock_read( sock ) )
 		eos = true;
 
-	socket_free( sockstream->socket );
+	socket_destroy( sockstream->socket );
 	
 	return false;
 }
@@ -962,7 +950,7 @@ static uint64_t _socket_available_read( stream_t* stream )
 
 	available = _socket_available_nonblock_read( sock );
 
-	socket_free( sockstream->socket );
+	socket_destroy( sockstream->socket );
 
 	return available;
 }
@@ -997,7 +985,7 @@ static void _socket_buffer_read( stream_t* stream )
 
 exit:
 	
-	socket_free( sockstream->socket );
+	socket_destroy( sockstream->socket );
 }
 
 
@@ -1016,7 +1004,7 @@ static void _socket_flush( stream_t* stream )
 
 	_socket_doflush( sock );
 
-	socket_free( sockstream->socket );
+	socket_destroy( sockstream->socket );
 }
 
 
@@ -1057,7 +1045,7 @@ static void _socket_seek( stream_t* stream, int64_t offset, stream_seek_mode_t d
 		_socket_read( stream, 0, offset );
 	}
 
-	socket_free( sockstream->socket );
+	socket_destroy( sockstream->socket );
 }
 
 
@@ -1077,7 +1065,7 @@ static int64_t _socket_tell( stream_t* stream )
 
 	pos = (int64_t)sock->bytes_read;
 
-	socket_free( sockstream->socket );
+	socket_destroy( sockstream->socket );
 
 	return pos;
 }
@@ -1101,7 +1089,7 @@ int _socket_initialize( unsigned int max_sockets )
 	{
 		_socket_base = memory_allocate_zero_context( HASH_NETWORK, sizeof( socket_base_t ) * max_sockets, 16, MEMORY_PERSISTENT );
 		_socket_base_size = (int)max_sockets;
-		_socket_base_next = 0;
+		atomic_store32( &_socket_base_next, 0 );
 	}
 	
 	_socket_stream_vtable.read = _socket_read;

@@ -16,9 +16,6 @@
 
 #include <foundation/foundation.h>
 
-#if FOUNDATION_PLATFORM_POSIX
-#  include <netinet/udp.h>
-#endif
 
 static socket_t* _udp_socket_allocate( void );
 static void _udp_socket_open( socket_t*, unsigned int );
@@ -480,18 +477,18 @@ network_datagram_t udp_socket_recvfrom( object_t id, network_address_t const** a
 
 	sock = _socket_lookup( id );
 	if( !sock || ( sock->base < 0 ) )
-		return datagram;
+		goto exit;
 
 	sockbase = _socket_base + sock->base;
 	if( sockbase->state != SOCKETSTATE_NOTCONNECTED )
 	{
 		FOUNDATION_ASSERT_FAILFORMAT_LOG( HASH_NETWORK, "Trying to datagram read from a connected UDP socket 0x%llx (0x%" PRIfixPTR " : %d) in state %u", sock->id, sock, sockbase->fd, sockbase->state );
-		return datagram;
+		goto exit;
 	}
 	if( ( sockbase->fd == SOCKET_INVALID ) || !sock->address_local )
 	{
 		FOUNDATION_ASSERT_FAILFORMAT_LOG( HASH_NETWORK, "Trying to datagram read from an unbound UDP socket 0x%llx (0x%" PRIfixPTR " : %d) in state %u", sock->id, sock, sockbase->fd, sockbase->state );
-		return datagram;
+		goto exit;
 	}
 
 	is_blocking = ( ( sockbase->flags & SOCKETFLAG_BLOCKING ) != 0 );
@@ -503,7 +500,7 @@ network_datagram_t udp_socket_recvfrom( object_t id, network_address_t const** a
 	else
 	{
 		if( !is_blocking ) 
-			return datagram;
+			goto exit;
 		try_read = max_read;
 	}
 
@@ -566,6 +563,11 @@ network_datagram_t udp_socket_recvfrom( object_t id, network_address_t const** a
 		}
 	}
 
+exit:
+
+	if( sock )
+		socket_destroy( id );	
+
 	return datagram;
 }
 
@@ -575,25 +577,25 @@ uint64_t udp_socket_sendto( object_t id, const network_datagram_t datagram, cons
 	socket_t* sock;
 	socket_base_t* sockbase;
 	const network_address_ip_t* addr_ip;
-	long res;
+	long res = 0;
 
 	if( !address )
 		return 0;
 
 	sock = _socket_lookup( id );
 	if( !sock || ( sock->base < 0 ) )
-		return 0;
+		goto exit;
 
 	sockbase = _socket_base + sock->base;
 	if( sockbase->state != SOCKETSTATE_NOTCONNECTED )
 	{
 		FOUNDATION_ASSERT_FAILFORMAT_LOG( HASH_NETWORK, "Trying to datagram send from a connected UDP socket 0x%llx (0x%" PRIfixPTR " : %d) in state %u", sock->id, sock, sockbase->fd, sockbase->state );
-		return 0;
+		goto exit;
 	}
 	if( _socket_create_fd( sock, address->family ) == SOCKET_INVALID )
 	{
 		FOUNDATION_ASSERT_FAILFORMAT_LOG( HASH_NETWORK, "Trying to datagram send from an invalid UDP socket 0x%llx (0x%" PRIfixPTR " : %d) in state %u", sock->id, sock, sockbase->fd, sockbase->state );
-		return 0;
+		goto exit;
 	}
 	addr_ip = (const network_address_ip_t*)address;
 
@@ -659,6 +661,14 @@ uint64_t udp_socket_sendto( object_t id, const network_datagram_t datagram, cons
 
 		res = 0;
 	}
+
+	if( !sock->address_local )
+		_socket_store_address_local( sock, address->family );
+
+exit:
+
+	if( sock )
+		socket_destroy( id );
 
 	return res;
 }

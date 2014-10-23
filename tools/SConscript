@@ -14,9 +14,9 @@ if toolsenv['platform'] == 'linux':
 elif toolsenv['platform'] == 'raspberrypi':
 	toolsenv.Append( LIBS=[ 'bcm_host', 'rt', 'm' ] )
 
-#env['netprg'] = toolsenv.Program( 'bin/${buildprofile}/net${prgsuffix}', 'net/main.c' )
+env['blastprg'] = toolsenv.Program( 'bin/${buildprofile}/blast${prgsuffix}', [ 'blast/main.c', 'blast/client.c', 'blast/server.c' ] )
 
 
 # INSTALLS
 
-#toolsenv.AddPostAction( 'bin/${buildprofile}/net${prgsuffix}', toolsenv.Install( '#bin/${platform}${platformsuffix}/${buildprofile}', [ env['netprg'] ] ) )
+toolsenv.AddPostAction( 'bin/${buildprofile}/blast${prgsuffix}', toolsenv.Install( '#bin/${platform}${platformsuffix}/${buildprofile}', [ env['blastprg'] ] ) )

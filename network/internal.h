@@ -155,7 +155,7 @@ struct ALIGN(16) _socket
 
 NETWORK_EXTERN socket_base_t*      _socket_base;
 NETWORK_EXTERN int32_t             _socket_base_size;
-NETWORK_EXTERN int32_t             _socket_base_next;
+NETWORK_EXTERN atomic32_t          _socket_base_next;
 
 NETWORK_API int                    _socket_create_fd( socket_t* sock, network_address_family_t family );
 NETWORK_API socket_t*              _socket_allocate( void );

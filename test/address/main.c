@@ -91,7 +91,7 @@ DECLARE_TEST( address, resolve )
 	{
 		char* address_str = network_address_to_string( addresses[iaddr], true );
 		log_debugf( HASH_NETWORK, "  %s", address_str );
-		EXPECT_TRUE( string_equal( address_str, "127.0.0.1" ) || string_equal( address_str, "::1" ) );
+		EXPECT_TRUE( string_equal( address_str, "127.0.0.1" ) || string_equal( address_str, "::1" ) || string_equal_substr( address_str, "fe80:", 5 ) );
 		string_deallocate( address_str );
 		memory_deallocate( addresses[iaddr] );
 	}
@@ -105,7 +105,7 @@ DECLARE_TEST( address, resolve )
 	{
 		char* address_str = network_address_to_string( addresses[iaddr], true );
 		log_debugf( HASH_NETWORK, "  %s", address_str );
-		EXPECT_TRUE( string_equal( address_str, "127.0.0.1:80" ) || string_equal( address_str, "[::1]:80" ) );
+		EXPECT_TRUE( string_equal( address_str, "127.0.0.1:80" ) || string_equal( address_str, "[::1]:80" ) || string_match_pattern( address_str, "[fe80:*]:80" ) );
 		string_deallocate( address_str );
 		memory_deallocate( addresses[iaddr] );
 	}	
@@ -332,7 +332,7 @@ test_suite_t test_address_suite = {
 };
 
 
-#if FOUNDATION_PLATFORM_ANDROID
+#if FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_IOS
 
 int test_address_run( void )
 {

@@ -101,7 +101,7 @@ DECLARE_TEST( tcp, connect_ipv4 )
 	EXPECT_TRUE( success );
 	EXPECT_EQ( socket_state( sock_client ), SOCKETSTATE_CONNECTED );
 
-	socket_free( sock_client );
+	socket_destroy( sock_client );
 
 	EXPECT_FALSE( socket_is_socket( sock_client ) );
 
@@ -130,7 +130,7 @@ DECLARE_TEST( tcp, connect_ipv4 )
 	EXPECT_TRUE( success );
 	EXPECT_EQ( socket_state( sock_client ), SOCKETSTATE_CONNECTED );
 
-	socket_free( sock_client );
+	socket_destroy( sock_client );
 
 	EXPECT_FALSE( socket_is_socket( sock_client ) );
 
@@ -158,7 +158,7 @@ DECLARE_TEST( tcp, connect_ipv4 )
 	EXPECT_TRUE( success );
 	EXPECT_EQ( socket_state( sock_client ), SOCKETSTATE_CONNECTED );
 
-	socket_free( sock_client );
+	socket_destroy( sock_client );
 
 	EXPECT_FALSE( socket_is_socket( sock_client ) );
 
@@ -187,7 +187,7 @@ DECLARE_TEST( tcp, connect_ipv4 )
 	EXPECT_TRUE( success );
 	EXPECT_TRUE( ( socket_state( sock_client ) == SOCKETSTATE_CONNECTING ) || ( socket_state( sock_client ) == SOCKETSTATE_CONNECTED ) );
 
-	socket_free( sock_client );
+	socket_destroy( sock_client );
 
 	EXPECT_FALSE( socket_is_socket( sock_client ) );
 	
@@ -228,7 +228,7 @@ DECLARE_TEST( tcp, connect_ipv6 )
 	EXPECT_TRUE( success );
 	EXPECT_EQ( socket_state( sock_client ), SOCKETSTATE_CONNECTED );
 
-	socket_free( sock_client );
+	socket_destroy( sock_client );
 
 	EXPECT_FALSE( socket_is_socket( sock_client ) );
 
@@ -257,7 +257,7 @@ DECLARE_TEST( tcp, connect_ipv6 )
 	EXPECT_TRUE( success );
 	EXPECT_EQ( socket_state( sock_client ), SOCKETSTATE_CONNECTED );
 
-	socket_free( sock_client );
+	socket_destroy( sock_client );
 
 	EXPECT_FALSE( socket_is_socket( sock_client ) );
 
@@ -285,7 +285,7 @@ DECLARE_TEST( tcp, connect_ipv6 )
 	EXPECT_TRUE( success );
 	EXPECT_EQ( socket_state( sock_client ), SOCKETSTATE_CONNECTED );
 
-	socket_free( sock_client );
+	socket_destroy( sock_client );
 
 	EXPECT_FALSE( socket_is_socket( sock_client ) );
 
@@ -316,7 +316,7 @@ DECLARE_TEST( tcp, connect_ipv6 )
 	EXPECT_TRUE( success );
 	EXPECT_TRUE( connecting );
 
-	socket_free( sock_client );
+	socket_destroy( sock_client );
 
 	EXPECT_FALSE( socket_is_socket( sock_client ) );
 	
@@ -369,7 +369,7 @@ DECLARE_TEST( tcp, io_ipv4 )
 	EXPECT_EQ( socket_state( sock_client ), SOCKETSTATE_CONNECTED );
 	EXPECT_EQ( socket_state( sock_server ), SOCKETSTATE_CONNECTED );
 
-	socket_free( sock_listen );
+	socket_destroy( sock_listen );
 	EXPECT_FALSE( socket_is_socket( sock_listen ) );
 
 	socket_set_blocking( sock_client, true );
@@ -388,8 +388,8 @@ DECLARE_TEST( tcp, io_ipv4 )
 
 	test_wait_for_threads_exit( threads, 2 );
 	
-	socket_free( sock_server );
-	socket_free( sock_client );
+	socket_destroy( sock_server );
+	socket_destroy( sock_client );
 
 	EXPECT_FALSE( socket_is_socket( sock_server ) );
 	EXPECT_FALSE( socket_is_socket( sock_client ) );
@@ -442,7 +442,7 @@ DECLARE_TEST( tcp, io_ipv6 )
 	EXPECT_EQ( socket_state( sock_client ), SOCKETSTATE_CONNECTED );
 	EXPECT_EQ( socket_state( sock_server ), SOCKETSTATE_CONNECTED );
 
-	socket_free( sock_listen );
+	socket_destroy( sock_listen );
 	EXPECT_FALSE( socket_is_socket( sock_listen ) );
 
 	socket_set_blocking( sock_client, true );
@@ -461,8 +461,8 @@ DECLARE_TEST( tcp, io_ipv6 )
 
 	test_wait_for_threads_exit( threads, 2 );
 	
-	socket_free( sock_server );
-	socket_free( sock_client );
+	socket_destroy( sock_server );
+	socket_destroy( sock_client );
 
 	EXPECT_FALSE( socket_is_socket( sock_server ) );
 	EXPECT_FALSE( socket_is_socket( sock_client ) );
@@ -489,7 +489,7 @@ test_suite_t test_tcp_suite = {
 };
 
 
-#if FOUNDATION_PLATFORM_ANDROID
+#if FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_IOS
 
 int test_tcp_run( void )
 {

@@ -62,7 +62,7 @@ bool tcp_socket_listen( object_t id )
 
 	if( sock->base < 0 )
 	{
-		socket_free( id );
+		socket_destroy( id );
 		return false;
 	}
 	
@@ -71,7 +71,7 @@ bool tcp_socket_listen( object_t id )
 	    ( sockbase->fd == SOCKET_INVALID ) ||
 	    !sock->address_local ) //Must be locally bound
 	{
-		socket_free( id );
+		socket_destroy( id );
 		return false;
 	}
 
@@ -83,7 +83,7 @@ bool tcp_socket_listen( object_t id )
 		string_deallocate( address_str );
 #endif
 		sockbase->state = SOCKETSTATE_LISTENING;
-		socket_free( id );
+		socket_destroy( id );
 		return true;
 	}
 	
@@ -96,7 +96,7 @@ bool tcp_socket_listen( object_t id )
 	}
 #endif
 
-	socket_free( id );
+	socket_destroy( id );
 	
 	return false;
 }
@@ -121,7 +121,7 @@ object_t tcp_socket_accept( object_t id, unsigned int timeoutms )
 
 	if( sock->base < 0 )
 	{
-		socket_free( id );
+		socket_destroy( id );
 		return 0;
 	}
 
@@ -130,7 +130,7 @@ object_t tcp_socket_accept( object_t id, unsigned int timeoutms )
 	    ( sockbase->fd == SOCKET_INVALID ) ||
 	    !sock->address_local ) //Must be locally bound
 	{
-		socket_free( id );
+		socket_destroy( id );
 		return 0;
 	}
 
@@ -185,21 +185,21 @@ object_t tcp_socket_accept( object_t id, unsigned int timeoutms )
 	if( fd < 0 )
 	{
 		memory_deallocate( address_remote );
-		socket_free( id );
+		socket_destroy( id );
 		return 0;
 	}
 
 	accepted = _tcp_socket_allocate();
 	if( !accepted )
 	{
-		socket_free( id );		
+		socket_destroy( id );		
 		return 0;
 	}
 
 	if( _socket_allocate_base( accepted ) < 0 )
 	{
-		socket_free( accepted->id );
-		socket_free( id );
+		socket_destroy( accepted->id );
+		socket_destroy( id );
 		return 0;
 	}
 
@@ -222,7 +222,7 @@ object_t tcp_socket_accept( object_t id, unsigned int timeoutms )
 	}
 #endif
 
-	socket_free( id );
+	socket_destroy( id );
 	
 	return accepted->id;
 }
@@ -236,7 +236,7 @@ bool tcp_socket_delay( object_t id )
 	{
 		socket_base_t* sockbase = _socket_base + sock->base;
 		delay = ( ( sockbase->flags & SOCKETFLAG_TCPDELAY ) != 0 );
-		socket_free( id );
+		socket_destroy( id );
 	}
 	return delay;
 }
@@ -253,7 +253,7 @@ void tcp_socket_set_delay( object_t id, bool delay )
 
 	_tcp_socket_set_delay( sock, delay );
 	
-	socket_free( id );
+	socket_destroy( id );
 }
 
 

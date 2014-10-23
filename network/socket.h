@@ -19,7 +19,7 @@
 #include <network/types.h>
 
 
-NETWORK_API void                          socket_free( object_t id );
+NETWORK_API void                          socket_destroy( object_t id );
 
 NETWORK_API bool                          socket_bind( object_t id, const network_address_t* address );
 NETWORK_API bool                          socket_connect( object_t id, const network_address_t* address, unsigned int timeoutms );

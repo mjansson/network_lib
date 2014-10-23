@@ -19,13 +19,16 @@
 
 #if FOUNDATION_PLATFORM_POSIX
 #  include <unistd.h>
-#  include <sys/epoll.h>
 #  include <errno.h>
 #elif FOUNDATION_PLATFORM_WINDOWS
 #  include <foundation/windows.h>
 #  define FAR
 #endif
-
+#if FOUNDATION_PLATFORM_LINUX
+#  include <sys/epoll.h>
+#elif FOUNDATION_PLATFORM_MACOSX || FOUNDATION_PLATFORM_IOS
+#  include <sys/poll.h>
+#endif
 
 typedef struct _network_poll_slot
 {
@@ -34,13 +37,13 @@ typedef struct _network_poll_slot
 	int                  fd;
 } network_poll_slot_t;
 
-struct _network_poll
+struct ALIGN(8) _network_poll
 {
+	object_t             queue_add[BUILD_SIZE_POLL_QUEUE];
+	object_t             queue_remove[BUILD_SIZE_POLL_QUEUE];
 	unsigned int         timeout;
 	unsigned int         max_sockets;
 	unsigned int         num_sockets;
-	object_t             queue_add[BUILD_SIZE_POLL_QUEUE];
-	object_t             queue_remove[BUILD_SIZE_POLL_QUEUE];
 #if FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
 	int                  fd_poll;
 	struct epoll_event*  events;
@@ -108,11 +111,11 @@ static int _network_poll_process_pending( network_poll_t* pollobj )
 				{
 					FOUNDATION_ASSERT( sockptr->base >= 0 );
 					_socket_base[ sockptr->base ].flags &= ~SOCKETFLAG_POLLED;
-					socket_free( sock );
+					socket_destroy( sock );
 				}
 			}
 			//Free the reference created when socket was added to poll
-			socket_free( sock );
+			socket_destroy( sock );
 		}
 	}
 		
@@ -164,7 +167,7 @@ static int _network_poll_process_pending( network_poll_t* pollobj )
 				++num_events;
 			}
 
-			socket_free( sockobj );
+			socket_destroy( sockobj );
 		}
 	}
 
@@ -174,14 +177,14 @@ static int _network_poll_process_pending( network_poll_t* pollobj )
 
 network_poll_t* network_poll_allocate( unsigned int num_sockets, unsigned int timeoutms )
 {
-	network_poll_t* poll = memory_allocate_zero_context( HASH_NETWORK, sizeof( network_poll_t ) + sizeof( network_poll_slot_t ) * num_sockets, 0, MEMORY_PERSISTENT );
+	network_poll_t* poll = memory_allocate_zero_context( HASH_NETWORK, sizeof( network_poll_t ) + sizeof( network_poll_slot_t ) * num_sockets, 8, MEMORY_PERSISTENT );
 	poll->timeout = timeoutms;
 	poll->max_sockets = num_sockets;
 #if FOUNDATION_PLATFORM_APPLE
-	poll->pollfds = memory_allocate_zero_context( HASH_NETWORK, sizeof( struct pollfd ) * num_sockets, 0, MEMORY_PERSISTENT );
+	poll->pollfds = memory_allocate_zero_context( HASH_NETWORK, sizeof( struct pollfd ) * num_sockets, 8, MEMORY_PERSISTENT );
 #elif FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
 	poll->fd_poll = epoll_create( num_sockets );
-	poll->events = memory_allocate_zero_context( HASH_NETWORK, sizeof( struct epoll_event ) * num_sockets, 0, MEMORY_PERSISTENT );
+	poll->events = memory_allocate_zero_context( HASH_NETWORK, sizeof( struct epoll_event ) * num_sockets, 8, MEMORY_PERSISTENT );
 #endif
 	return poll;
 }
@@ -201,7 +204,7 @@ void network_poll_deallocate( network_poll_t* pollobj )
 			object_t sock = pollobj->queue_add[iqueue];
 			pollobj->queue_add[iqueue] = 0;
 
-			socket_free( sock );
+			socket_destroy( sock );
 		}
 	}
 
@@ -215,10 +218,10 @@ void network_poll_deallocate( network_poll_t* pollobj )
 			{
 				FOUNDATION_ASSERT( sock->base >= 0 );
 				_socket_base[ sock->base ].flags &= ~SOCKETFLAG_POLLED;
-				socket_free( sockobj );
+				socket_destroy( sockobj );
 			}
 
-			socket_free( sockobj );
+			socket_destroy( sockobj );
 		}
 	}
 
@@ -269,7 +272,7 @@ bool network_poll_add_socket( network_poll_t* pollobj, object_t sock )
 		int iqueue;
 		for( iqueue = 0; iqueue < BUILD_SIZE_POLL_QUEUE; ++iqueue )
 		{
-			if( !pollobj->queue_add[iqueue] && atomic_cas64( (int64_t*)pollobj->queue_add + iqueue, sock, 0 ) )
+			if( !pollobj->queue_add[iqueue] && atomic_cas64( (atomic64_t*)( pollobj->queue_add + iqueue ), sock, 0 ) )
 			{
 				//Add reference
 				socket_t* sockptr = _socket_lookup( sock );
@@ -279,7 +282,7 @@ bool network_poll_add_socket( network_poll_t* pollobj, object_t sock )
 					for( jqueue = 0; jqueue < BUILD_SIZE_POLL_QUEUE; ++jqueue )
 					{
 						if( pollobj->queue_remove[jqueue] == sock )
-							atomic_cas64( (int64_t*)pollobj->queue_remove + jqueue, 0, sock );
+							atomic_cas64( (atomic64_t*)( pollobj->queue_remove + jqueue ), 0, sock );
 					}
 					return true;
 				}
@@ -307,13 +310,13 @@ void network_poll_remove_socket( network_poll_t* pollobj, object_t sock )
 		int iqueue;
 		for( iqueue = 0; iqueue < BUILD_SIZE_POLL_QUEUE; ++iqueue )
 		{
-			if( !pollobj->queue_remove[iqueue] && atomic_cas64( (int64_t*)pollobj->queue_remove + iqueue, sock, 0 ) )
+			if( !pollobj->queue_remove[iqueue] && atomic_cas64( (atomic64_t*)( pollobj->queue_remove + iqueue ), sock, 0 ) )
 			{
 				int jqueue;
 				for( jqueue = 0; jqueue < BUILD_SIZE_POLL_QUEUE; ++jqueue )
 				{
 					if( pollobj->queue_add[jqueue] == sock )
-						atomic_cas64( (int64_t*)pollobj->queue_add + jqueue, 0, sock );
+						atomic_cas64( (atomic64_t*)( pollobj->queue_add + jqueue ), 0, sock );
 				}
 				return;
 			}
@@ -358,7 +361,6 @@ int network_poll( network_poll_t* pollobj )
 {
 	unsigned int max_sockets;
 	unsigned int num_sockets;
-	unsigned int islot;
 	int timeout = pollobj->timeout;
 	int avail = 0;
 	
@@ -366,6 +368,7 @@ int network_poll( network_poll_t* pollobj )
 	//TODO: Refactor to keep fd_set across loop and rebuild on change (add/remove)
 	int num_fd = 0;
 	int ret = 0;
+	unsigned int islot;
 	fd_set fdread, fdwrite, fderr;
 #endif
 
@@ -378,14 +381,6 @@ int network_poll( network_poll_t* pollobj )
 		return num_events ? num_events : -1;
 		
 #if FOUNDATION_PLATFORM_APPLE
-	for( islot = 0; islot < num_sockets; ++islot )
-	{
-		if( socket_buffered_in( pollobj->slots[islot].sock ) )
-		{
-			++avail;
-			timeout = 0;
-		}
-	}
 
 	int ret = poll( pollobj->pollfds, pollobj->num_sockets, timeout );
 		
@@ -446,85 +441,67 @@ int network_poll( network_poll_t* pollobj )
 	network_poll_slot_t* slot = pollobj->slots;
 	for( unsigned int i = 0; i < num_sockets; ++i, ++pfd, ++slot )
 	{
-		socket_t* sock = slot->socket;
-		if( ( pfd->revents & POLLIN ) || socket_buffered_in( sock ) )
+		object_t sockobj = slot->sock;
+		socket_base_t* sockbase = _socket_base + slot->base;
+		int fd = slot->fd;
+		if( pfd->revents & POLLIN )
 		{
-			if( sock->state == SOCKETSTATE_LISTENING )
+			if( sockbase->state == SOCKETSTATE_LISTENING )
 			{
-				if( !( sock->flags & SOCKETFLAG_CONNECTION_PENDING ) )
+				if( !( sockbase->flags & SOCKETFLAG_CONNECTION_PENDING ) )
 				{
-					sock->flags |= SOCKETFLAG_CONNECTION_PENDING;
-
-#if !NEO_BUILD_RTM
-					char* local_address = network_address_to_string( socket_address_local( sock ) );
-					debug_logf( "Got connection on socket at %s", local_address );
-					string_deallocate( local_address );
-#endif
-
-					network_event_post( NETWORKEVENT_CONNECTION, sock );
+					sockbase->flags |= SOCKETFLAG_CONNECTION_PENDING;
+					network_event_post( NETWORKEVENT_CONNECTION, sockobj );
 				}
 			}
 			else
 			{
-				unsigned int has_buffered = 0;
-				if( sock->state == SOCKETSTATE_CONNECTED )
+				int sockavail = _socket_available_fd( fd );
+				if( sockavail > 0 )
 				{
-					sock->read_fn( sock, 0 );
-					has_buffered = socket_buffered_in( sock );
-				}
-				else
-					has_buffered = _socket_available_fd( );
-				
-				if( ( sock->state == SOCKETSTATE_CONNECTED ) && has_buffered )
-				{
-					if( has_buffered != sock->last_buffered_event )
+					if( sockavail != sockbase->last_event )
 					{
-						sock->last_buffered_event = has_buffered;
-						network_event_post( NETWORKEVENT_DATAIN, sock );
+						sockbase->last_event = sockavail;
+						network_event_post( NETWORKEVENT_DATAIN, sockobj );
 					}
 				}
-				else if( pfd->revents & POLLIN )
+				else
 				{
-					if( !( sock->flags & SOCKETFLAG_HANGUP_PENDING ) )
+					if( !( sockbase->flags & SOCKETFLAG_HANGUP_PENDING ) )
 					{
-						sock->flags |= SOCKETFLAG_HANGUP_PENDING;
-						network_event_post( NETWORKEVENT_HANGUP, sock );
+						sockbase->flags |= SOCKETFLAG_HANGUP_PENDING;
+						network_event_post( NETWORKEVENT_HANGUP, sockobj );
 					}
 				}
 			}
 			++num_events;
 		}
-		if( ( sock->state == SOCKETSTATE_CONNECTING ) && ( pfd->revents & POLLOUT ) )
+		if( ( sockbase->state == SOCKETSTATE_CONNECTING ) && ( pfd->revents & POLLOUT ) )
 		{
-#if !FOUNDATION_BUILD_DEPLOY
-			char* remote_address = network_address_to_string( socket_address_remote( sock ) );
-			debug_logf( "Socket connected to %s", remote_address );
-			string_deallocate( remote_address );
-#endif
-			sock->state = SOCKETSTATE_CONNECTED;
+			sockbase->state = SOCKETSTATE_CONNECTED;
 			pfd->events = POLLIN | POLLERR | POLLHUP;
-			network_event_post( NETWORKEVENT_CONNECTED, sock );
+			network_event_post( NETWORKEVENT_CONNECTED, sockobj );
 			++num_events;
 		}
 		if( pfd->revents & POLLERR )
 		{
-			socket_close( sock );
+			socket_close( sockobj );
 			pfd->events = POLLOUT | POLLERR | POLLHUP;
-			if( !( sock->flags & SOCKETFLAG_ERROR_PENDING ) )
+			if( !( sockbase->flags & SOCKETFLAG_ERROR_PENDING ) )
 			{
-				sock->flags |= SOCKETFLAG_ERROR_PENDING;
-				network_event_post( NETWORKEVENT_ERROR, sock );
+				sockbase->flags |= SOCKETFLAG_ERROR_PENDING;
+				network_event_post( NETWORKEVENT_ERROR, sockobj );
 			}
 			++num_events;
 		}
 		if( pfd->revents & POLLHUP )
 		{
-			socket_close( sock );
+			socket_close( sockobj );
 			pfd->events = POLLOUT | POLLERR | POLLHUP;
-			if( !( sock->flags & SOCKETFLAG_HANGUP_PENDING ) )
+			if( !( sockbase->flags & SOCKETFLAG_HANGUP_PENDING ) )
 			{
-				sock->flags |= SOCKETFLAG_HANGUP_PENDING;
-				network_event_post( NETWORKEVENT_HANGUP, sock );
+				sockbase->flags |= SOCKETFLAG_HANGUP_PENDING;
+				network_event_post( NETWORKEVENT_HANGUP, sockobj );
 			}
 			++num_events;
 		}
