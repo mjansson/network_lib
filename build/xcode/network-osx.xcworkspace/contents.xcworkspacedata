@@ -5,6 +5,9 @@
       location = "group:osx/network.xcodeproj">
    </FileRef>
    <FileRef
+      location = "group:osx/tools.xcodeproj">
+   </FileRef>
+   <FileRef
       location = "group:osx/test.xcodeproj">
    </FileRef>
 </Workspace>

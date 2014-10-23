@@ -181,10 +181,10 @@ network_poll_t* network_poll_allocate( unsigned int num_sockets, unsigned int ti
 	poll->timeout = timeoutms;
 	poll->max_sockets = num_sockets;
 #if FOUNDATION_PLATFORM_APPLE
-	poll->pollfds = memory_allocate_zero_context( HASH_NETWORK, sizeof( struct pollfd ) * num_sockets, 8, MEMORY_PERSISTENT );
+	poll->pollfds = memory_allocate( HASH_NETWORK, sizeof( struct pollfd ) * num_sockets, 8, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 #elif FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
 	poll->fd_poll = epoll_create( num_sockets );
-	poll->events = memory_allocate_zero_context( HASH_NETWORK, sizeof( struct epoll_event ) * num_sockets, 8, MEMORY_PERSISTENT );
+	poll->events = memory_allocate( HASH_NETWORK, sizeof( struct epoll_event ) * num_sockets, 8, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 #endif
 	return poll;
 }

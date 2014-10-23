@@ -349,7 +349,7 @@ network_address_t** network_address_local( void )
 
 		if( ifa->ifa_addr->sa_family == AF_INET )
 		{
-			network_address_ipv4_t* ipv4 = memory_allocate_zero_context( HASH_NETWORK, sizeof( network_address_ipv4_t ), 0, MEMORY_PERSISTENT );
+			network_address_ipv4_t* ipv4 = memory_allocate( HASH_NETWORK, sizeof( network_address_ipv4_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 			ipv4->family = NETWORK_ADDRESSFAMILY_IPV4;
 			ipv4->address_size = sizeof( struct sockaddr_in );
 			ipv4->saddr.sin_family = AF_INET;
@@ -359,7 +359,7 @@ network_address_t** network_address_local( void )
 		}
 		else if( ifa->ifa_addr->sa_family == AF_INET6 )
 		{
-			network_address_ipv6_t* ipv6 = memory_allocate_zero_context( HASH_NETWORK, sizeof( network_address_ipv6_t ), 0, MEMORY_PERSISTENT );
+			network_address_ipv6_t* ipv6 = memory_allocate( HASH_NETWORK, sizeof( network_address_ipv6_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 			ipv6->family = NETWORK_ADDRESSFAMILY_IPV6;
 			ipv6->address_size = sizeof( struct sockaddr_in6 );
 			ipv6->saddr.sin6_family = AF_INET6;
