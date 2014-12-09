@@ -12,6 +12,11 @@
 #include "blast.h"
 
 
+static void blast_server_process_network_events( void )
+{
+}
+
+
 static int blast_server_run( bool daemon, network_poll_t* poll )
 {
 	int result = BLAST_RESULT_OK;
@@ -25,6 +30,7 @@ static int blast_server_run( bool daemon, network_poll_t* poll )
 	while( !blast_should_exit() )
 	{
 		network_poll( poll );
+		blast_server_process_network_events();
 		blast_process_system_events();
 	}
 
@@ -38,7 +44,7 @@ int blast_server( network_address_t** bind, bool daemon )
 	int result = BLAST_RESULT_OK;
 	network_poll_t* poll = 0;
 
-	poll = network_poll_allocate( array_size( bind ), 10000 );
+	poll = network_poll_allocate( array_size( bind ), 0 );
 
 	for( isock = 0, asize = array_size( bind ); isock < asize; ++isock )
 	{

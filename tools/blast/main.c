@@ -29,7 +29,7 @@ typedef struct
 	bool                    daemon;
 
 	//Client args
-	network_address_t**     target;
+	network_address_t***    target;
 	char**                  files;
 } blast_input_t;
 
@@ -41,10 +41,8 @@ static blast_input_t        blast_parse_command_line( char const* const* cmdline
 
 static void                 blast_print_usage( void );
 
-static void*                blast_event_thread( object_t thread, void* arg );
-
 extern int                  blast_server( network_address_t** bind, bool daemon );
-extern int                  blast_client( network_address_t** target, char** files );
+extern int                  blast_client( network_address_t*** target, char** files );
 
 bool                        blast_should_exit( void );
 void                        blast_process_system_events( void );
@@ -80,16 +78,10 @@ int main_initialize( void )
 
 int main_run( void* main_arg )
 {
+	int itarget, tsize = 0;
 	int result = BLAST_RESULT_OK;
-	object_t thread_event;
 
 	blast_input_t input = blast_parse_command_line( environment_command_line() );
-
-	thread_event = thread_create( blast_event_thread, "event_thread", THREAD_PRIORITY_NORMAL, 0 );
-	thread_start( thread_event, 0 );
-
-	while( !thread_is_running( thread_event ) )
-		thread_yield();
 
 	if( input.mode == BLAST_SERVER )
 		result = blast_server( input.bind, input.daemon );
@@ -98,14 +90,11 @@ int main_run( void* main_arg )
 	else
 		blast_print_usage();
 
-	thread_terminate( thread_event );
-	thread_destroy( thread_event );
-	while( thread_is_running( thread_event ) || thread_is_thread( thread_event ) )
-		thread_yield();
-
 	string_array_deallocate( input.files );
 	network_address_array_deallocate( input.bind );
-	network_address_array_deallocate( input.target );
+	for( itarget = 0, tsize = array_size( input.target ); itarget < tsize; ++itarget )
+		network_address_array_deallocate( input.target[itarget] );
+	array_deallocate( input.target );
 
 	return result;
 }
@@ -147,8 +136,8 @@ blast_input_t blast_parse_command_line( char const* const* cmdline )
 			if( ++arg < asize )
 			{
 				network_address_t** resolved = network_address_resolve( cmdline[arg] );
-				for( addr = 0, addrsize = array_size( resolved ); addr < addrsize; ++addr )
-					array_push( input.target, resolved[addr] );
+				if( resolved && array_size( resolved ) )
+					array_push( input.target, resolved );
 			}
 		}
 		else if( string_equal( cmdline[arg], "--" ) )
@@ -198,7 +187,7 @@ void blast_process_system_events( void )
 		switch( event->id )
 		{
 			case FOUNDATIONEVENT_TERMINATE:
-				log_warn( HASH_BLAST, WARNING_SUSPICIOUS, "Terminating due to event" );
+				log_debug( HASH_BLAST, "Terminating due to event" );
 				should_exit = true;
 				break;
 
@@ -206,17 +195,6 @@ void blast_process_system_events( void )
 				break;
 		}
 	}
-}
-
-
-void* blast_event_thread( object_t thread, void* arg )
-{
-	while( !thread_should_terminate( thread ) )
-	{
-		blast_process_system_events();
-		thread_sleep( 1000 );
-	}
-	return 0;
 }
 
 
