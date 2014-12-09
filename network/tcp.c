@@ -295,8 +295,10 @@ static int _tcp_socket_connect( socket_t* sock, const network_address_t* address
 	bool blocking;
 	bool failed = true;
 	int err = 0;
+#if BUILD_ENABLE_DEBUG_LOG
 	const char* error_message = 0;
-
+#endif
+	
 	if( sock->base < 0 )
 		return 0;
 
@@ -363,13 +365,17 @@ static int _tcp_socket_connect( socket_t* sock, const network_address_t* address
 					else
 					{
 						err = serr;
+#if BUILD_ENABLE_DEBUG_LOG
 						error_message = "select indicated socket error";
+#endif
 					}
 				}
 				else if( ret < 0 )
 				{
 					err = NETWORK_SOCKET_ERROR;
+#if BUILD_ENABLE_DEBUG_LOG
 					error_message = "select failed";
+#endif
 				}
 				else
 				{
@@ -378,21 +384,32 @@ static int _tcp_socket_connect( socket_t* sock, const network_address_t* address
 #else
 					err = ETIMEDOUT;
 #endif
+#if BUILD_ENABLE_DEBUG_LOG
 					error_message = "select timed out";
+#endif
 				}			
 			}
 		}
+#if BUILD_ENABLE_DEBUG_LOG
 		else
 		{
 			error_message = "connect error";
 		}
+#endif
 	}
 	
 	if( ( timeoutms > 0 ) && blocking )
 		_socket_set_blocking( sock, true );
 
 	if( failed )
+	{
+#if BUILD_ENABLE_DEBUG_LOG
+		char* address_str = network_address_to_string( address, true );
+		log_debugf( HASH_NETWORK, "Failed to connect socket 0x%llx (0x%" PRIfixPTR " : %d) to remote host %s: %s", sock->id, sock, sockbase->fd, address_str, error_message );
+		string_deallocate( address_str );
+#endif		
 		return err;
+	}
 
 	memory_deallocate( sock->address_remote );
 	sock->address_remote = network_address_clone( address );

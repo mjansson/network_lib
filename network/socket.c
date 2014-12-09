@@ -24,10 +24,8 @@ int32_t                  _socket_base_size = 0;
 static objectmap_t*      _socket_map = 0;
 static stream_vtable_t   _socket_stream_vtable = {0};
 
-//! Deallocate socket and free memory
 static void              _socket_deallocate( socket_t* sock );
 static unsigned int      _socket_buffered_in( const socket_t* sock );
-//static unsigned int      _socket_buffered_out( const socket_t* sock );
 static void              _socket_doflush( socket_t* sock );
 
 static void              _socket_set_blocking_fd( int fd, bool block );
@@ -70,7 +68,6 @@ socket_t* _socket_allocate( void )
 
 int _socket_allocate_base( socket_t* sock )
 {
-	int32_t startbase;
 	int32_t maxbase;
 
 	FOUNDATION_ASSERT( sock );
@@ -79,7 +76,6 @@ int _socket_allocate_base( socket_t* sock )
 		return sock->base;
 
 	//TODO: Better allocation scheme
-	startbase = atomic_load32( &_socket_base_next );
 	maxbase = _socket_base_size;
 	do
 	{
@@ -932,7 +928,7 @@ static bool _socket_eos( stream_t* stream )
 
 	socket_destroy( sockstream->socket );
 	
-	return false;
+	return eos;
 }
 
 

@@ -359,7 +359,6 @@ bool network_poll_has_socket( network_poll_t* pollobj, object_t sock )
 
 int network_poll( network_poll_t* pollobj )
 {
-	unsigned int max_sockets;
 	unsigned int num_sockets;
 	int timeout = pollobj->timeout;
 	int avail = 0;
@@ -374,7 +373,6 @@ int network_poll( network_poll_t* pollobj )
 
 	int num_events = _network_poll_process_pending( pollobj );
 	
-	max_sockets = pollobj->max_sockets;
 	num_sockets = pollobj->num_sockets;
 
 	if( !num_sockets )
