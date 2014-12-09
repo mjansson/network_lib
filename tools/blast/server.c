@@ -16,6 +16,12 @@ static int blast_server_run( bool daemon, network_poll_t* poll )
 {
 	int result = BLAST_RESULT_OK;
 
+    if( daemon )
+    {
+        config_set_bool( HASH_APPLICATION, HASH_DAEMON, true );
+        //TODO: Implement
+    }
+    
 	while( !blast_should_exit() )
 	{
 		network_poll( poll );

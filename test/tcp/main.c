@@ -332,7 +332,7 @@ DECLARE_TEST( tcp, io_ipv4 )
 
 	int state, iaddr, asize;
 	object_t threads[2] = {0};
-
+	
 	object_t sock_listen = tcp_socket_create();
 	object_t sock_server = 0;
 	object_t sock_client = tcp_socket_create();
@@ -364,6 +364,8 @@ DECLARE_TEST( tcp, io_ipv4 )
 	state = socket_state( sock_client );
 	network_address_array_deallocate( address_local );
 	EXPECT_TRUE( ( state == SOCKETSTATE_CONNECTING ) || ( state == SOCKETSTATE_CONNECTED ) );
+	
+	thread_sleep( 100 );
 
 	sock_server = tcp_socket_accept( sock_listen, 0 );
 	EXPECT_EQ( socket_state( sock_client ), SOCKETSTATE_CONNECTED );
@@ -438,6 +440,8 @@ DECLARE_TEST( tcp, io_ipv6 )
 	state = socket_state( sock_client );
 	EXPECT_TRUE( ( state == SOCKETSTATE_CONNECTING ) || ( state == SOCKETSTATE_CONNECTED ) );
 
+	thread_sleep( 100 );
+	
 	sock_server = tcp_socket_accept( sock_listen, 0 );
 	EXPECT_EQ( socket_state( sock_client ), SOCKETSTATE_CONNECTED );
 	EXPECT_EQ( socket_state( sock_server ), SOCKETSTATE_CONNECTED );

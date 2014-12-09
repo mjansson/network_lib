@@ -100,7 +100,7 @@ static void* datagram_server_blocking_thread( object_t thread, void* arg )
 		thread_yield();
 	}
 
-	log_debugf( HASH_NETWORK, "IO complete on socket 0x%llx", sock );
+	log_infof( HASH_NETWORK, "IO complete on socket 0x%llx", sock );
 	
 	return 0;
 }
@@ -118,6 +118,8 @@ static void* datagram_client_blocking_thread( object_t thread, void* arg )
 	char buffer[1024] = {0};
 	network_datagram_t datagram = { buffer, 973 };
 	
+	log_debugf( HASH_NETWORK, "IO start on socket 0x%llx", sock );
+	
 	for( iloop = 0; iloop < 512; ++iloop )
 	{
 		log_infof( HASH_NETWORK, "UDP read/write pass %d", iloop );
@@ -128,7 +130,7 @@ static void* datagram_client_blocking_thread( object_t thread, void* arg )
 		thread_yield();
 	}
 
-	log_debugf( HASH_NETWORK, "IO complete on socket 0x%llx", sock );
+	log_infof( HASH_NETWORK, "IO complete on socket 0x%llx", sock );
 	
 	return 0;
 }
@@ -309,7 +311,7 @@ DECLARE_TEST( udp, datagram_ipv4 )
 	network_address_t** address_local;
 	network_address_t* address;
 	network_address_t* address_server;
-	test_datagram_arg_t client_arg;
+	test_datagram_arg_t client_arg[4];
 
 	int server_port;
 	int state, iaddr, asize;
@@ -377,17 +379,17 @@ DECLARE_TEST( udp, datagram_ipv4 )
 
 	thread_start( threads[0], &sock_server );
 
-	client_arg.sock = sock_client[0]; client_arg.target = address_server;
-	thread_start( threads[1], &client_arg );
+	client_arg[0].sock = sock_client[0]; client_arg[0].target = address_server;
+	thread_start( threads[1], &client_arg[0] );
 
-	client_arg.sock = sock_client[1]; client_arg.target = address_server;
-	thread_start( threads[2], &client_arg );
+	client_arg[1].sock = sock_client[1]; client_arg[1].target = address_server;
+	thread_start( threads[2], &client_arg[1] );
 
-	client_arg.sock = sock_client[2]; client_arg.target = address_server;
-	thread_start( threads[3], &client_arg );
+	client_arg[2].sock = sock_client[2]; client_arg[2].target = address_server;
+	thread_start( threads[3], &client_arg[2] );
 
-	client_arg.sock = sock_client[3]; client_arg.target = address_server;
-	thread_start( threads[4], &client_arg );
+	client_arg[3].sock = sock_client[3]; client_arg[3].target = address_server;
+	thread_start( threads[4], &client_arg[3] );
 	
 	test_wait_for_threads_startup( threads, 5 );
 
@@ -422,7 +424,7 @@ DECLARE_TEST( udp, datagram_ipv6 )
 	network_address_t** address_local;
 	network_address_t* address;
 	network_address_t* address_server;
-	test_datagram_arg_t client_arg;
+	test_datagram_arg_t client_arg[4];
 
 	int server_port;
 	int state, iaddr, asize;
@@ -490,17 +492,17 @@ DECLARE_TEST( udp, datagram_ipv6 )
 
 	thread_start( threads[0], &sock_server );
 
-	client_arg.sock = sock_client[0]; client_arg.target = address_server;
-	thread_start( threads[1], &client_arg );
-
-	client_arg.sock = sock_client[1]; client_arg.target = address_server;
-	thread_start( threads[2], &client_arg );
-
-	client_arg.sock = sock_client[2]; client_arg.target = address_server;
-	thread_start( threads[3], &client_arg );
-
-	client_arg.sock = sock_client[3]; client_arg.target = address_server;
-	thread_start( threads[4], &client_arg );
+	client_arg[0].sock = sock_client[0]; client_arg[0].target = address_server;
+	thread_start( threads[1], &client_arg[0] );
+	
+	client_arg[1].sock = sock_client[1]; client_arg[1].target = address_server;
+	thread_start( threads[2], &client_arg[1] );
+	
+	client_arg[2].sock = sock_client[2]; client_arg[2].target = address_server;
+	thread_start( threads[3], &client_arg[2] );
+	
+	client_arg[3].sock = sock_client[3]; client_arg[3].target = address_server;
+	thread_start( threads[4], &client_arg[3] );
 	
 	test_wait_for_threads_startup( threads, 5 );
 

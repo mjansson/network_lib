@@ -168,7 +168,7 @@ void blast_print_usage( void )
 {
 	log_info( HASH_BLAST, 
 		"blast usage:\n"
-		"  blast [-s|--server] [-d|-daemon] [-c|--client] [-t|--target host[:port]] [-b|--bind host[:port]] <file> <file> <file> <...>\n"
+		"  blast [-s|--server] [-d|-daemon] [-c|--client] [-t|--target host[:port]] [-b|--bind host[:port]] <file> <file> <file> <...> [--]\n"
 		"    Required arguments for server:\n"
 		"      -s|--server              Start as server\n"
 		"      -b||-bind host[:port]    Bind ip address and optional port (muliple)\n"
@@ -178,6 +178,7 @@ void blast_print_usage( void )
 		"      <file>                   File name (muliple)\n"
 		"    Optional arguments:\n"
 		"      -d|--daemon              Run server as daemon\n"
+        "      --                       Stop parsing command line options\n"
 	);
 }
 

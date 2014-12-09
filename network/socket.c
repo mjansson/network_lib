@@ -33,7 +33,7 @@ static void              _socket_doflush( socket_t* sock );
 static void              _socket_set_blocking_fd( int fd, bool block );
 
 static socket_stream_t*  _socket_stream_allocate( object_t id );
-static void              _socket_stream_deallocate( stream_t* stream );
+static void              _socket_stream_finalize( stream_t* stream );
 static uint64_t          _socket_read( stream_t* stream, void* buffer, uint64_t size );
 static uint64_t          _socket_write( stream_t* stream, const void* buffer, uint64_t size );
 static bool              _socket_eos( stream_t* stream );
@@ -710,7 +710,7 @@ static socket_stream_t* _socket_stream_allocate( object_t id )
 }
 
 
-static void _socket_stream_deallocate( stream_t* stream )
+static void _socket_stream_finalize( stream_t* stream )
 {
 	socket_stream_t* sockstream;
 	object_t id;
@@ -1107,7 +1107,7 @@ int _socket_initialize( unsigned int max_sockets )
 	_socket_stream_vtable.lastmod = _socket_last_modified;
 	_socket_stream_vtable.buffer_read = _socket_buffer_read;
 	_socket_stream_vtable.available_read = _socket_available_read;
-	_socket_stream_vtable.deallocate = _socket_stream_deallocate;
+	_socket_stream_vtable.finalize = _socket_stream_finalize;
 	_socket_stream_vtable.clone = 0;
 	
 	return 0;

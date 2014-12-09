@@ -130,6 +130,7 @@ object_t tcp_socket_accept( object_t id, unsigned int timeoutms )
 	    ( sockbase->fd == SOCKET_INVALID ) ||
 	    !sock->address_local ) //Must be locally bound
 	{
+		log_errorf( HASH_NETWORK, ERROR_INVALID_VALUE, "Unable to accept on a non-listening/unbound socket (fd %d, state %d)", sockbase->fd, sockbase->state );
 		socket_destroy( id );
 		return 0;
 	}
@@ -184,6 +185,7 @@ object_t tcp_socket_accept( object_t id, unsigned int timeoutms )
 
 	if( fd < 0 )
 	{
+		log_debugf( HASH_NETWORK, "Accept returned invalid socket fd: %d", fd );
 		memory_deallocate( address_remote );
 		socket_destroy( id );
 		return 0;
@@ -192,12 +194,14 @@ object_t tcp_socket_accept( object_t id, unsigned int timeoutms )
 	accepted = _tcp_socket_allocate();
 	if( !accepted )
 	{
-		socket_destroy( id );		
+		log_debugf( HASH_NETWORK, "Unable to allocate socket for accepted fd: %d", fd );
+		socket_destroy( id );
 		return 0;
 	}
 
 	if( _socket_allocate_base( accepted ) < 0 )
 	{
+		log_debugf( HASH_NETWORK, "Unable to allocate socket base for accepted fd: %d", fd );
 		socket_destroy( accepted->id );
 		socket_destroy( id );
 		return 0;
