@@ -138,8 +138,8 @@ static void* datagram_client_blocking_thread( object_t thread, void* arg )
 
 DECLARE_TEST( udp, stream_ipv4 )
 {
-	network_address_t** address_local;
-	network_address_t* address;
+	network_address_t** address_local = 0;
+	network_address_t* address = 0;
 
 	int server_port, client_port;
 	int state, iaddr, asize;
@@ -223,8 +223,8 @@ DECLARE_TEST( udp, stream_ipv4 )
 
 DECLARE_TEST( udp, stream_ipv6 )
 {
-	network_address_t** address_local;
-	network_address_t* address;
+	network_address_t** address_local = 0;
+	network_address_t* address = 0;
 
 	int server_port, client_port;
 	int state, iaddr, asize;
@@ -308,9 +308,9 @@ DECLARE_TEST( udp, stream_ipv6 )
 
 DECLARE_TEST( udp, datagram_ipv4 )
 {
-	network_address_t** address_local;
-	network_address_t* address;
-	network_address_t* address_server;
+	network_address_t** address_local = 0;
+	network_address_t* address = 0;
+	network_address_t* address_server = 0;
 	test_datagram_arg_t client_arg[4];
 
 	int server_port;
@@ -421,9 +421,9 @@ DECLARE_TEST( udp, datagram_ipv4 )
 
 DECLARE_TEST( udp, datagram_ipv6 )
 {
-	network_address_t** address_local;
-	network_address_t* address;
-	network_address_t* address_server;
+	network_address_t** address_local = 0;
+	network_address_t* address = 0;
+	network_address_t* address_server = 0;
 	test_datagram_arg_t client_arg[4];
 
 	int server_port;

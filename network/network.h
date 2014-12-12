@@ -28,5 +28,7 @@
 //! Entry point
 NETWORK_API int         network_initialize( unsigned int max_sockets );
 
+NETWORK_API bool        network_is_initialized( void );
+
 //! Exit point
 NETWORK_API void        network_shutdown( void );

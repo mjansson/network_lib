@@ -17,6 +17,8 @@
 #include "errorcodes.h"
 #include "hashstrings.h"
 
+#include "packet.h"
+
 
 extern bool blast_should_exit( void );
 extern void blast_process_system_events( void );

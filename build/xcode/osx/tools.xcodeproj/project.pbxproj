@@ -38,6 +38,9 @@
 		454C05F419F979ED00F30C70 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
 		454C05F519F979ED00F30C70 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		454C05F819F97AA500F30C70 /* libnetwork.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libnetwork.a; path = ../../../lib/macosx/debug/libnetwork.a; sourceTree = "<group>"; };
+		45D287AE1A374CF900C5DA3D /* hashstrings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = hashstrings.h; path = ../../../tools/blast/hashstrings.h; sourceTree = "<group>"; };
+		45D287AF1A374E5F00C5DA3D /* blast.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = blast.h; path = ../../../tools/blast/blast.h; sourceTree = "<group>"; };
+		45D287B01A374EC400C5DA3D /* packet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = packet.h; path = ../../../tools/blast/packet.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,9 +78,12 @@
 		454C05E719F975E800F30C70 /* blast */ = {
 			isa = PBXGroup;
 			children = (
+				45D287AF1A374E5F00C5DA3D /* blast.h */,
 				454C05ED19F9760E00F30C70 /* client.c */,
 				454C05E819F975FF00F30C70 /* errorcodes.h */,
+				45D287AE1A374CF900C5DA3D /* hashstrings.h */,
 				454C05E919F975FF00F30C70 /* main.c */,
+				45D287B01A374EC400C5DA3D /* packet.h */,
 				454C05EA19F975FF00F30C70 /* server.c */,
 			);
 			name = blast;
@@ -120,7 +126,7 @@
 		454C05CA19F973EF00F30C70 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0600;
+				LastUpgradeCheck = 0610;
 				TargetAttributes = {
 					454C05DF19F9744F00F30C70 = {
 						CreatedOnToolsVersion = 6.0.1;
@@ -315,6 +321,7 @@
 				454C05E619F9744F00F30C70 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

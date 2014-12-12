@@ -9,6 +9,10 @@
  *
  */
 
+#pragma once
+
 
 //Error codes returned by blast tool
 #define BLAST_RESULT_OK                                   0
+
+#define BLAST_ERROR_UNABLE_TO_CREATE_SOCKET              -1

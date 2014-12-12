@@ -76,7 +76,7 @@ DECLARE_TEST( tcp, connect_ipv4 )
 {
 	int iaddr;
 	bool success = false;
-	network_address_t** addresses;
+	network_address_t** addresses = 0;
 
 	//Blocking with timeout
 	object_t sock_client = tcp_socket_create();
@@ -201,7 +201,7 @@ DECLARE_TEST( tcp, connect_ipv6 )
 	bool success = false;
 	bool connecting = false;
 	object_t sock_client;
-	network_address_t** addresses;
+	network_address_t** addresses = 0;
 
 	log_suppress( ERRORLEVEL_NONE );
 
@@ -326,9 +326,9 @@ DECLARE_TEST( tcp, connect_ipv6 )
 
 DECLARE_TEST( tcp, io_ipv4 )
 {
-	network_address_t* address_bind;
-	network_address_t** address_local;
-	network_address_t* address_connect;
+	network_address_t* address_bind = 0;
+	network_address_t** address_local = 0;
+	network_address_t* address_connect = 0;
 
 	int state, iaddr, asize;
 	object_t threads[2] = {0};
@@ -402,9 +402,9 @@ DECLARE_TEST( tcp, io_ipv4 )
 
 DECLARE_TEST( tcp, io_ipv6 )
 {
-	network_address_t* address_bind;
-	network_address_t** address_local;
-	network_address_t* address_connect;
+	network_address_t* address_bind = 0;
+	network_address_t** address_local = 0;
+	network_address_t* address_connect = 0;
 
 	int state, iaddr, asize;
 	object_t threads[2] = {0};

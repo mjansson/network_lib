@@ -59,6 +59,12 @@ int network_initialize( unsigned int max_sockets )
 }
 
 
+bool network_is_initialized( void )
+{
+	return _network_initialized;
+}
+
+
 void network_shutdown( void )
 {
 	if( !_network_initialized )
