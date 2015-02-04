@@ -283,16 +283,17 @@ static unsigned int _udp_socket_buffer_read( socket_t* sock, unsigned int wanted
 	}
 	else if( ret > 0 )
 	{
+#if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
+		const unsigned char* src = (const unsigned char*)sock->buffer_in + sock->offset_write_in;
+		char dump_buffer[66];
+#endif
 #if BUILD_ENABLE_LOG
 		if( !available && ( ret == try_read ) )
 			log_warnf( HASH_NETWORK, WARNING_SUSPICIOUS, "Socket 0x%llx (0x%" PRIfixPTR " : %d): potential partial blocking UDP read %d of %d bytes (%u available)", sock->id, sock, sockbase->fd, ret, try_read, available );
 #endif
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
-#if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
-		const unsigned char* src = (const unsigned char*)sock->buffer_in + sock->offset_write_in;
-		char dump_buffer[66];
-#endif
 		log_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d) read %d of %u (%u were available, %u wanted) bytes from UDP socket to buffer position %d", sock->id, sock, sockbase->fd, ret, try_read, available, wanted_size, sock->offset_write_in );
+#endif
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 		for( long row = 0; row <= ( ret / 8 ); ++row )
 		{
@@ -310,7 +311,6 @@ static unsigned int _udp_socket_buffer_read( socket_t* sock, unsigned int wanted
 				log_debug( HASH_NETWORK, dump_buffer );
 			}
 		}
-#endif
 #endif
 
 		sock->offset_write_in += ret;
@@ -376,12 +376,13 @@ static unsigned int _udp_socket_buffer_write( socket_t* sock )
 		long res = send( sockbase->fd, (const char*)sock->buffer_out + sent, sock->offset_write_out - sent, 0 );
 		if( res > 0 )
 		{
-#if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 			const unsigned char* src = (const unsigned char*)sock->buffer_out + sent;
 			char buffer[34];
 #endif
+#if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
 			log_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d) wrote %d of %d bytes bytes to UDP socket from buffer position %d", sock->id, sock, sockbase->fd, res, sock->offset_write_out - sent, sent );
+#endif
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 			for( long row = 0; row <= ( res / 8 ); ++row )
 			{
@@ -399,7 +400,6 @@ static unsigned int _udp_socket_buffer_write( socket_t* sock )
 					log_debug( HASH_NETWORK, buffer );
 				}
 			}
-#endif
 #endif
 			sent += res;
 		}
@@ -532,16 +532,17 @@ network_datagram_t udp_socket_recvfrom( object_t id, network_address_t const** a
 	ret = recvfrom( sockbase->fd, (char*)sock->buffer_in, try_read, 0, &addr_ip->saddr, &addr_ip->address_size );
 	if( ret > 0 )
 	{
+#if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
+		const unsigned char* src = (const unsigned char*)sock->buffer_in;
+		char dump_buffer[66];
+#endif
 #if BUILD_ENABLE_LOG
 		if( !available && ( ret == try_read ) )
 			log_warnf( HASH_NETWORK, WARNING_SUSPICIOUS, "Socket 0x%llx (0x%" PRIfixPTR " : %d): potential partial blocking UDP datagram read %d of %d bytes (%u available)", sock->id, sock, sockbase->fd, ret, try_read, available );
 #endif
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
-#if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
-		const unsigned char* src = (const unsigned char*)sock->buffer_in;
-		char dump_buffer[66];
-#endif
 		log_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d) read %d of %u (%u were available) bytes from UDP socket to datagram", sock->id, sock, sockbase->fd, ret, try_read, available );
+#endif
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 		for( long row = 0; row <= ( ret / 8 ); ++row )
 		{
@@ -560,7 +561,7 @@ network_datagram_t udp_socket_recvfrom( object_t id, network_address_t const** a
 			}
 		}
 #endif
-#endif
+
 		datagram.data = sock->buffer_in;
 		datagram.size = ret;
 
@@ -619,16 +620,17 @@ uint64_t udp_socket_sendto( object_t id, const network_datagram_t datagram, cons
 	res = sendto( sockbase->fd, datagram.data, (int)datagram.size, 0, &addr_ip->saddr, addr_ip->address_size );
 	if( res > 0 )
 	{
+#if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
+		const unsigned char* src = (const unsigned char*)datagram.data;
+		char buffer[34];
+#endif
 #if BUILD_ENABLE_LOG
 		if( (uint64_t)res != datagram.size )
 			log_warnf( HASH_NETWORK, WARNING_SUSPICIOUS, "Socket 0x%llx (0x%" PRIfixPTR " : %d): partial UDP datagram write %d of %d bytes", sock->id, sock, sockbase->fd, res, (unsigned int)datagram.size );
 #endif
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
-#if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
-		const unsigned char* src = (const unsigned char*)sock->buffer_out + sent;
-		char buffer[34];
-#endif
 		log_debugf( HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d) wrote %d of %d bytes bytes to UDP socket", sock->id, sock, sockbase->fd, res, (unsigned int)datagram.size );
+#endif
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 		for( long row = 0; row <= ( res / 8 ); ++row )
 		{
@@ -646,7 +648,6 @@ uint64_t udp_socket_sendto( object_t id, const network_datagram_t datagram, cons
 				log_debug( HASH_NETWORK, buffer );
 			}
 		}
-#endif
 #endif
 	}
 	else

@@ -20,7 +20,7 @@
 
 
 //! Dump network traffic to log (debug). Dump read/write information if > 0, dump full traffic (payload data) if > 1
-#define BUILD_ENABLE_NETWORK_DUMP_TRAFFIC     1
+#define BUILD_ENABLE_NETWORK_DUMP_TRAFFIC     2
 
 
 //! Default thresholds

@@ -19,6 +19,7 @@
 #include <network/types.h>
 
 
+NETWORK_API object_t                      socket_ref( object_t id );
 NETWORK_API void                          socket_destroy( object_t id );
 
 NETWORK_API bool                          socket_bind( object_t id, const network_address_t* address );
@@ -27,6 +28,14 @@ NETWORK_API void                          socket_close( object_t id );
 
 NETWORK_API bool                          socket_blocking( object_t id );
 NETWORK_API void                          socket_set_blocking( object_t id, bool block );
+
+NETWORK_API bool                          socket_reuse_address( object_t id );
+NETWORK_API void                          socket_set_reuse_address( object_t id, bool reuse );
+
+NETWORK_API bool                          socket_reuse_port( object_t id );
+NETWORK_API void                          socket_set_reuse_port( object_t id, bool reuse );
+
+NETWORK_API bool                          socket_set_multicast_group( object_t id, network_address_t* address );
 
 NETWORK_API const network_address_t*      socket_address_local( object_t id );
 NETWORK_API const network_address_t*      socket_address_remote( object_t id );

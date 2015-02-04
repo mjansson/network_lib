@@ -155,10 +155,19 @@ int _socket_create_fd( socket_t* sock, network_address_family_t family )
 		{
 			sock->family = family;
 			_socket_set_blocking( sock, sockbase->flags & SOCKETFLAG_BLOCKING );
+			_socket_set_reuse_address( sock, sockbase->flags & SOCKETFLAG_REUSE_ADDR );
+			_socket_set_reuse_port( sock, sockbase->flags & SOCKETFLAG_REUSE_PORT );
 		}
 	}
 
 	return sockbase->fd;
+}
+
+
+object_t socket_ref( object_t id )
+{
+	socket_t* sock = _socket_lookup( id );
+	return sock ? id : 0;
 }
 
 
@@ -328,6 +337,113 @@ void socket_set_blocking( object_t id, bool block )
 }
 
 
+bool socket_reuse_address( object_t id )
+{
+	bool reuse = false;
+	socket_t* sock = _socket_lookup( id );
+	if( sock )
+	{
+		if( sock->base >= 0 )
+		{
+			socket_base_t* sockbase = _socket_base + sock->base;
+			reuse = ( ( sockbase->flags & SOCKETFLAG_REUSE_ADDR ) != 0 );
+		}
+		socket_destroy( id );
+	}
+	return reuse;
+}
+
+
+void socket_set_reuse_address( object_t id, bool reuse )
+{
+	socket_t* sock = _socket_lookup( id );
+	if( !sock )
+	{
+		log_errorf( HASH_NETWORK, ERROR_INVALID_VALUE, "Trying to set reuse address flag on an invalid socket 0x%llx", id );
+		return;
+	}
+
+	_socket_set_reuse_address( sock, reuse );
+	
+	socket_destroy( id );
+}
+
+
+bool socket_reuse_port( object_t id )
+{
+	bool reuse = false;
+	socket_t* sock = _socket_lookup( id );
+	if( sock )
+	{
+		if( sock->base >= 0 )
+		{
+			socket_base_t* sockbase = _socket_base + sock->base;
+			reuse = ( ( sockbase->flags & SOCKETFLAG_REUSE_PORT ) != 0 );
+		}
+		socket_destroy( id );
+	}
+	return reuse;
+}
+
+
+void socket_set_reuse_port( object_t id, bool reuse )
+{
+	socket_t* sock = _socket_lookup( id );
+	if( !sock )
+	{
+		log_errorf( HASH_NETWORK, ERROR_INVALID_VALUE, "Trying to set reuse port flag on an invalid socket 0x%llx", id );
+		return;
+	}
+
+	_socket_set_reuse_port( sock, reuse );
+	
+	socket_destroy( id );
+}
+
+
+bool socket_set_multicast_group( object_t id, network_address_t* address )
+{
+	socket_base_t* sockbase;
+	int fd;
+	unsigned char ttl = 1;
+	unsigned char loopback = 0;
+	struct ip_mreq req;
+
+	socket_t* sock = _socket_lookup( id );
+	if( !sock )
+	{
+		log_errorf( HASH_NETWORK, ERROR_INVALID_VALUE, "Trying to set reuse port flag on an invalid socket 0x%llx", id );
+		return false;
+	}
+
+	if( _socket_allocate_base( sock ) < 0 )
+		return false;
+
+	sockbase = _socket_base + sock->base;
+	fd = sockbase->fd;
+	if( fd == SOCKET_INVALID )
+		return false;
+
+	//TODO: TTL 1 means local network, should be split out to separate control function
+	setsockopt( fd, IPPROTO_IP, IP_MULTICAST_TTL, (const char*)&ttl, sizeof( ttl ) );
+
+	//TODO: Disabling multicast loopback, should be split out to separate control function
+	setsockopt( fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const char*)&loopback, sizeof( loopback ) );
+
+	memset( &req, 0, sizeof( req ) );
+	req.imr_multiaddr.s_addr = ((network_address_ipv4_t*)address)->saddr.sin_addr.s_addr;
+	req.imr_interface.s_addr = INADDR_ANY;
+	if( setsockopt( fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)&req, sizeof( req ) ) != 0 )
+	{
+		int sockerr = NETWORK_SOCKET_ERROR;
+		log_errorf( HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL, "Add multicast group failed on socket 0x%llx (0x%" PRIfixPTR " : %d): %s", sock->id, sock, fd, system_error_message( sockerr ) );
+		return false;
+	}
+
+	return true;
+}
+
+
 const network_address_t* socket_address_local( object_t id )
 {
 	network_address_t* addr = 0;
@@ -488,6 +604,44 @@ void _socket_close( socket_t* sock )
 		memory_deallocate( local_address );
 	if( remote_address )
 		memory_deallocate( remote_address );
+}
+
+
+void _socket_set_reuse_address( socket_t* sock, bool reuse )
+{
+	socket_base_t* sockbase;
+	int fd;
+
+	if( _socket_allocate_base( sock ) < 0 )
+		return;
+
+	sockbase = _socket_base + sock->base;
+	sockbase->flags = ( reuse ? sockbase->flags | SOCKETFLAG_REUSE_ADDR : sockbase->flags & ~SOCKETFLAG_REUSE_ADDR );
+	fd = sockbase->fd;
+	if( fd != SOCKET_INVALID )
+	{
+		int optval = reuse ? 1 : 0;
+    	setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof( optval ) );
+    }
+}
+
+
+void _socket_set_reuse_port( socket_t* sock, bool reuse )
+{
+	socket_base_t* sockbase;
+	int fd;
+
+	if( _socket_allocate_base( sock ) < 0 )
+		return;
+
+	sockbase = _socket_base + sock->base;
+	sockbase->flags = ( reuse ? sockbase->flags | SOCKETFLAG_REUSE_PORT : sockbase->flags & ~SOCKETFLAG_REUSE_PORT );
+	fd = sockbase->fd;
+	if( fd != SOCKET_INVALID )
+	{
+		int optval = reuse ? 1 : 0;
+    	setsockopt( fd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval) );
+    }
 }
 
 
@@ -1120,4 +1274,3 @@ void _socket_shutdown( void )
 		memory_deallocate( _socket_base );
 	_socket_base = 0;
 }
-

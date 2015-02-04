@@ -246,6 +246,41 @@ unsigned int network_address_ip_port( const network_address_t* address )
 }
 
 
+network_address_t* network_address_ipv4_from_ip( uint32_t ip )
+{
+	network_address_ipv4_t* address = memory_allocate( HASH_NETWORK, sizeof( network_address_ipv4_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
+#if FOUNDATION_PLATFORM_APPLE
+    address->saddr.sin_len = sizeof( address->saddr );
+#endif
+	address->saddr.sin_family = AF_INET;
+	address->family = NETWORK_ADDRESSFAMILY_IPV4;
+	address->address_size = sizeof( struct sockaddr_in );
+	network_address_ipv4_set_ip( (network_address_t*)address, ip );
+	return (network_address_t*)address;
+}
+
+
+void network_address_ipv4_set_ip( network_address_t* address, uint32_t ip )
+{
+	if( address && address->family == NETWORK_ADDRESSFAMILY_IPV4 )
+	{
+		network_address_ipv4_t* address_ipv4 = (network_address_ipv4_t*)address;
+		address_ipv4->saddr.sin_addr.s_addr = ip;
+	}
+}
+
+
+uint32_t network_address_ipv4_ip( network_address_t* address )
+{
+	if( address && address->family == NETWORK_ADDRESSFAMILY_IPV4 )
+	{
+		network_address_ipv4_t* address_ipv4 = (network_address_ipv4_t*)address;
+		return address_ipv4->saddr.sin_addr.s_addr;
+	}
+	return 0;
+}
+
+
 network_address_family_t network_address_type( const network_address_t* address )
 {
 	return address->family;

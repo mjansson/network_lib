@@ -42,7 +42,9 @@ typedef enum _socket_flag
 	SOCKETFLAG_CONNECTION_PENDING   = 0x00000008,
 	SOCKETFLAG_ERROR_PENDING        = 0x00000010,
 	SOCKETFLAG_HANGUP_PENDING       = 0x00000020,
-	SOCKETFLAG_REFLUSH              = 0x00000040
+	SOCKETFLAG_REFLUSH              = 0x00000040,
+	SOCKETFLAG_REUSE_ADDR           = 0x00000080,
+	SOCKETFLAG_REUSE_PORT           = 0x00000100
 } socket_flag_t;
 
 #if FOUNDATION_PLATFORM_POSIX
@@ -163,6 +165,8 @@ NETWORK_API int                    _socket_allocate_base( socket_t* sock );
 NETWORK_API socket_t*              _socket_lookup( object_t id );
 NETWORK_API void                   _socket_close( socket_t* sock );
 NETWORK_API void                   _socket_set_blocking( socket_t* sock, bool block );
+NETWORK_API void                   _socket_set_reuse_address( socket_t* sock, bool reuse );
+NETWORK_API void                   _socket_set_reuse_port( socket_t* sock, bool reuse );
 NETWORK_API void                   _socket_store_address_local( socket_t* sock, int family );
 NETWORK_API int                    _socket_available_fd( int fd );
 NETWORK_API unsigned int           _socket_available_nonblock_read( const socket_t* sock );

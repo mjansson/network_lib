@@ -30,6 +30,10 @@ NETWORK_API network_address_t*         network_address_ipv6_any( void );
 NETWORK_API void                       network_address_ip_set_port( network_address_t* address, unsigned int port );
 NETWORK_API unsigned int               network_address_ip_port( const network_address_t* address );
 
+NETWORK_API network_address_t*         network_address_ipv4_from_ip( uint32_t ip );
+NETWORK_API void                       network_address_ipv4_set_ip( network_address_t* address, uint32_t ip );
+NETWORK_API uint32_t                   network_address_ipv4_ip( network_address_t* address );
+
 NETWORK_API network_address_family_t   network_address_family( const network_address_t* address );
 
 NETWORK_API network_address_t**        network_address_local( void );
