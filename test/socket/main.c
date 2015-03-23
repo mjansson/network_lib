@@ -82,69 +82,77 @@ DECLARE_TEST( tcp, blocking )
 
 DECLARE_TEST( tcp, bind )
 {
+	bool has_ipv4 = network_supports_ipv4();
+	bool has_ipv6 = network_supports_ipv6();
 	bool was_bound = false;
 	int port;
 
-	object_t sock = tcp_socket_create();
-
-	EXPECT_TRUE( socket_is_socket( sock ) );
-
-	EXPECT_EQ( socket_address_local( sock ), 0 );
-	EXPECT_EQ( socket_address_remote( sock ), 0 );
-	EXPECT_EQ( socket_state( sock ), SOCKETSTATE_NOTCONNECTED );
-
-	for( port = 31890; !was_bound && ( port < 32890 ); ++port )
+	if( has_ipv4 )
 	{
-		network_address_t* address = network_address_ipv4_any();
-		network_address_ip_set_port( address, port );
+		object_t sock = tcp_socket_create();
 
-		if( socket_bind( sock, address ) )
+		EXPECT_TRUE( socket_is_socket( sock ) );
+
+		EXPECT_EQ( socket_address_local( sock ), 0 );
+		EXPECT_EQ( socket_address_remote( sock ), 0 );
+		EXPECT_EQ( socket_state( sock ), SOCKETSTATE_NOTCONNECTED );
+
+		for( port = 31890; !was_bound && ( port < 32890 ); ++port )
 		{
-			EXPECT_NE( socket_address_local( sock ), 0 );
-			EXPECT_EQ( socket_address_remote( sock ), 0 );
-			EXPECT_EQ( socket_state( sock ), SOCKETSTATE_NOTCONNECTED );
+			network_address_t* address = network_address_ipv4_any();
+			network_address_ip_set_port( address, port );
 
-			EXPECT_TRUE( network_address_equal( socket_address_local( sock ), address ) );
+			if( socket_bind( sock, address ) )
+			{
+				EXPECT_NE( socket_address_local( sock ), 0 );
+				EXPECT_EQ( socket_address_remote( sock ), 0 );
+				EXPECT_EQ( socket_state( sock ), SOCKETSTATE_NOTCONNECTED );
 
-			was_bound = true;
+				EXPECT_TRUE( network_address_equal( socket_address_local( sock ), address ) );
+
+				was_bound = true;
+			}
+
+			memory_deallocate( address );
 		}
+		EXPECT_TRUE( was_bound );
 
-		memory_deallocate( address );
+		socket_destroy( sock );
+
+		EXPECT_FALSE( socket_is_socket( sock ) );
 	}
-	EXPECT_TRUE( was_bound );
 
-	socket_destroy( sock );
-
-	EXPECT_FALSE( socket_is_socket( sock ) );
-
-	sock = tcp_socket_create();
-
-	EXPECT_TRUE( socket_is_socket( sock ) );
-
-	was_bound = false;
-	for( port = 31890; !was_bound && ( port < 32890 ); ++port )
+	if( has_ipv6 )
 	{
-		network_address_t* address = network_address_ipv6_any();
-		network_address_ip_set_port( address, port );
+		object_t sock = tcp_socket_create();
 
-		if( socket_bind( sock, address ) )
+		EXPECT_TRUE( socket_is_socket( sock ) );
+
+		was_bound = false;
+		for( port = 31890; !was_bound && ( port < 32890 ); ++port )
 		{
-			EXPECT_NE( socket_address_local( sock ), 0 );
-			EXPECT_EQ( socket_address_remote( sock ), 0 );
-			EXPECT_EQ( socket_state( sock ), SOCKETSTATE_NOTCONNECTED );
+			network_address_t* address = network_address_ipv6_any();
+			network_address_ip_set_port( address, port );
 
-			EXPECT_TRUE( network_address_equal( socket_address_local( sock ), address ) );
+			if( socket_bind( sock, address ) )
+			{
+				EXPECT_NE( socket_address_local( sock ), 0 );
+				EXPECT_EQ( socket_address_remote( sock ), 0 );
+				EXPECT_EQ( socket_state( sock ), SOCKETSTATE_NOTCONNECTED );
 
-			was_bound = true;
+				EXPECT_TRUE( network_address_equal( socket_address_local( sock ), address ) );
+
+				was_bound = true;
+			}
+
+			memory_deallocate( address );
 		}
+		EXPECT_TRUE( was_bound );
 
-		memory_deallocate( address );
+		socket_destroy( sock );
+
+		EXPECT_FALSE( socket_is_socket( sock ) );
 	}
-	EXPECT_TRUE( was_bound );
-
-	socket_destroy( sock );
-
-	EXPECT_FALSE( socket_is_socket( sock ) );
 
 	return 0;
 }
@@ -186,69 +194,77 @@ DECLARE_TEST( udp, blocking )
 
 DECLARE_TEST( udp, bind )
 {
+	bool has_ipv4 = network_supports_ipv4();
+	bool has_ipv6 = network_supports_ipv6();
 	bool was_bound = false;
 	int port;
 
-	object_t sock = udp_socket_create();
-
-	EXPECT_TRUE( socket_is_socket( sock ) );
-
-	EXPECT_EQ( socket_address_local( sock ), 0 );
-	EXPECT_EQ( socket_address_remote( sock ), 0 );
-	EXPECT_EQ( socket_state( sock ), SOCKETSTATE_NOTCONNECTED );
-
-	for( port = 31890; !was_bound && ( port < 32890 ); ++port )
+	if( has_ipv4 )
 	{
-		network_address_t* address = network_address_ipv4_any();
-		network_address_ip_set_port( address, port );
+		object_t sock = udp_socket_create();
 
-		if( socket_bind( sock, address ) )
+		EXPECT_TRUE( socket_is_socket( sock ) );
+
+		EXPECT_EQ( socket_address_local( sock ), 0 );
+		EXPECT_EQ( socket_address_remote( sock ), 0 );
+		EXPECT_EQ( socket_state( sock ), SOCKETSTATE_NOTCONNECTED );
+
+		for( port = 31890; !was_bound && ( port < 32890 ); ++port )
 		{
-			EXPECT_NE( socket_address_local( sock ), 0 );
-			EXPECT_EQ( socket_address_remote( sock ), 0 );
-			EXPECT_EQ( socket_state( sock ), SOCKETSTATE_NOTCONNECTED );
+			network_address_t* address = network_address_ipv4_any();
+			network_address_ip_set_port( address, port );
 
-			EXPECT_TRUE( network_address_equal( socket_address_local( sock ), address ) );
+			if( socket_bind( sock, address ) )
+			{
+				EXPECT_NE( socket_address_local( sock ), 0 );
+				EXPECT_EQ( socket_address_remote( sock ), 0 );
+				EXPECT_EQ( socket_state( sock ), SOCKETSTATE_NOTCONNECTED );
 
-			was_bound = true;
+				EXPECT_TRUE( network_address_equal( socket_address_local( sock ), address ) );
+
+				was_bound = true;
+			}
+
+			memory_deallocate( address );
 		}
+		EXPECT_TRUE( was_bound );
 
-		memory_deallocate( address );
+		socket_destroy( sock );
+
+		EXPECT_FALSE( socket_is_socket( sock ) );
 	}
-	EXPECT_TRUE( was_bound );
 
-	socket_destroy( sock );
-
-	EXPECT_FALSE( socket_is_socket( sock ) );
-
-	sock = udp_socket_create();
-
-	EXPECT_TRUE( socket_is_socket( sock ) );
-
-	was_bound = false;
-	for( port = 31890; !was_bound && ( port < 32890 ); ++port )
+	if( has_ipv6 )
 	{
-		network_address_t* address = network_address_ipv6_any();
-		network_address_ip_set_port( address, port );
+		object_t sock = udp_socket_create();
 
-		if( socket_bind( sock, address ) )
+		EXPECT_TRUE( socket_is_socket( sock ) );
+
+		was_bound = false;
+		for( port = 31890; !was_bound && ( port < 32890 ); ++port )
 		{
-			EXPECT_NE( socket_address_local( sock ), 0 );
-			EXPECT_EQ( socket_address_remote( sock ), 0 );
-			EXPECT_EQ( socket_state( sock ), SOCKETSTATE_NOTCONNECTED );
+			network_address_t* address = network_address_ipv6_any();
+			network_address_ip_set_port( address, port );
 
-			EXPECT_TRUE( network_address_equal( socket_address_local( sock ), address ) );
+			if( socket_bind( sock, address ) )
+			{
+				EXPECT_NE( socket_address_local( sock ), 0 );
+				EXPECT_EQ( socket_address_remote( sock ), 0 );
+				EXPECT_EQ( socket_state( sock ), SOCKETSTATE_NOTCONNECTED );
 
-			was_bound = true;
+				EXPECT_TRUE( network_address_equal( socket_address_local( sock ), address ) );
+
+				was_bound = true;
+			}
+
+			memory_deallocate( address );
 		}
+		EXPECT_TRUE( was_bound );
 
-		memory_deallocate( address );
+		socket_destroy( sock );
+
+		EXPECT_FALSE( socket_is_socket( sock ) );
 	}
-	EXPECT_TRUE( was_bound );
-
-	socket_destroy( sock );
-
-	EXPECT_FALSE( socket_is_socket( sock ) );
 
 	return 0;
 }

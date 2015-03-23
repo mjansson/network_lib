@@ -94,8 +94,6 @@ DECLARE_TEST( address, resolve )
 	bool has_ipv6 = network_supports_ipv6();
 	int expected_addresses = ( has_ipv4 ? 1 : 0 ) + ( has_ipv6 ? 1 : 0 );
 
-	log_set_suppress( HASH_NETWORK, ERRORLEVEL_NONE );
-
 	network_address_t** addresses = network_address_resolve( "localhost" );
 	log_debugf( HASH_NETWORK, "localhost -> %u addresses", array_size( addresses ) );
 	EXPECT_EQ( array_size( addresses ), expected_addresses );

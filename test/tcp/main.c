@@ -78,16 +78,20 @@ DECLARE_TEST( tcp, connect_ipv4 )
 	int iaddr;
 	bool success = false;
 	network_address_t** addresses = 0;
+	object_t sock_client;
+
+	if( !network_supports_ipv4() )
+		return 0;
 
 	//Blocking with timeout
-	object_t sock_client = tcp_socket_create();
+	sock_client = tcp_socket_create();
 
 	EXPECT_TRUE( socket_is_socket( sock_client ) );
 
 	socket_set_blocking( sock_client, true );
 
 	addresses = network_address_resolve( "www.rampantpixels.com:80" );
-	for( iaddr = 0; iaddr < array_size( addresses ); ++iaddr )
+	for( iaddr = 0; !success && iaddr < array_size( addresses ); ++iaddr )
 	{
 		if( network_address_family( addresses[iaddr] ) != NETWORK_ADDRESSFAMILY_IPV4 )
 			continue;
@@ -204,7 +208,8 @@ DECLARE_TEST( tcp, connect_ipv6 )
 	object_t sock_client;
 	network_address_t** addresses = 0;
 
-	log_suppress( ERRORLEVEL_NONE );
+	if( !network_supports_ipv6() )
+		return 0;
 
 	//Blocking with timeout
 	sock_client = tcp_socket_create();
@@ -334,9 +339,15 @@ DECLARE_TEST( tcp, io_ipv4 )
 	int state, iaddr, asize;
 	object_t threads[2] = {0};
 
-	object_t sock_listen = tcp_socket_create();
+	object_t sock_listen = 0;
 	object_t sock_server = 0;
-	object_t sock_client = tcp_socket_create();
+	object_t sock_client = 0;
+
+	if( !network_supports_ipv4() )
+		return 0;
+
+	sock_listen = tcp_socket_create();
+	sock_client = tcp_socket_create();
 
 	EXPECT_TRUE( socket_is_socket( sock_listen ) );
 	EXPECT_TRUE( socket_is_socket( sock_client ) );
@@ -410,9 +421,15 @@ DECLARE_TEST( tcp, io_ipv6 )
 	int state, iaddr, asize;
 	object_t threads[2] = {0};
 
-	object_t sock_listen = tcp_socket_create();
+	object_t sock_listen = 0;
 	object_t sock_server = 0;
-	object_t sock_client = tcp_socket_create();
+	object_t sock_client = 0;
+
+	if( !network_supports_ipv6() )
+		return 0;
+
+	sock_listen = tcp_socket_create();
+	sock_client = tcp_socket_create();
 
 	EXPECT_TRUE( socket_is_socket( sock_listen ) );
 	EXPECT_TRUE( socket_is_socket( sock_client ) );

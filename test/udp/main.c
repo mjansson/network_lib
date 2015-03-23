@@ -146,8 +146,14 @@ DECLARE_TEST( udp, stream_ipv4 )
 	int state, iaddr, asize;
 	object_t threads[2] = {0};
 
-	object_t sock_server = udp_socket_create();
-	object_t sock_client = udp_socket_create();
+	object_t sock_server;
+	object_t sock_client;
+
+	if( !network_supports_ipv4() )
+		return 0;
+
+	sock_server = udp_socket_create();
+	sock_client = udp_socket_create();
 
 	EXPECT_TRUE( socket_is_socket( sock_server ) );
 	EXPECT_TRUE( socket_is_socket( sock_client ) );
@@ -231,8 +237,14 @@ DECLARE_TEST( udp, stream_ipv6 )
 	int state, iaddr, asize;
 	object_t threads[2] = {0};
 
-	object_t sock_server = udp_socket_create();
-	object_t sock_client = udp_socket_create();
+	object_t sock_server;
+	object_t sock_client;
+
+	if( !network_supports_ipv6() )
+		return 0;
+
+	sock_server = udp_socket_create();
+	sock_client = udp_socket_create();
 
 	EXPECT_TRUE( socket_is_socket( sock_server ) );
 	EXPECT_TRUE( socket_is_socket( sock_client ) );
@@ -318,8 +330,17 @@ DECLARE_TEST( udp, datagram_ipv4 )
 	int state, iaddr, asize;
 	object_t threads[5] = {0};
 
-	object_t sock_server = udp_socket_create();
-	object_t sock_client[4] = { udp_socket_create(), udp_socket_create(), udp_socket_create(), udp_socket_create() };
+	object_t sock_server;
+	object_t sock_client[4];
+
+	if( !network_supports_ipv4() )
+		return 0;
+
+	sock_server = udp_socket_create();
+	sock_client[0] = udp_socket_create();
+	sock_client[1] = udp_socket_create();
+	sock_client[2] = udp_socket_create();
+	sock_client[3] = udp_socket_create();
 
 	EXPECT_TRUE( socket_is_socket( sock_server ) );
 	EXPECT_TRUE( socket_is_socket( sock_client[0] ) );
@@ -431,8 +452,17 @@ DECLARE_TEST( udp, datagram_ipv6 )
 	int state, iaddr, asize;
 	object_t threads[5] = {0};
 
-	object_t sock_server = udp_socket_create();
-	object_t sock_client[4] = { udp_socket_create(), udp_socket_create(), udp_socket_create(), udp_socket_create() };
+	object_t sock_server;
+	object_t sock_client[4];
+
+	if( !network_supports_ipv6() )
+		return 0;
+
+	sock_server = udp_socket_create();
+	sock_client[0] = udp_socket_create();
+	sock_client[1] = udp_socket_create();
+	sock_client[2] = udp_socket_create();
+	sock_client[3] = udp_socket_create();
 
 	EXPECT_TRUE( socket_is_socket( sock_server ) );
 	EXPECT_TRUE( socket_is_socket( sock_client[0] ) );
