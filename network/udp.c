@@ -302,7 +302,7 @@ static unsigned int _udp_socket_buffer_read( socket_t* sock, unsigned int wanted
 				cols = ret - ( row * 8 );
 			for( ; col < cols; ++col, ofs +=3 )
 			{
-				string_format_buffer( dump_buffer + ofs, 66 - ofs, "%02x", *( src + ( row * 8 ) + col ) );
+				string_format_buffer( dump_buffer + ofs, 66 - (unsigned int)ofs, "%02x", *( src + ( row * 8 ) + col ) );
 				*( dump_buffer + ofs + 2 ) = ' ';
 			}
 			if( ofs )
@@ -391,7 +391,7 @@ static unsigned int _udp_socket_buffer_write( socket_t* sock )
 					cols = res - ( row * 8 );
 				for( ; col < cols; ++col, ofs +=3 )
 				{
-					string_format_buffer( buffer + ofs, 34 - ofs, "%02x", *( src + ( row * 8 ) + col ) );
+					string_format_buffer( buffer + ofs, 34 - (unsigned int)ofs, "%02x", *( src + ( row * 8 ) + col ) );
 					*( buffer + ofs + 2 ) = ' ';
 				}
 				if( ofs )
@@ -551,7 +551,7 @@ network_datagram_t udp_socket_recvfrom( object_t id, network_address_t const** a
 				cols = ret - ( row * 8 );
 			for( ; col < cols; ++col, ofs +=3 )
 			{
-				string_format_buffer( dump_buffer + ofs, 66 - ofs, "%02x", *( src + ( row * 8 ) + col ) );
+				string_format_buffer( dump_buffer + ofs, 66 - (unsigned int)ofs, "%02x", *( src + ( row * 8 ) + col ) );
 				*( dump_buffer + ofs + 2 ) = ' ';
 			}
 			if( ofs )
@@ -639,7 +639,7 @@ uint64_t udp_socket_sendto( object_t id, const network_datagram_t datagram, cons
 				cols = res - ( row * 8 );
 			for( ; col < cols; ++col, ofs +=3 )
 			{
-				string_format_buffer( buffer + ofs, 34 - ofs, "%02x", *( src + ( row * 8 ) + col ) );
+				string_format_buffer( buffer + ofs, 34 - (unsigned int)ofs, "%02x", *( src + ( row * 8 ) + col ) );
 				*( buffer + ofs + 2 ) = ' ';
 			}
 			if( ofs )

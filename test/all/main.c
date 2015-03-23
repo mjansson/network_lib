@@ -11,6 +11,7 @@
  */
 
 #include <foundation/foundation.h>
+#include <network/network.h>
 
 #if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_PNACL
 
@@ -107,7 +108,7 @@ int main_initialize( void )
 {
 	application_t application;
 	memset( &application, 0, sizeof( application ) );
-	application.name = "Foundation library test suite";
+	application.name = "Network library test suite";
 	application.short_name = "test_all";
 	application.config_dir = "test_all";
 	application.flags = APPLICATION_UTILITY;
@@ -177,7 +178,7 @@ int main_run( void* main_arg )
 
 	log_set_suppress( HASH_TEST, ERRORLEVEL_DEBUG );
 
-	log_infof( HASH_TEST, "Foundation library v%s built for %s using %s (%s)", string_from_version_static( foundation_version() ), FOUNDATION_PLATFORM_DESCRIPTION, FOUNDATION_COMPILER_DESCRIPTION, build_name );
+	log_infof( HASH_TEST, "Network library v%s built for %s using %s (%s)", string_from_version_static( network_version() ), FOUNDATION_PLATFORM_DESCRIPTION, FOUNDATION_COMPILER_DESCRIPTION, build_name );
 
 	thread = thread_create( event_thread, "event_thread", THREAD_PRIORITY_NORMAL, 0 );
 	thread_start( thread, 0 );

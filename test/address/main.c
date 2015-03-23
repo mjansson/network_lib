@@ -89,7 +89,6 @@ DECLARE_TEST( address, local )
 DECLARE_TEST( address, resolve )
 {
 	unsigned int iaddr, addrsize;
-	unsigned int num_addresses = 0;
 	bool has_ipv4 = network_supports_ipv4();
 	bool has_ipv6 = network_supports_ipv6();
 	int expected_addresses = ( has_ipv4 ? 1 : 0 ) + ( has_ipv6 ? 1 : 0 );
@@ -97,7 +96,6 @@ DECLARE_TEST( address, resolve )
 	network_address_t** addresses = network_address_resolve( "localhost" );
 	log_debugf( HASH_NETWORK, "localhost -> %u addresses", array_size( addresses ) );
 	EXPECT_EQ( array_size( addresses ), expected_addresses );
-	num_addresses = array_size( addresses );
 	for( iaddr = 0, addrsize = array_size( addresses ); iaddr < addrsize; ++iaddr )
 	{
 		char* address_str = network_address_to_string( addresses[iaddr], true );
@@ -111,7 +109,6 @@ DECLARE_TEST( address, resolve )
 	addresses = network_address_resolve( "localhost:80" );
 	log_debugf( HASH_NETWORK, "localhost:80 -> %u addresses", array_size( addresses ) );
 	EXPECT_EQ( array_size( addresses ), expected_addresses );
-	num_addresses = array_size( addresses );
 	for( iaddr = 0, addrsize = array_size( addresses ); iaddr < addrsize; ++iaddr )
 	{
 		char* address_str = network_address_to_string( addresses[iaddr], true );

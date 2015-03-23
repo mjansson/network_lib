@@ -19,6 +19,7 @@
 		45138887193BA7C200BA2092 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 45138886193BA7C200BA2092 /* main.c */; };
 		45138889193BA7CE00BA2092 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 45138888193BA7CE00BA2092 /* main.c */; };
 		4513888B193BA7D900BA2092 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 4513888A193BA7D900BA2092 /* main.c */; };
+		459BDCDE1AC040D000B649E6 /* viewcontroller.m in Sources */ = {isa = PBXBuildFile; fileRef = 459BDCDD1AC040D000B649E6 /* viewcontroller.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,6 +37,8 @@
 		45138886193BA7C200BA2092 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = ../../../test/socket/main.c; sourceTree = "<group>"; };
 		45138888193BA7CE00BA2092 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = ../../../test/tcp/main.c; sourceTree = "<group>"; };
 		4513888A193BA7D900BA2092 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = ../../../test/udp/main.c; sourceTree = "<group>"; };
+		459BDCDC1AC040D000B649E6 /* viewcontroller.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = viewcontroller.h; path = ../../../test/all/ios/viewcontroller.h; sourceTree = "<group>"; };
+		459BDCDD1AC040D000B649E6 /* viewcontroller.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = viewcontroller.m; path = ../../../test/all/ios/viewcontroller.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -90,6 +93,8 @@
 		45138874193BA3F500BA2092 /* all */ = {
 			isa = PBXGroup;
 			children = (
+				459BDCDC1AC040D000B649E6 /* viewcontroller.h */,
+				459BDCDD1AC040D000B649E6 /* viewcontroller.m */,
 				45138877193BA42D00BA2092 /* Images.xcassets */,
 				45138878193BA42D00BA2092 /* test-all.plist */,
 				45138879193BA42D00BA2092 /* test-all.xib */,
@@ -165,6 +170,11 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0510;
+				TargetAttributes = {
+					45138843193BA3D600BA2092 = {
+						DevelopmentTeam = TDSNBN44YV;
+					};
+				};
 			};
 			buildConfigurationList = 451387F4193B9AD000BA2092 /* Build configuration list for PBXProject "test" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -201,6 +211,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				459BDCDE1AC040D000B649E6 /* viewcontroller.m in Sources */,
 				4513888B193BA7D900BA2092 /* main.c in Sources */,
 				45138889193BA7CE00BA2092 /* main.c in Sources */,
 				45138885193BA7B600BA2092 /* main.c in Sources */,
@@ -303,6 +314,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -337,6 +349,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -411,6 +424,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -485,6 +499,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;

@@ -436,7 +436,8 @@ bool socket_set_multicast_group( object_t id, network_address_t* address )
 	if( setsockopt( fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)&req, sizeof( req ) ) != 0 )
 	{
 		int sockerr = NETWORK_SOCKET_ERROR;
-		log_errorf( HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL, "Add multicast group failed on socket 0x%llx (0x%" PRIfixPTR " : %d): %s", sock->id, sock, fd, system_error_message( sockerr ) );
+		log_errorf( HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL, "Add multicast group failed on socket 0x%llx (0x%" PRIfixPTR " : %d): %s (%d)", sock->id, sock, fd, system_error_message( sockerr ), sockerr );
+		FOUNDATION_UNUSED( sockerr );
 		return false;
 	}
 
@@ -629,8 +630,9 @@ void _socket_set_reuse_address( socket_t* sock, bool reuse )
 		int optval = reuse ? 1 : 0;
     	if( setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof( optval ) ) < 0 )
     	{
-    		int err = NETWORK_SOCKET_ERROR;
-    		log_warnf( HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL, "Unable to set reuse address option on socket 0x%llx (0x%" PRIfixPTR " : %d): %s %d", sockbase->object, sock, sockbase->fd, system_error_message( err ), err );
+    		int sockerr = NETWORK_SOCKET_ERROR;
+    		log_warnf( HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL, "Unable to set reuse address option on socket 0x%llx (0x%" PRIfixPTR " : %d): %s (%d)", sockbase->object, sock, sockbase->fd, system_error_message( sockerr ), sockerr );
+    		FOUNDATION_UNUSED( sockerr );
     	}
     }
 }
@@ -653,8 +655,9 @@ void _socket_set_reuse_port( socket_t* sock, bool reuse )
 		int optval = reuse ? 1 : 0;
     	if( setsockopt( fd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof( optval ) ) < 0 )
     	{
-    		int err = NETWORK_SOCKET_ERROR;
-    		log_warnf( HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL, "Unable to set reuse port option on socket 0x%llx (0x%" PRIfixPTR " : %d): %s %d", sockbase->object, sock, sockbase->fd, system_error_message( err ), err );
+    		int sockerr = NETWORK_SOCKET_ERROR;
+    		log_warnf( HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL, "Unable to set reuse port option on socket 0x%llx (0x%" PRIfixPTR " : %d): %s (%d)", sockbase->object, sock, sockbase->fd, system_error_message( sockerr ), sockerr );
+    		FOUNDATION_UNUSED( sockerr );
     	}
     }
 #endif

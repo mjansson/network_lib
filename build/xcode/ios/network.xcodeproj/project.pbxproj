@@ -14,6 +14,7 @@
 		45138839193BA0E300BA2092 /* socket.c in Sources */ = {isa = PBXBuildFile; fileRef = 4513882E193BA0E300BA2092 /* socket.c */; };
 		4513883A193BA0E300BA2092 /* tcp.c in Sources */ = {isa = PBXBuildFile; fileRef = 45138830193BA0E300BA2092 /* tcp.c */; };
 		4513883B193BA0E300BA2092 /* udp.c in Sources */ = {isa = PBXBuildFile; fileRef = 45138833193BA0E300BA2092 /* udp.c */; };
+		459BDCDB1AC03E8D00B649E6 /* version.c in Sources */ = {isa = PBXBuildFile; fileRef = 459BDCDA1AC03E8D00B649E6 /* version.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -48,6 +49,7 @@
 		45138832193BA0E300BA2092 /* types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = types.h; path = ../../../network/types.h; sourceTree = "<group>"; };
 		45138833193BA0E300BA2092 /* udp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = udp.c; path = ../../../network/udp.c; sourceTree = "<group>"; };
 		45138834193BA0E300BA2092 /* udp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = udp.h; path = ../../../network/udp.h; sourceTree = "<group>"; };
+		459BDCDA1AC03E8D00B649E6 /* version.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = version.c; path = ../../../network/version.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,6 +101,7 @@
 				45138832193BA0E300BA2092 /* types.h */,
 				45138833193BA0E300BA2092 /* udp.c */,
 				45138834193BA0E300BA2092 /* udp.h */,
+				459BDCDA1AC03E8D00B649E6 /* version.c */,
 			);
 			name = network;
 			sourceTree = "<group>";
@@ -110,6 +113,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 4513881C193B9B2100BA2092 /* Build configuration list for PBXNativeTarget "network" */;
 			buildPhases = (
+				459BDCD91AC039AA00B649E6 /* ShellScript */,
 				451387F7193B9B2100BA2092 /* Sources */,
 				451387F8193B9B2100BA2092 /* Frameworks */,
 				451387F9193B9B2100BA2092 /* CopyFiles */,
@@ -148,11 +152,29 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		459BDCD91AC039AA00B649E6 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+				network/version.c,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "python ${PROJECT_DIR}/../../ninja/version.py network ${PROJECT_DIR}/../../../network";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		451387F7193B9B2100BA2092 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				459BDCDB1AC03E8D00B649E6 /* version.c in Sources */,
 				4513883B193BA0E300BA2092 /* udp.c in Sources */,
 				45138837193BA0E300BA2092 /* network.c in Sources */,
 				45138836193BA0E300BA2092 /* event.c in Sources */,
@@ -435,6 +457,7 @@
 				4513883F193BA35600BA2092 /* Deploy */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

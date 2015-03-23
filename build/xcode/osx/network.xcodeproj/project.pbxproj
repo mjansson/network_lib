@@ -25,6 +25,7 @@
 		45138752193A80F700BA2092 /* types.h in Headers */ = {isa = PBXBuildFile; fileRef = 45138740193A80F700BA2092 /* types.h */; };
 		45138753193A80F700BA2092 /* udp.c in Sources */ = {isa = PBXBuildFile; fileRef = 45138741193A80F700BA2092 /* udp.c */; };
 		45138754193A80F700BA2092 /* udp.h in Headers */ = {isa = PBXBuildFile; fileRef = 45138742193A80F700BA2092 /* udp.h */; };
+		459BDCE01AC0421600B649E6 /* version.c in Sources */ = {isa = PBXBuildFile; fileRef = 459BDCDF1AC0421600B649E6 /* version.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -47,6 +48,7 @@
 		45138740193A80F700BA2092 /* types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = types.h; path = ../../../network/types.h; sourceTree = "<group>"; };
 		45138741193A80F700BA2092 /* udp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = udp.c; path = ../../../network/udp.c; sourceTree = "<group>"; };
 		45138742193A80F700BA2092 /* udp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = udp.h; path = ../../../network/udp.h; sourceTree = "<group>"; };
+		459BDCDF1AC0421600B649E6 /* version.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = version.c; path = ../../../network/version.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -98,6 +100,7 @@
 				45138740193A80F700BA2092 /* types.h */,
 				45138741193A80F700BA2092 /* udp.c */,
 				45138742193A80F700BA2092 /* udp.h */,
+				459BDCDF1AC0421600B649E6 /* version.c */,
 			);
 			name = network;
 			sourceTree = "<group>";
@@ -130,6 +133,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 4513872D193A800D00BA2092 /* Build configuration list for PBXNativeTarget "network" */;
 			buildPhases = (
+				459BDCE11AC0424A00B649E6 /* ShellScript */,
 				45138725193A800D00BA2092 /* Sources */,
 				45138726193A800D00BA2092 /* Frameworks */,
 				45138727193A800D00BA2092 /* Headers */,
@@ -149,7 +153,7 @@
 		45138721193A800D00BA2092 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0610;
+				LastUpgradeCheck = 0620;
 				ORGANIZATIONNAME = "Rampant Pixels AB";
 			};
 			buildConfigurationList = 45138724193A800D00BA2092 /* Build configuration list for PBXProject "network" */;
@@ -169,11 +173,29 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		459BDCE11AC0424A00B649E6 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+				network/version.c,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "python ${PROJECT_DIR}/../../ninja/version.py network ${PROJECT_DIR}/../../../network";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		45138725193A800D00BA2092 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				459BDCE01AC0421600B649E6 /* version.c in Sources */,
 				45138753193A80F700BA2092 /* udp.c in Sources */,
 				4513874A193A80F700BA2092 /* network.c in Sources */,
 				45138746193A80F700BA2092 /* event.c in Sources */,
@@ -290,6 +312,7 @@
 		4513872E193A800D00BA2092 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				EXECUTABLE_PREFIX = lib;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -298,6 +321,7 @@
 		4513872F193A800D00BA2092 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				EXECUTABLE_PREFIX = lib;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -356,6 +380,7 @@
 		4513875D193A81CC00BA2092 /* Profile */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				EXECUTABLE_PREFIX = lib;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -414,6 +439,7 @@
 		4513875F193A81D000BA2092 /* Deploy */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				EXECUTABLE_PREFIX = lib;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
