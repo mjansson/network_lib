@@ -589,21 +589,27 @@ void _socket_close( socket_t* sock )
 	if( fd != SOCKET_INVALID )
 	{
 		_socket_set_blocking_fd( fd, false );
-#if FOUNDATION_PLATFORM_WINDOWS
-		shutdown( fd, SD_BOTH );
-		closesocket( fd );
-#elif FOUNDATION_PLATFORM_POSIX
-		shutdown( fd, SHUT_RDWR );
-		close( fd );
-#else
-#  error Not implemented
-#endif
+		_socket_close_fd( fd );
 	}
 
 	if( local_address )
 		memory_deallocate( local_address );
 	if( remote_address )
 		memory_deallocate( remote_address );
+}
+
+
+void _socket_close_fd( int fd )
+{
+#if FOUNDATION_PLATFORM_WINDOWS
+	shutdown( fd, SD_BOTH );
+	closesocket( fd );
+#elif FOUNDATION_PLATFORM_POSIX
+	shutdown( fd, SHUT_RDWR );
+	close( fd );
+#else
+#  error Not implemented
+#endif
 }
 
 

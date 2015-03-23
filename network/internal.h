@@ -1,10 +1,10 @@
 /* internal.h  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
- * 
+ *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
- * 
+ *
  * https://github.com/rampantpixels/network_lib
- * 
+ *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
  */
@@ -160,7 +160,7 @@ struct ALIGN(16) _socket
 	socket_buffer_read_fn          read_fn;
 	socket_buffer_write_fn         write_fn;
 	socket_stream_initialize_fn    stream_initialize_fn;
-	
+
 	socket_stream_t*               stream;
 
 	uint8_t                        buffer_in[BUILD_SIZE_SOCKET_READBUFFER];
@@ -176,6 +176,7 @@ NETWORK_API socket_t*              _socket_allocate( void );
 NETWORK_API int                    _socket_allocate_base( socket_t* sock );
 NETWORK_API socket_t*              _socket_lookup( object_t id );
 NETWORK_API void                   _socket_close( socket_t* sock );
+NETWORK_API void                   _socket_close_fd( int fd );
 NETWORK_API void                   _socket_set_blocking( socket_t* sock, bool block );
 NETWORK_API void                   _socket_set_reuse_address( socket_t* sock, bool reuse );
 NETWORK_API void                   _socket_set_reuse_port( socket_t* sock, bool reuse );

@@ -34,3 +34,6 @@ NETWORK_API bool        network_is_initialized( void );
 NETWORK_API void        network_shutdown( void );
 
 NETWORK_API version_t   network_version( void );
+
+NETWORK_API bool        network_supports_ipv4( void );
+NETWORK_API bool        network_supports_ipv6( void );
