@@ -1,10 +1,10 @@
 /* main.c  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
- * 
+ *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
- * 
+ *
  * https://github.com/rampantpixels/network_lib
- * 
+ *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
  */
@@ -24,7 +24,8 @@ typedef struct _test_datagram_arg
 
 application_t test_udp_application( void )
 {
-	application_t app = {0};
+	application_t app;
+	memset( &app, 0, sizeof( app ) );
 	app.name = "Network UDP tests";
 	app.short_name = "test_udp";
 	app.config_dir = "test_udp";
@@ -60,17 +61,17 @@ static void* stream_blocking_thread( object_t thread, void* arg )
 
 	char buffer_out[317] = {0};
 	char buffer_in[317] = {0};
-	
+
 	stream_t* stream = socket_stream( sock );
 
-	for( iloop = 0; iloop < 512; ++iloop )
+	for( iloop = 0; !thread_should_terminate( thread ) && iloop < 512; ++iloop )
 	{
 		log_infof( HASH_NETWORK, "UDP write pass %d", iloop );
 		EXPECT_EQ( stream_write( stream, buffer_out, 127 ), 127 );
 		EXPECT_EQ( stream_write( stream, buffer_out + 127, 180 ), 180 );
-		stream_flush( stream );	
+		stream_flush( stream );
 		EXPECT_EQ( stream_write( stream, buffer_out + 307, 10 ), 10 );
-		stream_flush( stream );	
+		stream_flush( stream );
 		log_infof( HASH_NETWORK, "UDP read pass %d", iloop );
 		EXPECT_EQ( stream_read( stream, buffer_in, 235 ), 235 );
 		EXPECT_EQ( stream_read( stream, buffer_in + 235, 82 ), 82 );
@@ -79,7 +80,7 @@ static void* stream_blocking_thread( object_t thread, void* arg )
 
 	log_debugf( HASH_NETWORK, "IO complete on socket 0x%llx", sock );
 	stream_deallocate( stream );
-	
+
 	return 0;
 }
 
@@ -91,7 +92,7 @@ static void* datagram_server_blocking_thread( object_t thread, void* arg )
 	object_t sock = *(object_t*)arg;
 	network_datagram_t datagram;
 
-	for( iloop = 0; iloop < 512 * 4; ++iloop )
+	for( iloop = 0; !thread_should_terminate( thread ) && iloop < 512 * 4; ++iloop )
 	{
 		log_infof( HASH_NETWORK, "UDP mirror pass %d", iloop );
 		datagram = udp_socket_recvfrom( sock, &from );
@@ -101,7 +102,7 @@ static void* datagram_server_blocking_thread( object_t thread, void* arg )
 	}
 
 	log_infof( HASH_NETWORK, "IO complete on socket 0x%llx", sock );
-	
+
 	return 0;
 }
 
@@ -116,11 +117,11 @@ static void* datagram_client_blocking_thread( object_t thread, void* arg )
 	const network_address_t* address;
 
 	char buffer[1024] = {0};
-	network_datagram_t datagram = { buffer, 973 };
-	
+	network_datagram_t datagram = { 973, buffer };
+
 	log_debugf( HASH_NETWORK, "IO start on socket 0x%llx", sock );
-	
-	for( iloop = 0; iloop < 512; ++iloop )
+
+	for( iloop = 0; !thread_should_terminate( thread ) && iloop < 512; ++iloop )
 	{
 		log_infof( HASH_NETWORK, "UDP read/write pass %d", iloop );
 		EXPECT_EQ( udp_socket_sendto( sock, datagram, target ), datagram.size );
@@ -131,7 +132,7 @@ static void* datagram_client_blocking_thread( object_t thread, void* arg )
 	}
 
 	log_infof( HASH_NETWORK, "IO complete on socket 0x%llx", sock );
-	
+
 	return 0;
 }
 
@@ -177,7 +178,7 @@ DECLARE_TEST( udp, stream_ipv4 )
 		if( socket_bind( sock_client, address ) )
 			break;
 	} while( true );
-	
+
 	socket_set_blocking( sock_server, false );
 	socket_set_blocking( sock_client, false );
 
@@ -188,10 +189,10 @@ DECLARE_TEST( udp, stream_ipv4 )
 	socket_connect( sock_client, address, 0 );
 
 	network_address_array_deallocate( address_local );
-	
+
 	state = socket_state( sock_server );
 	EXPECT_TRUE( state == SOCKETSTATE_CONNECTED );
-	
+
 	state = socket_state( sock_client );
 	EXPECT_TRUE( state == SOCKETSTATE_CONNECTED );
 
@@ -203,20 +204,20 @@ DECLARE_TEST( udp, stream_ipv4 )
 
 	thread_start( threads[0], &sock_server );
 	thread_start( threads[1], &sock_client );
-	
+
 	test_wait_for_threads_startup( threads, 2 );
 
 	thread_destroy( threads[0] );
 	thread_destroy( threads[1] );
 
 	test_wait_for_threads_exit( threads, 2 );
-	
+
 	socket_destroy( sock_server );
 	socket_destroy( sock_client );
 
 	EXPECT_FALSE( socket_is_socket( sock_server ) );
 	EXPECT_FALSE( socket_is_socket( sock_client ) );
-	
+
 	return 0;
 }
 
@@ -262,7 +263,7 @@ DECLARE_TEST( udp, stream_ipv6 )
 		if( socket_bind( sock_client, address ) )
 			break;
 	} while( true );
-	
+
 	socket_set_blocking( sock_server, false );
 	socket_set_blocking( sock_client, false );
 
@@ -273,10 +274,10 @@ DECLARE_TEST( udp, stream_ipv6 )
 	socket_connect( sock_client, address, 0 );
 
 	network_address_array_deallocate( address_local );
-	
+
 	state = socket_state( sock_server );
 	EXPECT_TRUE( state == SOCKETSTATE_CONNECTED );
-	
+
 	state = socket_state( sock_client );
 	EXPECT_TRUE( state == SOCKETSTATE_CONNECTED );
 
@@ -288,20 +289,20 @@ DECLARE_TEST( udp, stream_ipv6 )
 
 	thread_start( threads[0], &sock_server );
 	thread_start( threads[1], &sock_client );
-	
+
 	test_wait_for_threads_startup( threads, 2 );
 
 	thread_destroy( threads[0] );
 	thread_destroy( threads[1] );
 
 	test_wait_for_threads_exit( threads, 2 );
-	
+
 	socket_destroy( sock_server );
 	socket_destroy( sock_client );
 
 	EXPECT_FALSE( socket_is_socket( sock_server ) );
 	EXPECT_FALSE( socket_is_socket( sock_client ) );
-	
+
 	return 0;
 }
 
@@ -344,24 +345,24 @@ DECLARE_TEST( udp, datagram_ipv4 )
 		if( socket_bind( sock_server, address ) )
 			break;
 	} while( true );
-	
+
 	address_server = network_address_clone( address );
 	network_address_ip_set_port( address_server, server_port );
 
 	network_address_array_deallocate( address_local );
-	
+
 	state = socket_state( sock_server );
 	EXPECT_TRUE( state == SOCKETSTATE_NOTCONNECTED );
-	
+
 	state = socket_state( sock_client[0] );
 	EXPECT_TRUE( state == SOCKETSTATE_NOTCONNECTED );
-	
+
 	state = socket_state( sock_client[1] );
 	EXPECT_TRUE( state == SOCKETSTATE_NOTCONNECTED );
-	
+
 	state = socket_state( sock_client[2] );
 	EXPECT_TRUE( state == SOCKETSTATE_NOTCONNECTED );
-	
+
 	state = socket_state( sock_client[3] );
 	EXPECT_TRUE( state == SOCKETSTATE_NOTCONNECTED );
 
@@ -390,7 +391,7 @@ DECLARE_TEST( udp, datagram_ipv4 )
 
 	client_arg[3].sock = sock_client[3]; client_arg[3].target = address_server;
 	thread_start( threads[4], &client_arg[3] );
-	
+
 	test_wait_for_threads_startup( threads, 5 );
 
 	thread_destroy( threads[0] );
@@ -400,7 +401,7 @@ DECLARE_TEST( udp, datagram_ipv4 )
 	thread_destroy( threads[4] );
 
 	test_wait_for_threads_exit( threads, 5 );
-	
+
 	socket_destroy( sock_server );
 	socket_destroy( sock_client[0] );
 	socket_destroy( sock_client[1] );
@@ -414,7 +415,7 @@ DECLARE_TEST( udp, datagram_ipv4 )
 	EXPECT_FALSE( socket_is_socket( sock_client[3] ) );
 
 	memory_deallocate( address_server );
-	
+
 	return 0;
 }
 
@@ -457,24 +458,24 @@ DECLARE_TEST( udp, datagram_ipv6 )
 		if( socket_bind( sock_server, address ) )
 			break;
 	} while( true );
-	
+
 	address_server = network_address_clone( address );
 	network_address_ip_set_port( address_server, server_port );
 
 	network_address_array_deallocate( address_local );
-	
+
 	state = socket_state( sock_server );
 	EXPECT_TRUE( state == SOCKETSTATE_NOTCONNECTED );
-	
+
 	state = socket_state( sock_client[0] );
 	EXPECT_TRUE( state == SOCKETSTATE_NOTCONNECTED );
-	
+
 	state = socket_state( sock_client[1] );
 	EXPECT_TRUE( state == SOCKETSTATE_NOTCONNECTED );
-	
+
 	state = socket_state( sock_client[2] );
 	EXPECT_TRUE( state == SOCKETSTATE_NOTCONNECTED );
-	
+
 	state = socket_state( sock_client[3] );
 	EXPECT_TRUE( state == SOCKETSTATE_NOTCONNECTED );
 
@@ -494,16 +495,16 @@ DECLARE_TEST( udp, datagram_ipv6 )
 
 	client_arg[0].sock = sock_client[0]; client_arg[0].target = address_server;
 	thread_start( threads[1], &client_arg[0] );
-	
+
 	client_arg[1].sock = sock_client[1]; client_arg[1].target = address_server;
 	thread_start( threads[2], &client_arg[1] );
-	
+
 	client_arg[2].sock = sock_client[2]; client_arg[2].target = address_server;
 	thread_start( threads[3], &client_arg[2] );
-	
+
 	client_arg[3].sock = sock_client[3]; client_arg[3].target = address_server;
 	thread_start( threads[4], &client_arg[3] );
-	
+
 	test_wait_for_threads_startup( threads, 5 );
 
 	thread_destroy( threads[0] );
@@ -513,7 +514,7 @@ DECLARE_TEST( udp, datagram_ipv6 )
 	thread_destroy( threads[4] );
 
 	test_wait_for_threads_exit( threads, 5 );
-	
+
 	socket_destroy( sock_server );
 	socket_destroy( sock_client[0] );
 	socket_destroy( sock_client[1] );
@@ -527,7 +528,7 @@ DECLARE_TEST( udp, datagram_ipv6 )
 	EXPECT_FALSE( socket_is_socket( sock_client[3] ) );
 
 	memory_deallocate( address_server );
-	
+
 	return 0;
 }
 

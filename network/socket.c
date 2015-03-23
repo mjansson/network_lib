@@ -1,10 +1,10 @@
 /* socket.c  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
- * 
+ *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
- * 
+ *
  * https://github.com/rampantpixels/network_lib
- * 
+ *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
  */
@@ -17,12 +17,12 @@
 #include <foundation/foundation.h>
 
 
-socket_base_t*           _socket_base = 0;
-atomic32_t               _socket_base_next = {0};
-int32_t                  _socket_base_size = 0;
+socket_base_t*           _socket_base;
+atomic32_t               _socket_base_next;
+int32_t                  _socket_base_size;
 
-static objectmap_t*      _socket_map = 0;
-static stream_vtable_t   _socket_stream_vtable = {0};
+static objectmap_t*      _socket_map;
+static stream_vtable_t   _socket_stream_vtable;
 
 static void              _socket_deallocate( socket_t* sock );
 static unsigned int      _socket_buffered_in( const socket_t* sock );
@@ -53,7 +53,7 @@ socket_t* _socket_allocate( void )
 		return 0;
 
 	sock = memory_allocate( HASH_NETWORK, sizeof( socket_t ), 16, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
-	
+
 	log_debugf( HASH_NETWORK, "Allocated socket 0x%llx (0x%" PRIfixPTR ")", object, sock );
 
 	sock->id = object;
@@ -98,7 +98,7 @@ int _socket_allocate_base( socket_t* sock )
 			sockbase->last_event = 0;
 			return base;
 		}
-		
+
 	} while( true );
 
 	return -1;
@@ -108,7 +108,7 @@ int _socket_allocate_base( socket_t* sock )
 static void _socket_deallocate( socket_t* sock )
 {
 	const object_t object = sock->id;
-	
+
 #if BUILD_ENABLE_DEBUG_LOG
 	int fd = SOCKET_INVALID;
 	if( sock->base >= 0 )
@@ -117,9 +117,9 @@ static void _socket_deallocate( socket_t* sock )
 #endif
 
 	objectmap_free( _socket_map, object );
-	
+
 	_socket_close( sock );
-	
+
 	FOUNDATION_ASSERT_MSG( !sock->stream, "Socket deallocated while still holding stream" );
 	stream_deallocate( (stream_t*)sock->stream );
 
@@ -138,7 +138,7 @@ int _socket_create_fd( socket_t* sock, network_address_family_t family )
 	}
 
 	sockbase = _socket_base + sock->base;
-	
+
 	if( sockbase->fd != SOCKET_INVALID )
 	{
 		if( sock->family != family )
@@ -214,7 +214,7 @@ bool socket_bind( object_t id, const network_address_t* address )
 
 	if( _socket_create_fd( sock, address->family ) == SOCKET_INVALID )
 		goto exit;
-	
+
 	sockbase = _socket_base + sock->base;
 	address_ip = (const network_address_ip_t*)address;
 	if( bind( sockbase->fd, &address_ip->saddr, address_ip->address_size ) == 0 )
@@ -243,7 +243,7 @@ bool socket_bind( object_t id, const network_address_t* address )
 exit:
 
 	socket_destroy( id );
-	
+
 	return success;
 }
 
@@ -266,7 +266,7 @@ bool socket_connect( object_t id, const network_address_t* address, unsigned int
 
 	if( _socket_create_fd( sock, address->family ) == SOCKET_INVALID )
 		goto exit;
-	
+
 	sockbase = _socket_base + sock->base;
 	if( sockbase->state != SOCKETSTATE_NOTCONNECTED )
 	{
@@ -280,7 +280,7 @@ bool socket_connect( object_t id, const network_address_t* address, unsigned int
 
 	sockbase->flags &= ~( SOCKETFLAG_CONNECTION_PENDING | SOCKETFLAG_ERROR_PENDING | SOCKETFLAG_HANGUP_PENDING );
     sockbase->last_event = 0;
-	
+
 	err = sock->connect_fn ? sock->connect_fn( sock, address, timeout ) : false;
 	if( err )
 	{
@@ -296,7 +296,7 @@ bool socket_connect( object_t id, const network_address_t* address, unsigned int
 		memory_deallocate( sock->address_remote );
 		sock->address_remote = network_address_clone( address );
 	}
-	
+
 exit:
 
 	socket_destroy( id );
@@ -332,7 +332,7 @@ void socket_set_blocking( object_t id, bool block )
 	}
 
 	_socket_set_blocking( sock, block );
-	
+
 	socket_destroy( id );
 }
 
@@ -364,7 +364,7 @@ void socket_set_reuse_address( object_t id, bool reuse )
 	}
 
 	_socket_set_reuse_address( sock, reuse );
-	
+
 	socket_destroy( id );
 }
 
@@ -396,7 +396,7 @@ void socket_set_reuse_port( object_t id, bool reuse )
 	}
 
 	_socket_set_reuse_port( sock, reuse );
-	
+
 	socket_destroy( id );
 }
 
@@ -505,7 +505,7 @@ stream_t* socket_stream( object_t id )
 		stream = sock->stream;
 		socket_destroy( id );
 	}
-	
+
 	return (stream_t*)stream;
 }
 
@@ -582,10 +582,10 @@ void _socket_close( socket_t* sock )
 	}
 
 	log_debugf( HASH_NETWORK, "Closing socket 0x%llx (0x%" PRIfixPTR " : %d)", sock->id, sock, fd );
-	
+
 	sock->address_local  = 0;
 	sock->address_remote = 0;
-	
+
 	if( fd != SOCKET_INVALID )
 	{
 		_socket_set_blocking_fd( fd, false );
@@ -621,7 +621,11 @@ void _socket_set_reuse_address( socket_t* sock, bool reuse )
 	if( fd != SOCKET_INVALID )
 	{
 		int optval = reuse ? 1 : 0;
-    	setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof( optval ) );
+    	if( setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof( optval ) ) < 0 )
+    	{
+    		int err = NETWORK_SOCKET_ERROR;
+    		log_warnf( HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL, "Unable to set reuse address option on socket 0x%llx (0x%" PRIfixPTR " : %d): %s %d", sockbase->object, sock, sockbase->fd, system_error_message( err ), err );
+    	}
     }
 }
 
@@ -636,12 +640,18 @@ void _socket_set_reuse_port( socket_t* sock, bool reuse )
 
 	sockbase = _socket_base + sock->base;
 	sockbase->flags = ( reuse ? sockbase->flags | SOCKETFLAG_REUSE_PORT : sockbase->flags & ~SOCKETFLAG_REUSE_PORT );
+#ifdef SO_REUSEPORT
 	fd = sockbase->fd;
 	if( fd != SOCKET_INVALID )
 	{
 		int optval = reuse ? 1 : 0;
-    	setsockopt( fd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval) );
+    	if( setsockopt( fd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof( optval ) ) < 0 )
+    	{
+    		int err = NETWORK_SOCKET_ERROR;
+    		log_warnf( HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL, "Unable to set reuse port option on socket 0x%llx (0x%" PRIfixPTR " : %d): %s %d", sockbase->object, sock, sockbase->fd, system_error_message( err ), err );
+    	}
     }
+#endif
 }
 
 
@@ -663,11 +673,12 @@ void _socket_set_blocking( socket_t* sock, bool block )
 
 void _socket_set_blocking_fd( int fd, bool block )
 {
-	unsigned long param = block ? 0 : 1;
 #if FOUNDATION_PLATFORM_WINDOWS
+	unsigned long param = block ? 0 : 1;
 	ioctlsocket( fd, FIONBIO, &param );
 #elif FOUNDATION_PLATFORM_POSIX
-	ioctl( fd, FIONBIO, &param );
+	const int flags = fcntl( fd, F_GETFL, 0 );
+	fcntl( fd, F_SETFL, block ? ( flags & ~O_NONBLOCK ) : ( flags | O_NONBLOCK ) );
 #else
 #  error Not implemented
 #endif
@@ -709,7 +720,7 @@ static void _socket_doflush( socket_t* sock )
 		return;
 	if( !sock->offset_write_out )
 		return;
-	
+
 	sockbase = _socket_base + sock->base;
 	if( sockbase->state != SOCKETSTATE_CONNECTED )
 		return;
@@ -736,7 +747,7 @@ socket_state_t _socket_poll_state( socket_base_t* sockbase )
 			FD_ZERO( &fderr );
 			FD_SET( sockbase->fd, &fdwrite );
 			FD_SET( sockbase->fd, &fderr   );
-				
+
 			tv.tv_sec  = 0;
 			tv.tv_usec = 0;
 
@@ -803,7 +814,7 @@ socket_state_t _socket_poll_state( socket_base_t* sockbase )
 
 	if( sock )
 		socket_destroy( sock->id );
-	
+
 	return sockbase->state;
 }
 
@@ -847,7 +858,7 @@ static socket_stream_t* _socket_stream_allocate( object_t id )
 	stream_t* stream = (stream_t*)sockstream;
 
 	//Network streams are always little endian by default
-	_stream_initialize( stream, BYTEORDER_LITTLEENDIAN );
+	stream_initialize( stream, BYTEORDER_LITTLEENDIAN );
 
 	stream->type = STREAMTYPE_SOCKET;
 	stream->sequential = 1;
@@ -881,7 +892,7 @@ static void _socket_stream_finalize( stream_t* stream )
 			socket_destroy( id );
 		}
 	}
-	
+
 	sockstream->socket = 0;
 
 	if( id )
@@ -915,10 +926,10 @@ static uint64_t _socket_read( stream_t* stream, void* buffer, uint64_t size )
 
 	polled = ( ( sockbase->flags & SOCKETFLAG_POLLED ) != 0 );
 	blocking = ( ( sockbase->flags & SOCKETFLAG_BLOCKING ) != 0 );
-	
+
 	//Trigger read events again (or else poll->read->poll with same amount of buffered data will not trigger event)
 	sockbase->last_event = 0;
-	
+
 	if( ( sockbase->state != SOCKETSTATE_CONNECTED ) && ( sockbase->state != SOCKETSTATE_DISCONNECTED ) )
 		goto exit;
 
@@ -928,7 +939,7 @@ static uint64_t _socket_read( stream_t* stream, void* buffer, uint64_t size )
 	do
 	{
 		try_again = false;
-		
+
 		do
 		{
 			unsigned int want_read;
@@ -941,7 +952,7 @@ static uint64_t _socket_read( stream_t* stream, void* buffer, uint64_t size )
 			want_read = (unsigned int)( size - was_read );
 			if( copy > want_read )
 				copy = want_read;
-			
+
 			if( copy > 0 )
 			{
 				if( buffer )
@@ -980,7 +991,7 @@ static uint64_t _socket_read( stream_t* stream, void* buffer, uint64_t size )
 exit:
 
 	socket_destroy( sockstream->socket );
-	
+
 	return was_read;
 }
 
@@ -997,7 +1008,7 @@ static uint64_t _socket_write( stream_t* stream, const void* buffer, uint64_t si
 	FOUNDATION_ASSERT( stream->type == STREAMTYPE_SOCKET );
 
 	sockstream = (socket_stream_t*)stream;
-	sock = _socket_lookup( sockstream->socket );	
+	sock = _socket_lookup( sockstream->socket );
 	if( !sock )
 		return 0;
 	if( sock->base < 0 )
@@ -1005,7 +1016,7 @@ static uint64_t _socket_write( stream_t* stream, const void* buffer, uint64_t si
 
 	sockbase = _socket_base + sock->base;
 	remain = BUILD_SIZE_SOCKET_WRITEBUFFER - sock->offset_write_out;
-	
+
 	if( sockbase->state != SOCKETSTATE_CONNECTED )
 		goto exit;
 
@@ -1052,7 +1063,7 @@ static uint64_t _socket_write( stream_t* stream, const void* buffer, uint64_t si
 exit:
 
 	socket_destroy( sockstream->socket );
-	
+
 	return was_written;
 }
 
@@ -1069,7 +1080,7 @@ static bool _socket_eos( stream_t* stream )
 	FOUNDATION_ASSERT( stream->type == STREAMTYPE_SOCKET );
 
 	sockstream = (socket_stream_t*)stream;
-	sock = _socket_lookup( sockstream->socket );	
+	sock = _socket_lookup( sockstream->socket );
 	if( !sock )
 		return true;
 	if( sock->base < 0 )
@@ -1081,7 +1092,7 @@ static bool _socket_eos( stream_t* stream )
 		eos = true;
 
 	socket_destroy( sockstream->socket );
-	
+
 	return eos;
 }
 
@@ -1096,7 +1107,7 @@ static uint64_t _socket_available_read( stream_t* stream )
 	FOUNDATION_ASSERT( stream->type == STREAMTYPE_SOCKET );
 
 	sockstream = (socket_stream_t*)stream;
-	sock = _socket_lookup( sockstream->socket );	
+	sock = _socket_lookup( sockstream->socket );
 	if( !sock )
 		return 0;
 	if( sock->base < 0 )
@@ -1121,7 +1132,7 @@ static void _socket_buffer_read( stream_t* stream )
 	FOUNDATION_ASSERT( stream->type == STREAMTYPE_SOCKET );
 
 	sockstream = (socket_stream_t*)stream;
-	sock = _socket_lookup( sockstream->socket );	
+	sock = _socket_lookup( sockstream->socket );
 	if( !sock )
 		return;
 	if( sock->base < 0 )
@@ -1138,7 +1149,7 @@ static void _socket_buffer_read( stream_t* stream )
 		sock->read_fn( sock, available );
 
 exit:
-	
+
 	socket_destroy( sockstream->socket );
 }
 
@@ -1152,7 +1163,7 @@ static void _socket_flush( stream_t* stream )
 	FOUNDATION_ASSERT( stream->type == STREAMTYPE_SOCKET );
 
 	sockstream = (socket_stream_t*)stream;
-	sock = _socket_lookup( sockstream->socket );	
+	sock = _socket_lookup( sockstream->socket );
 	if( !sock )
 		return;
 
@@ -1166,6 +1177,8 @@ static void _socket_truncate( stream_t* stream, uint64_t size )
 {
 	FOUNDATION_ASSERT( stream );
 	FOUNDATION_ASSERT( stream->type == STREAMTYPE_SOCKET );
+	FOUNDATION_UNUSED( stream );
+	FOUNDATION_UNUSED( size );
 }
 
 
@@ -1173,6 +1186,7 @@ static uint64_t _socket_size( stream_t* stream )
 {
 	FOUNDATION_ASSERT( stream );
 	FOUNDATION_ASSERT( stream->type == STREAMTYPE_SOCKET );
+	FOUNDATION_UNUSED( stream );
 	return 0;
 }
 
@@ -1186,10 +1200,10 @@ static void _socket_seek( stream_t* stream, int64_t offset, stream_seek_mode_t d
 	FOUNDATION_ASSERT( stream->type == STREAMTYPE_SOCKET );
 
 	sockstream = (socket_stream_t*)stream;
-	sock = _socket_lookup( sockstream->socket );	
+	sock = _socket_lookup( sockstream->socket );
 	if( !sock )
 		return;
-	
+
 	if( ( direction != STREAM_SEEK_CURRENT ) || ( offset < 0 ) )
 	{
 		log_error( HASH_NETWORK, ERROR_UNSUPPORTED, "Invalid call, only forward seeking allowed on sockets" );
@@ -1213,7 +1227,7 @@ static int64_t _socket_tell( stream_t* stream )
 	FOUNDATION_ASSERT( stream->type == STREAMTYPE_SOCKET );
 
 	sockstream = (socket_stream_t*)stream;
-	sock = _socket_lookup( sockstream->socket );	
+	sock = _socket_lookup( sockstream->socket );
 	if( !sock )
 		return 0;
 
@@ -1236,16 +1250,12 @@ static uint64_t _socket_last_modified( const stream_t* stream )
 
 int _socket_initialize( unsigned int max_sockets )
 {
-	if( !_socket_map )
-		_socket_map = objectmap_allocate( max_sockets + ( max_sockets > 256 ? 256 : 8 ) );
+	_socket_map = objectmap_allocate( max_sockets + ( max_sockets > 256 ? 256 : 8 ) );
 
-	if( !_socket_base )
-	{
-		_socket_base = memory_allocate( HASH_NETWORK, sizeof( socket_base_t ) * max_sockets, 16, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
-		_socket_base_size = (int)max_sockets;
-		atomic_store32( &_socket_base_next, 0 );
-	}
-	
+	_socket_base = memory_allocate( HASH_NETWORK, sizeof( socket_base_t ) * max_sockets, 16, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
+	_socket_base_size = (int)max_sockets;
+	atomic_store32( &_socket_base_next, 0 );
+
 	_socket_stream_vtable.read = _socket_read;
 	_socket_stream_vtable.write = _socket_write;
 	_socket_stream_vtable.eos = _socket_eos;
@@ -1259,7 +1269,7 @@ int _socket_initialize( unsigned int max_sockets )
 	_socket_stream_vtable.available_read = _socket_available_read;
 	_socket_stream_vtable.finalize = _socket_stream_finalize;
 	_socket_stream_vtable.clone = 0;
-	
+
 	return 0;
 }
 

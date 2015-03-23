@@ -26,13 +26,25 @@
 #  define FAR
 #elif FOUNDATION_PLATFORM_POSIX
 #  include <foundation/posix.h>
+#  include <fcntl.h>
 #  include <sys/select.h>
 #  include <arpa/inet.h>
 #  include <netinet/in.h>
 #  include <netdb.h>
-#  include <ifaddrs.h>
+#  if !FOUNDATION_PLATFORM_ANDROID
+#    include <ifaddrs.h>
+#  endif
 #endif
 
+#if FOUNDATION_PLATFORM_ANDROID
+#  ifndef SO_REUSEPORT
+#    if FOUNDATION_ARCH_MIPS
+#      define SO_REUSEPORT 0x0200
+#    else
+#      define SO_REUSEPORT 15
+#    endif
+#  endif
+#endif
 
 typedef enum _socket_flag
 {

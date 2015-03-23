@@ -1,10 +1,10 @@
 /* main.c  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
- * 
+ *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
- * 
+ *
  * https://github.com/rampantpixels/network_lib
- * 
+ *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
  */
@@ -16,7 +16,8 @@
 
 application_t test_address_application( void )
 {
-	application_t app = {0};
+	application_t app;
+	memset( &app, 0, sizeof( app ) );
 	app.name = "Network address tests";
 	app.short_name = "test_address";
 	app.config_dir = "test_address";
@@ -60,7 +61,7 @@ DECLARE_TEST( address, local )
 
 		if( string_equal( address_str, "127.0.0.1" ) )
 			found_localhost = true;
-		
+
 		string_deallocate( address_str );
 		memory_deallocate( addresses[iaddr] );
 
@@ -82,7 +83,7 @@ DECLARE_TEST( address, resolve )
 {
 	unsigned int iaddr, addrsize;
 	unsigned int num_addresses = 0;
-	
+
 	network_address_t** addresses = network_address_resolve( "localhost" );
 	log_debugf( HASH_NETWORK, "localhost -> %u addresses", array_size( addresses ) );
 	EXPECT_GT( array_size( addresses ), 0 );
@@ -108,7 +109,7 @@ DECLARE_TEST( address, resolve )
 		EXPECT_TRUE( string_equal( address_str, "127.0.0.1:80" ) || string_equal( address_str, "[::1]:80" ) || string_match_pattern( address_str, "[fe80:*]:80" ) );
 		string_deallocate( address_str );
 		memory_deallocate( addresses[iaddr] );
-	}	
+	}
 	array_deallocate( addresses );
 
 	addresses = network_address_resolve( "127.0.0.1" );
@@ -121,7 +122,7 @@ DECLARE_TEST( address, resolve )
 		EXPECT_TRUE( string_equal( address_str, "127.0.0.1" ) );
 		string_deallocate( address_str );
 		memory_deallocate( addresses[iaddr] );
-	}	
+	}
 	array_deallocate( addresses );
 
 	addresses = network_address_resolve( "::1" );
@@ -134,7 +135,7 @@ DECLARE_TEST( address, resolve )
 		EXPECT_TRUE( string_equal( address_str, "::1" ) );
 		string_deallocate( address_str );
 		memory_deallocate( addresses[iaddr] );
-	}	
+	}
 	array_deallocate( addresses );
 
 	addresses = network_address_resolve( "127.0.0.1:512" );
@@ -147,7 +148,7 @@ DECLARE_TEST( address, resolve )
 		EXPECT_TRUE( string_equal( address_str, "127.0.0.1:512" ) );
 		string_deallocate( address_str );
 		memory_deallocate( addresses[iaddr] );
-	}	
+	}
 	array_deallocate( addresses );
 
 	addresses = network_address_resolve( "[::1]:512" );
@@ -160,7 +161,7 @@ DECLARE_TEST( address, resolve )
 		EXPECT_TRUE( string_equal( address_str, "[::1]:512" ) );
 		string_deallocate( address_str );
 		memory_deallocate( addresses[iaddr] );
-	}	
+	}
 	array_deallocate( addresses );
 
 	addresses = network_address_resolve( "zion.rampantpixels.com:1234" );
@@ -172,7 +173,7 @@ DECLARE_TEST( address, resolve )
 		log_debugf( HASH_NETWORK, "  %s", address_str );
 		string_deallocate( address_str );
 		memory_deallocate( addresses[iaddr] );
-	}	
+	}
 	array_deallocate( addresses );
 
 	addresses = network_address_resolve( "www.google.com" );
@@ -184,9 +185,9 @@ DECLARE_TEST( address, resolve )
 		log_debugf( HASH_NETWORK, "  %s", address_str );
 		string_deallocate( address_str );
 		memory_deallocate( addresses[iaddr] );
-	}	
+	}
 	array_deallocate( addresses );
-	
+
 	return 0;
 }
 
@@ -205,7 +206,7 @@ DECLARE_TEST( address, any )
 	any_resolve = network_address_resolve( address_str );
 	EXPECT_EQ( array_size( any_resolve ), 1 );
 	EXPECT_TRUE( network_address_equal( any, any_resolve[0] ) );
-	
+
 	string_deallocate( address_str );
 	memory_deallocate( any_resolve[0] );
 	memory_deallocate( any );
@@ -220,12 +221,12 @@ DECLARE_TEST( address, any )
 	any_resolve = network_address_resolve( address_str );
 	EXPECT_EQ( array_size( any_resolve ), 1 );
 	EXPECT_TRUE( network_address_equal( any, any_resolve[0] ) );
-	
+
 	string_deallocate( address_str );
 	memory_deallocate( any_resolve[0] );
 	memory_deallocate( any );
 	array_deallocate( any_resolve );
-	
+
 	return 0;
 }
 
@@ -239,7 +240,7 @@ DECLARE_TEST( address, port )
 	EXPECT_EQ( network_address_ip_port( any ), 0 );
 
 	network_address_ip_set_port( any, 80 );
-	EXPECT_EQ( network_address_ip_port( any ), 80 );	
+	EXPECT_EQ( network_address_ip_port( any ), 80 );
 
 	address_str = network_address_to_string( any, true );
 	log_debugf( HASH_NETWORK, "IPv4 any: %s", address_str );
@@ -248,7 +249,7 @@ DECLARE_TEST( address, port )
 	any_resolve = network_address_resolve( address_str );
 	EXPECT_EQ( array_size( any_resolve ), 1 );
 	EXPECT_TRUE( network_address_equal( any, any_resolve[0] ) );
-	
+
 	string_deallocate( address_str );
 	memory_deallocate( any_resolve[0] );
 	memory_deallocate( any );
@@ -258,7 +259,7 @@ DECLARE_TEST( address, port )
 	EXPECT_EQ( network_address_ip_port( any ), 0 );
 
 	network_address_ip_set_port( any, 80 );
-	EXPECT_EQ( network_address_ip_port( any ), 80 );	
+	EXPECT_EQ( network_address_ip_port( any ), 80 );
 
 	address_str = network_address_to_string( any, true );
 	log_debugf( HASH_NETWORK, "IPv6 any: %s", address_str );
@@ -267,12 +268,12 @@ DECLARE_TEST( address, port )
 	any_resolve = network_address_resolve( address_str );
 	EXPECT_EQ( array_size( any_resolve ), 1 );
 	EXPECT_TRUE( network_address_equal( any, any_resolve[0] ) );
-	
+
 	string_deallocate( address_str );
 	memory_deallocate( any_resolve[0] );
 	memory_deallocate( any );
 	array_deallocate( any_resolve );
-	
+
 	return 0;
 }
 
@@ -290,7 +291,7 @@ DECLARE_TEST( address, family )
 	any_resolve = network_address_resolve( "0.0.0.0:80" );
 	EXPECT_EQ( array_size( any_resolve ), 1 );
 	EXPECT_EQ( network_address_family( any_resolve[0] ), NETWORK_ADDRESSFAMILY_IPV4 );
-	
+
 	memory_deallocate( any_resolve[0] );
 	memory_deallocate( any );
 	array_deallocate( any_resolve );
@@ -304,7 +305,7 @@ DECLARE_TEST( address, family )
 	any_resolve = network_address_resolve( "[::]:80" );
 	EXPECT_EQ( array_size( any_resolve ), 1 );
 	EXPECT_EQ( network_address_family( any_resolve[0] ), NETWORK_ADDRESSFAMILY_IPV6 );
-	
+
 	memory_deallocate( any_resolve[0] );
 	memory_deallocate( any );
 	array_deallocate( any_resolve );

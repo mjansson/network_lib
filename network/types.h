@@ -74,11 +74,11 @@ typedef struct _network_poll        network_poll_t;
 
 // COMPLEX TYPES
 
-struct _network_datagram
+ALIGNED_STRUCT( network_datagram_t, 8 )
 {
-	void*                           data;
 	uint64_t                        size;
+	void*                           data;
 };
 
 
-typedef struct _network_datagram    network_datagram_t;
+typedef struct network_datagram_t   network_datagram_t;
