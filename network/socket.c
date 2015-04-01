@@ -620,8 +620,13 @@ void _socket_set_reuse_address( socket_t* sock, bool reuse )
 	fd = sockbase->fd;
 	if( fd != SOCKET_INVALID )
 	{
+#if FOUNDATION_PLATFORM_WINDOWS
+		BOOL optval = reuse ? 1 : 0;
+    	setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&optval, sizeof(optval) );
+#else
 		int optval = reuse ? 1 : 0;
     	setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof( optval ) );
+#endif
     }
 }
 
@@ -639,8 +644,10 @@ void _socket_set_reuse_port( socket_t* sock, bool reuse )
 	fd = sockbase->fd;
 	if( fd != SOCKET_INVALID )
 	{
+#if !FOUNDATION_PLATFORM_WINDOWS
 		int optval = reuse ? 1 : 0;
     	setsockopt( fd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval) );
+#endif
     }
 }
 
