@@ -12,7 +12,6 @@
 		4513884C193BA3D600BA2092 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4513884B193BA3D600BA2092 /* UIKit.framework */; };
 		45138876193BA40400BA2092 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 45138875193BA40400BA2092 /* main.c */; };
 		4513887A193BA42D00BA2092 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 45138877193BA42D00BA2092 /* Images.xcassets */; };
-		4513887B193BA42D00BA2092 /* test-all.plist in Resources */ = {isa = PBXBuildFile; fileRef = 45138878193BA42D00BA2092 /* test-all.plist */; };
 		4513887C193BA42D00BA2092 /* test-all.xib in Resources */ = {isa = PBXBuildFile; fileRef = 45138879193BA42D00BA2092 /* test-all.xib */; };
 		4513887E193BA61E00BA2092 /* libnetwork.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4513887D193BA61E00BA2092 /* libnetwork.a */; };
 		45138885193BA7B600BA2092 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 45138884193BA7B600BA2092 /* main.c */; };
@@ -169,7 +168,7 @@
 		451387F1193B9AD000BA2092 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0510;
+				LastUpgradeCheck = 0620;
 				TargetAttributes = {
 					45138843193BA3D600BA2092 = {
 						DevelopmentTeam = TDSNBN44YV;
@@ -198,7 +197,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4513887B193BA42D00BA2092 /* test-all.plist in Resources */,
 				4513887A193BA42D00BA2092 /* Images.xcassets in Resources */,
 				4513887C193BA42D00BA2092 /* test-all.xib in Resources */,
 			);
