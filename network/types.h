@@ -74,11 +74,11 @@ typedef FOUNDATION_ALIGNED_STRUCT( network_poll_t, 8 )    network_poll_t;
 
 // COMPLEX TYPES
 
-FOUNDATION_ALIGNED_STRUCT( network_datagram_t, 8 )
+struct network_datagram_t
 {
 	uint64_t                        size;
 	void*                           data;
 };
 
 
-typedef FOUNDATION_ALIGNED_STRUCT( network_datagram_t, 8 )   network_datagram_t;
+typedef struct network_datagram_t                         network_datagram_t;

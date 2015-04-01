@@ -140,7 +140,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\..\..\bin\win32\debug\</OutDir>
+    <OutDir>..\..\..\..\bin\windows\debug\x86\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <TargetName>test-$(ProjectName)</TargetName>
   </PropertyGroup>
@@ -148,23 +148,23 @@
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <TargetName>test-$(ProjectName)</TargetName>
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\..\bin\win64\debug\</OutDir>
+    <OutDir>..\..\..\bin\windows\debug\x86-64\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\..\..\bin\win32\debug\</OutDir>
+    <OutDir>..\..\..\..\bin\windows\release\x86\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <TargetName>test-$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Deploy|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\..\..\bin\win32\debug\</OutDir>
+    <OutDir>..\..\..\..\bin\windows\deploy\x86\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <TargetName>test-$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\..\..\bin\win32\debug\</OutDir>
+    <OutDir>..\..\..\..\bin\windows\profile\x86\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <TargetName>test-$(ProjectName)</TargetName>
   </PropertyGroup>
@@ -172,19 +172,19 @@
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <TargetName>test-$(ProjectName)</TargetName>
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\..\bin\win64\release\</OutDir>
+    <OutDir>..\..\..\bin\windows\release\x86-64\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Deploy|x64'">
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <TargetName>test-$(ProjectName)</TargetName>
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\..\bin\win64\deploy\</OutDir>
+    <OutDir>..\..\..\bin\windows\deploy\x86-64\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <TargetName>test-$(ProjectName)</TargetName>
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\..\bin\win64\profile\</OutDir>
+    <OutDir>..\..\..\bin\windows\profile\x86-64\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -219,7 +219,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win32\debug</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\windows\debug\x86</AdditionalLibraryDirectories>
       <AdditionalDependencies>test.lib;foundation.lib;ws2_32.lib;iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -257,7 +257,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win64\debug</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\windows\debug\x86-64</AdditionalLibraryDirectories>
       <AdditionalDependencies>test.lib;foundation.lib;ws2_32.lib;iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -298,7 +298,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>test.lib;foundation.lib;ws2_32.lib;iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win32\release</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\windows\release\x86</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Deploy|Win32'">
@@ -338,7 +338,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>test.lib;foundation.lib;ws2_32.lib;iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win32\deploy</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\windows\deploy\x86</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">
@@ -378,7 +378,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>test.lib;foundation.lib;ws2_32.lib;iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win32\profile</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\windows\profile\x86</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -419,7 +419,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>test.lib;foundation.lib;ws2_32.lib;iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win64\release</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\windows\release\x86-64</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Deploy|x64'">
@@ -460,7 +460,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>test.lib;foundation.lib;ws2_32.lib;iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win64\deploy</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\windows\deploy\x86-64</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
@@ -501,7 +501,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>test.lib;foundation.lib;ws2_32.lib;iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\win64\profile</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\foundation_lib\lib\windows\profile\x86-64</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

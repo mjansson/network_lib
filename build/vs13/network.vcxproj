@@ -139,35 +139,35 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <OutDir>..\..\lib\win32\debug\</OutDir>
+    <OutDir>..\..\lib\windows\debug\x86\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <OutDir>..\..\lib\win64\debug\</OutDir>
+    <OutDir>..\..\lib\windows\debug\x86-64\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <OutDir>..\..\lib\win32\release\</OutDir>
+    <OutDir>..\..\lib\windows\release\x86\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Deploy|Win32'">
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <OutDir>..\..\lib\win32\deploy\</OutDir>
+    <OutDir>..\..\lib\windows\deploy\x86\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <OutDir>..\..\lib\win32\profile\</OutDir>
+    <OutDir>..\..\lib\windows\profile\x86\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <OutDir>..\..\lib\win64\release\</OutDir>
+    <OutDir>..\..\lib\windows\release\x86-64\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Deploy|x64'">
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <OutDir>..\..\lib\win64\deploy\</OutDir>
+    <OutDir>..\..\lib\windows\deploy\x86-64\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <OutDir>..\..\lib\win64\profile\</OutDir>
+    <OutDir>..\..\lib\windows\profile\x86-64\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -472,6 +472,8 @@
     <ClCompile Include="..\..\network\poll.c" />
     <ClCompile Include="..\..\network\socket.c" />
     <ClCompile Include="..\..\network\tcp.c" />
+    <ClCompile Include="..\..\network\udp.c" />
+    <ClCompile Include="..\..\network\version.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\network\address.h" />
@@ -484,6 +486,7 @@
     <ClInclude Include="..\..\network\socket.h" />
     <ClInclude Include="..\..\network\tcp.h" />
     <ClInclude Include="..\..\network\types.h" />
+    <ClInclude Include="..\..\network\udp.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\network\hashstrings.txt">
