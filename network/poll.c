@@ -24,20 +24,20 @@
 #  include <foundation/windows.h>
 #  define FAR
 #endif
-#if FOUNDATION_PLATFORM_LINUX
+#if FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
 #  include <sys/epoll.h>
 #elif FOUNDATION_PLATFORM_MACOSX || FOUNDATION_PLATFORM_IOS
 #  include <sys/poll.h>
 #endif
 
-typedef struct _network_poll_slot
+typedef struct network_poll_slot_t
 {
 	object_t             sock;
 	int                  base;
 	int                  fd;
 } network_poll_slot_t;
 
-struct ALIGN(8) _network_poll
+typedef FOUNDATION_ALIGNED_STRUCT( network_poll_t, 8 )
 {
 	object_t             queue_add[BUILD_SIZE_POLL_QUEUE];
 	object_t             queue_remove[BUILD_SIZE_POLL_QUEUE];
@@ -51,7 +51,7 @@ struct ALIGN(8) _network_poll
 	struct pollfd*       pollfds;
 #endif
 	network_poll_slot_t  slots[];
-};
+} network_poll_t;
 
 
 static int _network_poll_process_pending( network_poll_t* pollobj )

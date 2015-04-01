@@ -1,10 +1,10 @@
 /* network.h  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
- * 
+ *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
- * 
+ *
  * https://github.com/rampantpixels/network_lib
- * 
+ *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
  */
@@ -32,3 +32,8 @@ NETWORK_API bool        network_is_initialized( void );
 
 //! Exit point
 NETWORK_API void        network_shutdown( void );
+
+NETWORK_API version_t   network_version( void );
+
+NETWORK_API bool        network_supports_ipv4( void );
+NETWORK_API bool        network_supports_ipv6( void );

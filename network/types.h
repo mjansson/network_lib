@@ -68,17 +68,17 @@ typedef enum _network_event_id
 
 // OPAQUE COMPLEX TYPES
 
-typedef struct _network_address     network_address_t;
-typedef struct _network_poll        network_poll_t;
+typedef struct network_address_t                          network_address_t;
+typedef FOUNDATION_ALIGNED_STRUCT( network_poll_t, 8 )    network_poll_t;
 
 
 // COMPLEX TYPES
 
-struct _network_datagram
+FOUNDATION_ALIGNED_STRUCT( network_datagram_t, 8 )
 {
-	void*                           data;
 	uint64_t                        size;
+	void*                           data;
 };
 
 
-typedef struct _network_datagram    network_datagram_t;
+typedef FOUNDATION_ALIGNED_STRUCT( network_datagram_t, 8 )   network_datagram_t;

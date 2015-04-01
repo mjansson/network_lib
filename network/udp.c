@@ -1,10 +1,10 @@
 /* udp.c  -  Network library  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
- * 
+ *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
- * 
+ *
  * https://github.com/rampantpixels/network_lib
- * 
+ *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
  */
@@ -30,13 +30,13 @@ static socket_t* _udp_socket_allocate( void )
 	socket_t* sock = _socket_allocate();
 	if( !sock )
 		return 0;
-	
+
 	sock->open_fn = _udp_socket_open;
 	sock->connect_fn = _udp_socket_connect;
 	sock->read_fn = _udp_socket_buffer_read;
 	sock->write_fn = _udp_socket_buffer_write;
 	sock->stream_initialize_fn = _udp_stream_initialize;
-	
+
 	return sock;
 }
 
@@ -54,7 +54,7 @@ static void _udp_socket_open( socket_t* sock, unsigned int family )
 
 	if( sock->base < 0 )
 		return;
-	
+
 	sockbase = _socket_base + sock->base;
 	if( family == NETWORK_ADDRESSFAMILY_IPV6 )
 		sockbase->fd = (int)socket( AF_INET6, SOCK_DGRAM, IPPROTO_UDP );
@@ -126,7 +126,7 @@ static int _udp_socket_connect( socket_t* sock, const network_address_t* address
 				FD_ZERO( &fderr );
 				FD_SET( sockbase->fd, &fdwrite );
 				FD_SET( sockbase->fd, &fderr );
-				
+
 				tv.tv_sec  = timeoutms / 1000;
 				tv.tv_usec = ( timeoutms % 1000 ) * 1000;
 
@@ -172,7 +172,7 @@ static int _udp_socket_connect( socket_t* sock, const network_address_t* address
 #if BUILD_ENABLE_DEBUG_LOG
 					error_message = "select timed out";
 #endif
-				}			
+				}
 			}
 		}
 #if BUILD_ENABLE_DEBUG_LOG
@@ -182,7 +182,7 @@ static int _udp_socket_connect( socket_t* sock, const network_address_t* address
 		}
 #endif
 	}
-	
+
 	if( ( timeoutms > 0 ) && blocking )
 		_socket_set_blocking( sock, true );
 
@@ -209,7 +209,7 @@ static int _udp_socket_connect( socket_t* sock, const network_address_t* address
 		string_deallocate( address_str );
 	}
 #endif
-	
+
 	return 0;
 }
 
@@ -251,7 +251,7 @@ static unsigned int _udp_socket_buffer_read( socket_t* sock, unsigned int wanted
 		FOUNDATION_ASSERT_FAILFORMAT_LOG( HASH_NETWORK, "Trying to stream read from an unconnected UDP socket 0x%llx (0x%" PRIfixPTR " : %d) in state %u", sock->id, sock, sockbase->fd, sockbase->state );
 		return 0;
 	}
-	
+
 	is_blocking = ( ( sockbase->flags & SOCKETFLAG_BLOCKING ) != 0 );
 	available = _socket_available_fd( sockbase->fd );
 	if( available )
@@ -260,7 +260,7 @@ static unsigned int _udp_socket_buffer_read( socket_t* sock, unsigned int wanted
 	}
 	else
 	{
-		if( !wanted_size || !is_blocking ) 
+		if( !wanted_size || !is_blocking )
 			return 0;
 		try_read = max_read;
 	}
@@ -288,7 +288,7 @@ static unsigned int _udp_socket_buffer_read( socket_t* sock, unsigned int wanted
 		char dump_buffer[66];
 #endif
 #if BUILD_ENABLE_LOG
-		if( !available && ( ret == try_read ) )
+		if( !available && ( ret == (int)try_read ) )
 			log_warnf( HASH_NETWORK, WARNING_SUSPICIOUS, "Socket 0x%llx (0x%" PRIfixPTR " : %d): potential partial blocking UDP read %d of %d bytes (%u available)", sock->id, sock, sockbase->fd, ret, try_read, available );
 #endif
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
@@ -302,7 +302,7 @@ static unsigned int _udp_socket_buffer_read( socket_t* sock, unsigned int wanted
 				cols = ret - ( row * 8 );
 			for( ; col < cols; ++col, ofs +=3 )
 			{
-				string_format_buffer( dump_buffer + ofs, 66 - ofs, "%02x", *( src + ( row * 8 ) + col ) );
+				string_format_buffer( dump_buffer + ofs, 66 - (unsigned int)ofs, "%02x", *( src + ( row * 8 ) + col ) );
 				*( dump_buffer + ofs + 2 ) = ' ';
 			}
 			if( ofs )
@@ -362,7 +362,7 @@ static unsigned int _udp_socket_buffer_write( socket_t* sock )
 	unsigned int sent = 0;
 	if( sock->base < 0 )
 		return 0;
-	
+
 	sockbase = _socket_base + sock->base;
 	if( sockbase->state != SOCKETSTATE_CONNECTED )
 	{
@@ -391,7 +391,7 @@ static unsigned int _udp_socket_buffer_write( socket_t* sock )
 					cols = res - ( row * 8 );
 				for( ; col < cols; ++col, ofs +=3 )
 				{
-					string_format_buffer( buffer + ofs, 34 - ofs, "%02x", *( src + ( row * 8 ) + col ) );
+					string_format_buffer( buffer + ofs, 34 - (unsigned int)ofs, "%02x", *( src + ( row * 8 ) + col ) );
 					*( buffer + ofs + 2 ) = ' ';
 				}
 				if( ofs )
@@ -478,8 +478,8 @@ void _udp_stream_initialize( socket_t* sock, stream_t* stream )
 
 network_datagram_t udp_socket_recvfrom( object_t id, network_address_t const** address )
 {
-	network_datagram_t datagram = {0};
-	
+	network_datagram_t datagram = { 0, 0 };
+
 	socket_t* sock;
 	socket_base_t* sockbase;
 	network_address_ip_t* addr_ip;
@@ -516,7 +516,7 @@ network_datagram_t udp_socket_recvfrom( object_t id, network_address_t const** a
 	}
 	else
 	{
-		if( !is_blocking ) 
+		if( !is_blocking )
 			goto exit;
 		try_read = max_read;
 	}
@@ -537,7 +537,7 @@ network_datagram_t udp_socket_recvfrom( object_t id, network_address_t const** a
 		char dump_buffer[66];
 #endif
 #if BUILD_ENABLE_LOG
-		if( !available && ( ret == try_read ) )
+		if( !available && ( ret == (int)try_read ) )
 			log_warnf( HASH_NETWORK, WARNING_SUSPICIOUS, "Socket 0x%llx (0x%" PRIfixPTR " : %d): potential partial blocking UDP datagram read %d of %d bytes (%u available)", sock->id, sock, sockbase->fd, ret, try_read, available );
 #endif
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
@@ -551,7 +551,7 @@ network_datagram_t udp_socket_recvfrom( object_t id, network_address_t const** a
 				cols = ret - ( row * 8 );
 			for( ; col < cols; ++col, ofs +=3 )
 			{
-				string_format_buffer( dump_buffer + ofs, 66 - ofs, "%02x", *( src + ( row * 8 ) + col ) );
+				string_format_buffer( dump_buffer + ofs, 66 - (unsigned int)ofs, "%02x", *( src + ( row * 8 ) + col ) );
 				*( dump_buffer + ofs + 2 ) = ' ';
 			}
 			if( ofs )
@@ -584,7 +584,7 @@ network_datagram_t udp_socket_recvfrom( object_t id, network_address_t const** a
 exit:
 
 	if( sock )
-		socket_destroy( id );	
+		socket_destroy( id );
 
 	return datagram;
 }
@@ -639,7 +639,7 @@ uint64_t udp_socket_sendto( object_t id, const network_datagram_t datagram, cons
 				cols = res - ( row * 8 );
 			for( ; col < cols; ++col, ofs +=3 )
 			{
-				string_format_buffer( buffer + ofs, 34 - ofs, "%02x", *( src + ( row * 8 ) + col ) );
+				string_format_buffer( buffer + ofs, 34 - (unsigned int)ofs, "%02x", *( src + ( row * 8 ) + col ) );
 				*( buffer + ofs + 2 ) = ' ';
 			}
 			if( ofs )

@@ -1,10 +1,10 @@
 /* internal.h  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
- * 
+ *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
- * 
+ *
  * https://github.com/rampantpixels/network_lib
- * 
+ *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
  */
@@ -26,13 +26,25 @@
 #  define FAR
 #elif FOUNDATION_PLATFORM_POSIX
 #  include <foundation/posix.h>
+#  include <fcntl.h>
 #  include <sys/select.h>
 #  include <arpa/inet.h>
 #  include <netinet/in.h>
 #  include <netdb.h>
-#  include <ifaddrs.h>
+#  if !FOUNDATION_PLATFORM_ANDROID
+#    include <ifaddrs.h>
+#  endif
 #endif
 
+#if FOUNDATION_PLATFORM_ANDROID
+#  ifndef SO_REUSEPORT
+#    if FOUNDATION_ARCH_MIPS
+#      define SO_REUSEPORT 0x0200
+#    else
+#      define SO_REUSEPORT 15
+#    endif
+#  endif
+#endif
 
 typedef enum _socket_flag
 {
@@ -57,7 +69,7 @@ typedef int       network_address_size_t;
 	network_address_family_t   family;       \
 	network_address_size_t     address_size
 
-struct _network_address
+struct network_address_t
 {
 	NETWORK_DECLARE_NETWORK_ADDRESS;
 };
@@ -66,21 +78,21 @@ struct _network_address
 #define NETWORK_DECLARE_NETWORK_ADDRESS_IP   \
 	NETWORK_DECLARE_NETWORK_ADDRESS
 
-typedef struct _network_address_ip
+typedef struct network_address_ip_t
 {
 	NETWORK_DECLARE_NETWORK_ADDRESS_IP;
 	struct sockaddr        saddr; //Aliased to ipv4/ipv6 struct
 } network_address_ip_t;
 
 
-typedef struct _network_address_ipv4
+typedef struct network_address_ipv4_t
 {
 	NETWORK_DECLARE_NETWORK_ADDRESS_IP;
 	struct sockaddr_in     saddr;
 } network_address_ipv4_t;
 
 
-typedef struct _network_address_ipv6
+typedef struct network_address_ipv6_t
 {
 	NETWORK_DECLARE_NETWORK_ADDRESS_IP;
 	struct sockaddr_in6    saddr;
@@ -98,9 +110,9 @@ typedef struct _network_address_ipv6
 #endif
 
 
-typedef struct ALIGN(16) _socket_base    socket_base_t;
-typedef struct ALIGN(16) _socket         socket_t;
-typedef struct ALIGN(16) _socket_stream  socket_stream_t;
+typedef FOUNDATION_ALIGNED_STRUCT( socket_base_t, 16 )    socket_base_t;
+typedef FOUNDATION_ALIGNED_STRUCT( socket_t, 16 )         socket_t;
+typedef FOUNDATION_ALIGNED_STRUCT( socket_stream_t, 16 )  socket_stream_t;
 
 
 typedef void (*socket_open_fn)( socket_t*, unsigned int );
@@ -110,14 +122,14 @@ typedef unsigned int (*socket_buffer_write_fn)( socket_t* );
 typedef void (*socket_stream_initialize_fn)( socket_t*, stream_t* );
 
 
-struct ALIGN(16) _socket_stream
+FOUNDATION_ALIGNED_STRUCT( socket_stream_t, 16 )
 {
 	FOUNDATION_DECLARE_STREAM;
 	object_t                socket;
 };
 
 
-struct ALIGN(16) _socket_base
+FOUNDATION_ALIGNED_STRUCT( socket_base_t, 16 )
 {
 	object_t                object;
 	int                     fd;
@@ -127,7 +139,7 @@ struct ALIGN(16) _socket_base
 };
 
 
-struct ALIGN(16) _socket
+FOUNDATION_ALIGNED_STRUCT( socket_t, 16 )
 {
 	FOUNDATION_DECLARE_OBJECT;
 
@@ -148,7 +160,7 @@ struct ALIGN(16) _socket
 	socket_buffer_read_fn          read_fn;
 	socket_buffer_write_fn         write_fn;
 	socket_stream_initialize_fn    stream_initialize_fn;
-	
+
 	socket_stream_t*               stream;
 
 	uint8_t                        buffer_in[BUILD_SIZE_SOCKET_READBUFFER];
@@ -164,6 +176,7 @@ NETWORK_API socket_t*              _socket_allocate( void );
 NETWORK_API int                    _socket_allocate_base( socket_t* sock );
 NETWORK_API socket_t*              _socket_lookup( object_t id );
 NETWORK_API void                   _socket_close( socket_t* sock );
+NETWORK_API void                   _socket_close_fd( int fd );
 NETWORK_API void                   _socket_set_blocking( socket_t* sock, bool block );
 NETWORK_API void                   _socket_set_reuse_address( socket_t* sock, bool reuse );
 NETWORK_API void                   _socket_set_reuse_port( socket_t* sock, bool reuse );

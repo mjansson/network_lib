@@ -1,10 +1,10 @@
 /* main.c  -  Network blast tool  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
- * 
+ *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
- * 
+ *
  * https://github.com/rampantpixels/network_lib
- * 
+ *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
  */
@@ -34,7 +34,7 @@ typedef struct
 } blast_input_t;
 
 
-static bool                 should_exit = false;
+static bool                 should_exit;
 
 
 static blast_input_t        blast_parse_command_line( char const* const* cmdline );
@@ -51,8 +51,9 @@ void                        blast_process_system_events( void );
 int main_initialize( void )
 {
 	int ret = 0;
-	application_t application = {0};
+	application_t application;
 
+	memset( &application, 0, sizeof( application ) );
 	application.name = "blast";
 	application.short_name = "blast";
 	application.config_dir = "blast";
@@ -80,6 +81,8 @@ int main_run( void* main_arg )
 {
 	int itarget, tsize = 0;
 	int result = BLAST_RESULT_OK;
+
+	FOUNDATION_UNUSED( main_arg );
 
 	blast_input_t input = blast_parse_command_line( environment_command_line() );
 
@@ -109,11 +112,12 @@ void main_shutdown( void )
 
 blast_input_t blast_parse_command_line( char const* const* cmdline )
 {
-	blast_input_t input = {0};
+	blast_input_t input;
 	int arg, asize;
 	int addr, addrsize;
 
 	error_context_push( "parsing command line", "" );
+	memset( &input, 0, sizeof( input ) );
 	for( arg = 1, asize = array_size( cmdline ); arg < asize; ++arg )
 	{
 		if( string_equal( cmdline[arg], "-s" ) || string_equal( cmdline[arg], "--server" ) )
@@ -155,7 +159,7 @@ blast_input_t blast_parse_command_line( char const* const* cmdline )
 
 void blast_print_usage( void )
 {
-	log_info( HASH_BLAST, 
+	log_info( HASH_BLAST,
 		"blast usage:\n"
 		"  blast [-s|--server] [-d|-daemon] [-c|--client] [-t|--target host[:port]] [-b|--bind host[:port]] <file> <file> <file> <...> [--]\n"
 		"    Required arguments for server:\n"

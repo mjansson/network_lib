@@ -1,10 +1,10 @@
 /* address.c  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
- * 
+ *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
- * 
+ *
  * https://github.com/rampantpixels/network_lib
- * 
+ *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
  */
@@ -35,12 +35,12 @@ network_address_t** network_address_resolve( const char* address )
 	const char* final_address = address;
 	unsigned int portdelim;
 	int ret;
-	struct addrinfo hints = {0};
+	struct addrinfo hints;
 	struct addrinfo* result = 0;
 
 	if( !address )
 		return addresses;
-	
+
 	error_context_push( "resolving network address", address );
 
 	//Special case - port only
@@ -62,9 +62,9 @@ network_address_t** network_address_resolve( const char* address )
 			return addresses;
 		}
 	}
-	
+
 	portdelim = string_rfind( address, ':', STRING_NPOS );
-	
+
 	if( string_find_first_not_of( address, "[abcdefABCDEF0123456789.:]", 0 ) == STRING_NPOS )
 	{
 		//ipv6 hex format has more than one :
@@ -75,7 +75,7 @@ network_address_t** network_address_resolve( const char* address )
 				portdelim = STRING_NPOS;
 		}
 	}
-	
+
 	if( portdelim != STRING_NPOS )
 	{
 		unsigned int addrlen;
@@ -92,7 +92,8 @@ network_address_t** network_address_resolve( const char* address )
 			--portdelim;
 		}
 	}
-	
+
+	memset( &hints, 0, sizeof( hints ) );
 	hints.ai_family = AF_UNSPEC; // Allow IPv4 or IPv6
 	hints.ai_socktype = SOCK_STREAM;
 
@@ -107,7 +108,6 @@ network_address_t** network_address_resolve( const char* address )
 				network_address_ipv4_t* ipv4 = memory_allocate( HASH_NETWORK, sizeof( network_address_ipv4_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 				ipv4->family = NETWORK_ADDRESSFAMILY_IPV4;
 				ipv4->address_size = sizeof( struct sockaddr_in );
-				ipv4->saddr.sin_family = AF_INET;
 				memcpy( &ipv4->saddr, curaddr->ai_addr, sizeof( struct sockaddr_in ) );
 
 				array_push( addresses, (network_address_t*)ipv4 );
@@ -117,7 +117,6 @@ network_address_t** network_address_resolve( const char* address )
 				network_address_ipv6_t* ipv6 = memory_allocate( HASH_NETWORK, sizeof( network_address_ipv6_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 				ipv6->family = NETWORK_ADDRESSFAMILY_IPV6;
 				ipv6->address_size = sizeof( struct sockaddr_in6 );
-				ipv6->saddr.sin6_family = AF_INET6;
 				memcpy( &ipv6->saddr, curaddr->ai_addr, sizeof( struct sockaddr_in6 ) );
 
 				array_push( addresses, (network_address_t*)ipv6 );
@@ -131,9 +130,9 @@ network_address_t** network_address_resolve( const char* address )
 
 	if( localaddress )
 		string_deallocate( localaddress );
-	
+
 	error_context_pop();
-	
+
 	return addresses;
 }
 
@@ -299,8 +298,8 @@ network_address_t** network_address_local( void )
 	unsigned long ret = 0;
 #endif
 
-	error_context_push( "getting local network addresses", 0 );	
-	
+	error_context_push( "getting local network addresses", 0 );
+
 #if FOUNDATION_PLATFORM_WINDOWS
 
 	do
@@ -345,7 +344,6 @@ network_address_t** network_address_local( void )
 				network_address_ipv4_t* ipv4 = memory_allocate( HASH_NETWORK, sizeof( network_address_ipv4_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 				ipv4->family = NETWORK_ADDRESSFAMILY_IPV4;
 				ipv4->address_size = sizeof( struct sockaddr_in );
-				ipv4->saddr.sin_family = AF_INET;
 				memcpy( &ipv4->saddr, unicast->Address.lpSockaddr, sizeof( struct sockaddr_in ) );
 
 				array_push( addresses, (network_address_t*)ipv4 );
@@ -355,7 +353,6 @@ network_address_t** network_address_local( void )
 				network_address_ipv6_t* ipv6 = memory_allocate( HASH_NETWORK, sizeof( network_address_ipv6_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 				ipv6->family = NETWORK_ADDRESSFAMILY_IPV6;
 				ipv6->address_size = sizeof( struct sockaddr_in6 );
-				ipv6->saddr.sin6_family = AF_INET6;
 				memcpy( &ipv6->saddr, unicast->Address.lpSockaddr, sizeof( struct sockaddr_in6 ) );
 
 				array_push( addresses, (network_address_t*)ipv6 );
@@ -364,6 +361,52 @@ network_address_t** network_address_local( void )
 	}
 
 	memory_deallocate( adapter_address );
+
+#elif FOUNDATION_PLATFORM_ANDROID
+
+	int sock = socket( AF_INET, SOCK_DGRAM, 0 );
+	if( !sock )
+	{
+		log_error( HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL, "Unable to get interface addresses: Unable to create socket" );
+		error_context_pop();
+		return 0;
+	}
+
+	struct sockaddr_in sin;
+	memset( &sin, 0, sizeof( sin ) );
+	sin.sin_family = AF_INET;
+	sin.sin_port = htons(1234);
+	sin.sin_addr.s_addr = 0x50505050;
+	if( connect( sock, (struct sockaddr*)&sin, sizeof( struct sockaddr_in ) ) == 0 )
+	{
+		socklen_t socklen = sizeof( struct sockaddr_in );
+		if( getsockname( sock, (struct sockaddr*)&sin, &socklen ) == 0 )
+		{
+			network_address_ipv4_t* ipv4 = memory_allocate( HASH_NETWORK, sizeof( network_address_ipv4_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
+			ipv4->family = NETWORK_ADDRESSFAMILY_IPV4;
+			ipv4->address_size = sizeof( struct sockaddr_in );
+			ipv4->saddr.sin_family = AF_INET;
+			memcpy( &ipv4->saddr, &sin, sizeof( struct sockaddr_in ) );
+
+			array_push( addresses, (network_address_t*)ipv4 );
+		}
+		else
+		{
+			log_error( HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL, "Unable to get interface addresses: Unable to get socket name" );
+			error_context_pop();
+			return 0;
+		}
+	}
+	else
+	{
+		log_error( HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL, "Unable to get interface addresses: Unable to connect socket" );
+		error_context_pop();
+		return 0;
+	}
+
+	close( sock );
+
+	log_info( HASH_TEST, "Got interface addresses" );
 
 #else
 
@@ -387,7 +430,6 @@ network_address_t** network_address_local( void )
 			network_address_ipv4_t* ipv4 = memory_allocate( HASH_NETWORK, sizeof( network_address_ipv4_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 			ipv4->family = NETWORK_ADDRESSFAMILY_IPV4;
 			ipv4->address_size = sizeof( struct sockaddr_in );
-			ipv4->saddr.sin_family = AF_INET;
 			memcpy( &ipv4->saddr, ifa->ifa_addr, sizeof( struct sockaddr_in ) );
 
 			array_push( addresses, (network_address_t*)ipv4 );
@@ -397,7 +439,6 @@ network_address_t** network_address_local( void )
 			network_address_ipv6_t* ipv6 = memory_allocate( HASH_NETWORK, sizeof( network_address_ipv6_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 			ipv6->family = NETWORK_ADDRESSFAMILY_IPV6;
 			ipv6->address_size = sizeof( struct sockaddr_in6 );
-			ipv6->saddr.sin6_family = AF_INET6;
 			memcpy( &ipv6->saddr, ifa->ifa_addr, sizeof( struct sockaddr_in6 ) );
 
 			array_push( addresses, (network_address_t*)ipv6 );

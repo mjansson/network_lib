@@ -1,10 +1,10 @@
 /* main.c  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
- * 
+ *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
- * 
+ *
  * https://github.com/rampantpixels/network_lib
- * 
+ *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
  */
@@ -16,7 +16,8 @@
 
 application_t test_address_application( void )
 {
-	application_t app = {0};
+	application_t app;
+	memset( &app, 0, sizeof( app ) );
 	app.name = "Network address tests";
 	app.short_name = "test_address";
 	app.config_dir = "test_address";
@@ -46,11 +47,15 @@ void test_address_shutdown( void )
 
 DECLARE_TEST( address, local )
 {
-	bool found_localhost = false;
+	bool found_localhost_ipv4 = false;
+	bool found_localhost_ipv6 = false;
 	unsigned int iaddr, iother, addrsize;
+	bool has_ipv4 = network_supports_ipv4();
+	bool has_ipv6 = network_supports_ipv6();
 	network_address_t** addresses = network_address_local();
+	int expected_addresses = ( has_ipv4 ? 1 : 0 ) + ( has_ipv6 ? 1 : 0 );
 
-	EXPECT_GT( array_size( addresses ), 1 );
+	EXPECT_GE( array_size( addresses ), expected_addresses );
 
 	log_debugf( HASH_NETWORK, "%u local addresses (%s)", array_size( addresses ), system_hostname() );
 	for( iaddr = 0, addrsize = array_size( addresses ); iaddr < addrsize; ++iaddr )
@@ -59,8 +64,10 @@ DECLARE_TEST( address, local )
 		log_debugf( HASH_NETWORK, "  %s", address_str );
 
 		if( string_equal( address_str, "127.0.0.1" ) )
-			found_localhost = true;
-		
+			found_localhost_ipv4 = true;
+		if( string_equal( address_str, "::1" ) )
+			found_localhost_ipv6 = true;
+
 		string_deallocate( address_str );
 		memory_deallocate( addresses[iaddr] );
 
@@ -72,7 +79,8 @@ DECLARE_TEST( address, local )
 	}
 	array_deallocate( addresses );
 
-	EXPECT_TRUE( found_localhost );
+	EXPECT_TRUE( !has_ipv4 || found_localhost_ipv4 );
+	EXPECT_TRUE( !has_ipv6 || found_localhost_ipv6 );
 
 	return 0;
 }
@@ -81,12 +89,13 @@ DECLARE_TEST( address, local )
 DECLARE_TEST( address, resolve )
 {
 	unsigned int iaddr, addrsize;
-	unsigned int num_addresses = 0;
-	
+	bool has_ipv4 = network_supports_ipv4();
+	bool has_ipv6 = network_supports_ipv6();
+	int expected_addresses = ( has_ipv4 ? 1 : 0 ) + ( has_ipv6 ? 1 : 0 );
+
 	network_address_t** addresses = network_address_resolve( "localhost" );
 	log_debugf( HASH_NETWORK, "localhost -> %u addresses", array_size( addresses ) );
-	EXPECT_GT( array_size( addresses ), 0 );
-	num_addresses = array_size( addresses );
+	EXPECT_EQ( array_size( addresses ), expected_addresses );
 	for( iaddr = 0, addrsize = array_size( addresses ); iaddr < addrsize; ++iaddr )
 	{
 		char* address_str = network_address_to_string( addresses[iaddr], true );
@@ -99,8 +108,7 @@ DECLARE_TEST( address, resolve )
 
 	addresses = network_address_resolve( "localhost:80" );
 	log_debugf( HASH_NETWORK, "localhost:80 -> %u addresses", array_size( addresses ) );
-	EXPECT_EQ( (unsigned int)array_size( addresses ), num_addresses );
-	num_addresses = array_size( addresses );
+	EXPECT_EQ( array_size( addresses ), expected_addresses );
 	for( iaddr = 0, addrsize = array_size( addresses ); iaddr < addrsize; ++iaddr )
 	{
 		char* address_str = network_address_to_string( addresses[iaddr], true );
@@ -108,85 +116,97 @@ DECLARE_TEST( address, resolve )
 		EXPECT_TRUE( string_equal( address_str, "127.0.0.1:80" ) || string_equal( address_str, "[::1]:80" ) || string_match_pattern( address_str, "[fe80:*]:80" ) );
 		string_deallocate( address_str );
 		memory_deallocate( addresses[iaddr] );
-	}	
+	}
 	array_deallocate( addresses );
 
-	addresses = network_address_resolve( "127.0.0.1" );
-	log_debugf( HASH_NETWORK, "127.0.0.1 -> %u addresses", array_size( addresses ) );
-	EXPECT_EQ( array_size( addresses ), 1 );
-	for( iaddr = 0, addrsize = array_size( addresses ); iaddr < addrsize; ++iaddr )
+	if( has_ipv4 )
 	{
-		char* address_str = network_address_to_string( addresses[iaddr], true );
-		log_debugf( HASH_NETWORK, "  %s", address_str );
-		EXPECT_TRUE( string_equal( address_str, "127.0.0.1" ) );
-		string_deallocate( address_str );
-		memory_deallocate( addresses[iaddr] );
-	}	
-	array_deallocate( addresses );
+		addresses = network_address_resolve( "127.0.0.1" );
+		log_debugf( HASH_NETWORK, "127.0.0.1 -> %u addresses", array_size( addresses ) );
+		EXPECT_EQ( array_size( addresses ), 1 );
+		for( iaddr = 0, addrsize = array_size( addresses ); iaddr < addrsize; ++iaddr )
+		{
+			char* address_str = network_address_to_string( addresses[iaddr], true );
+			log_debugf( HASH_NETWORK, "  %s", address_str );
+			EXPECT_TRUE( string_equal( address_str, "127.0.0.1" ) );
+			string_deallocate( address_str );
+			memory_deallocate( addresses[iaddr] );
+		}
+		array_deallocate( addresses );
+	}
 
-	addresses = network_address_resolve( "::1" );
-	log_debugf( HASH_NETWORK, "::1 -> %u addresses", array_size( addresses ) );
-	EXPECT_EQ( array_size( addresses ), 1 );
-	for( iaddr = 0, addrsize = array_size( addresses ); iaddr < addrsize; ++iaddr )
+	if( has_ipv6 )
 	{
-		char* address_str = network_address_to_string( addresses[iaddr], true );
-		log_debugf( HASH_NETWORK, "  %s", address_str );
-		EXPECT_TRUE( string_equal( address_str, "::1" ) );
-		string_deallocate( address_str );
-		memory_deallocate( addresses[iaddr] );
-	}	
-	array_deallocate( addresses );
+		addresses = network_address_resolve( "::1" );
+		log_debugf( HASH_NETWORK, "::1 -> %u addresses", array_size( addresses ) );
+		EXPECT_EQ( array_size( addresses ), 1 );
+		for( iaddr = 0, addrsize = array_size( addresses ); iaddr < addrsize; ++iaddr )
+		{
+			char* address_str = network_address_to_string( addresses[iaddr], true );
+			log_debugf( HASH_NETWORK, "  %s", address_str );
+			EXPECT_TRUE( string_equal( address_str, "::1" ) );
+			string_deallocate( address_str );
+			memory_deallocate( addresses[iaddr] );
+		}
+		array_deallocate( addresses );
+	}
 
-	addresses = network_address_resolve( "127.0.0.1:512" );
-	log_debugf( HASH_NETWORK, "127.0.0.1:512 -> %u addresses", array_size( addresses ) );
-	EXPECT_EQ( array_size( addresses ), 1 );
-	for( iaddr = 0, addrsize = array_size( addresses ); iaddr < addrsize; ++iaddr )
+	if( has_ipv4 )
 	{
-		char* address_str = network_address_to_string( addresses[iaddr], true );
-		log_debugf( HASH_NETWORK, "  %s", address_str );
-		EXPECT_TRUE( string_equal( address_str, "127.0.0.1:512" ) );
-		string_deallocate( address_str );
-		memory_deallocate( addresses[iaddr] );
-	}	
-	array_deallocate( addresses );
+		addresses = network_address_resolve( "127.0.0.1:512" );
+		log_debugf( HASH_NETWORK, "127.0.0.1:512 -> %u addresses", array_size( addresses ) );
+		EXPECT_EQ( array_size( addresses ), 1 );
+		for( iaddr = 0, addrsize = array_size( addresses ); iaddr < addrsize; ++iaddr )
+		{
+			char* address_str = network_address_to_string( addresses[iaddr], true );
+			log_debugf( HASH_NETWORK, "  %s", address_str );
+			EXPECT_TRUE( string_equal( address_str, "127.0.0.1:512" ) );
+			string_deallocate( address_str );
+			memory_deallocate( addresses[iaddr] );
+		}
+		array_deallocate( addresses );
+	}
 
-	addresses = network_address_resolve( "[::1]:512" );
-	log_debugf( HASH_NETWORK, "[::1]:512 -> %u addresses", array_size( addresses ) );
-	EXPECT_EQ( array_size( addresses ), 1 );
-	for( iaddr = 0, addrsize = array_size( addresses ); iaddr < addrsize; ++iaddr )
+	if( has_ipv6 )
 	{
-		char* address_str = network_address_to_string( addresses[iaddr], true );
-		log_debugf( HASH_NETWORK, "  %s", address_str );
-		EXPECT_TRUE( string_equal( address_str, "[::1]:512" ) );
-		string_deallocate( address_str );
-		memory_deallocate( addresses[iaddr] );
-	}	
-	array_deallocate( addresses );
+		addresses = network_address_resolve( "[::1]:512" );
+		log_debugf( HASH_NETWORK, "[::1]:512 -> %u addresses", array_size( addresses ) );
+		EXPECT_EQ( array_size( addresses ), 1 );
+		for( iaddr = 0, addrsize = array_size( addresses ); iaddr < addrsize; ++iaddr )
+		{
+			char* address_str = network_address_to_string( addresses[iaddr], true );
+			log_debugf( HASH_NETWORK, "  %s", address_str );
+			EXPECT_TRUE( string_equal( address_str, "[::1]:512" ) );
+			string_deallocate( address_str );
+			memory_deallocate( addresses[iaddr] );
+		}
+		array_deallocate( addresses );
+	}
 
 	addresses = network_address_resolve( "zion.rampantpixels.com:1234" );
 	log_debugf( HASH_NETWORK, "zion.rampantpixels.com:1234 -> %u addresses", array_size( addresses ) );
-	EXPECT_GE( array_size( addresses ), 1 );
+	EXPECT_EQ( array_size( addresses ), expected_addresses );
 	for( iaddr = 0, addrsize = array_size( addresses ); iaddr < addrsize; ++iaddr )
 	{
 		char* address_str = network_address_to_string( addresses[iaddr], true );
 		log_debugf( HASH_NETWORK, "  %s", address_str );
 		string_deallocate( address_str );
 		memory_deallocate( addresses[iaddr] );
-	}	
+	}
 	array_deallocate( addresses );
 
 	addresses = network_address_resolve( "www.google.com" );
 	log_debugf( HASH_NETWORK, "www.google.com -> %u addresses", array_size( addresses ) );
-	EXPECT_GT( array_size( addresses ), 2 );
+	EXPECT_GE( array_size( addresses ), expected_addresses );
 	for( iaddr = 0, addrsize = array_size( addresses ); iaddr < addrsize; ++iaddr )
 	{
 		char* address_str = network_address_to_string( addresses[iaddr], true );
 		log_debugf( HASH_NETWORK, "  %s", address_str );
 		string_deallocate( address_str );
 		memory_deallocate( addresses[iaddr] );
-	}	
+	}
 	array_deallocate( addresses );
-	
+
 	return 0;
 }
 
@@ -194,38 +214,46 @@ DECLARE_TEST( address, resolve )
 DECLARE_TEST( address, any )
 {
 	char* address_str;
+	bool has_ipv4 = network_supports_ipv4();
+	bool has_ipv6 = network_supports_ipv6();
 	network_address_t** any_resolve;
 
-	network_address_t* any = network_address_ipv4_any();
-	EXPECT_NE( any, 0 );
-	address_str = network_address_to_string( any, true );
-	log_debugf( HASH_NETWORK, "IPv4 any: %s", address_str );
-	EXPECT_STREQ( address_str, "0.0.0.0" );
+	if( has_ipv4 )
+	{
+		network_address_t* any = network_address_ipv4_any();
+		EXPECT_NE( any, 0 );
+		address_str = network_address_to_string( any, true );
+		log_debugf( HASH_NETWORK, "IPv4 any: %s", address_str );
+		EXPECT_STREQ( address_str, "0.0.0.0" );
 
-	any_resolve = network_address_resolve( address_str );
-	EXPECT_EQ( array_size( any_resolve ), 1 );
-	EXPECT_TRUE( network_address_equal( any, any_resolve[0] ) );
-	
-	string_deallocate( address_str );
-	memory_deallocate( any_resolve[0] );
-	memory_deallocate( any );
-	array_deallocate( any_resolve );
+		any_resolve = network_address_resolve( address_str );
+		EXPECT_EQ( array_size( any_resolve ), 1 );
+		EXPECT_TRUE( network_address_equal( any, any_resolve[0] ) );
 
-	any = network_address_ipv6_any();
-	EXPECT_NE( any, 0 );
-	address_str = network_address_to_string( any, true );
-	log_debugf( HASH_NETWORK, "IPv6 any: %s", address_str );
-	EXPECT_STREQ( address_str, "::" );
+		string_deallocate( address_str );
+		memory_deallocate( any_resolve[0] );
+		memory_deallocate( any );
+		array_deallocate( any_resolve );
+	}
 
-	any_resolve = network_address_resolve( address_str );
-	EXPECT_EQ( array_size( any_resolve ), 1 );
-	EXPECT_TRUE( network_address_equal( any, any_resolve[0] ) );
-	
-	string_deallocate( address_str );
-	memory_deallocate( any_resolve[0] );
-	memory_deallocate( any );
-	array_deallocate( any_resolve );
-	
+	if( has_ipv6 )
+	{
+		network_address_t* any = network_address_ipv6_any();
+		EXPECT_NE( any, 0 );
+		address_str = network_address_to_string( any, true );
+		log_debugf( HASH_NETWORK, "IPv6 any: %s", address_str );
+		EXPECT_STREQ( address_str, "::" );
+
+		any_resolve = network_address_resolve( address_str );
+		EXPECT_EQ( array_size( any_resolve ), 1 );
+		EXPECT_TRUE( network_address_equal( any, any_resolve[0] ) );
+
+		string_deallocate( address_str );
+		memory_deallocate( any_resolve[0] );
+		memory_deallocate( any );
+		array_deallocate( any_resolve );
+	}
+
 	return 0;
 }
 
@@ -233,81 +261,97 @@ DECLARE_TEST( address, any )
 DECLARE_TEST( address, port )
 {
 	network_address_t** any_resolve;
+	bool has_ipv4 = network_supports_ipv4();
+	bool has_ipv6 = network_supports_ipv6();
 	char* address_str;
 
-	network_address_t* any = network_address_ipv4_any();
-	EXPECT_EQ( network_address_ip_port( any ), 0 );
+	if( has_ipv4 )
+	{
+		network_address_t* any = network_address_ipv4_any();
+		EXPECT_EQ( network_address_ip_port( any ), 0 );
 
-	network_address_ip_set_port( any, 80 );
-	EXPECT_EQ( network_address_ip_port( any ), 80 );	
+		network_address_ip_set_port( any, 80 );
+		EXPECT_EQ( network_address_ip_port( any ), 80 );
 
-	address_str = network_address_to_string( any, true );
-	log_debugf( HASH_NETWORK, "IPv4 any: %s", address_str );
-	EXPECT_STREQ( address_str, "0.0.0.0:80" );
+		address_str = network_address_to_string( any, true );
+		log_debugf( HASH_NETWORK, "IPv4 any: %s", address_str );
+		EXPECT_STREQ( address_str, "0.0.0.0:80" );
 
-	any_resolve = network_address_resolve( address_str );
-	EXPECT_EQ( array_size( any_resolve ), 1 );
-	EXPECT_TRUE( network_address_equal( any, any_resolve[0] ) );
-	
-	string_deallocate( address_str );
-	memory_deallocate( any_resolve[0] );
-	memory_deallocate( any );
-	array_deallocate( any_resolve );
+		any_resolve = network_address_resolve( address_str );
+		EXPECT_EQ( array_size( any_resolve ), 1 );
+		EXPECT_TRUE( network_address_equal( any, any_resolve[0] ) );
 
-	any = network_address_ipv6_any();
-	EXPECT_EQ( network_address_ip_port( any ), 0 );
+		string_deallocate( address_str );
+		memory_deallocate( any_resolve[0] );
+		memory_deallocate( any );
+		array_deallocate( any_resolve );
+	}
 
-	network_address_ip_set_port( any, 80 );
-	EXPECT_EQ( network_address_ip_port( any ), 80 );	
+	if( has_ipv6 )
+	{
+		network_address_t* any = network_address_ipv6_any();
+		EXPECT_EQ( network_address_ip_port( any ), 0 );
 
-	address_str = network_address_to_string( any, true );
-	log_debugf( HASH_NETWORK, "IPv6 any: %s", address_str );
-	EXPECT_STREQ( address_str, "[::]:80" );
+		network_address_ip_set_port( any, 80 );
+		EXPECT_EQ( network_address_ip_port( any ), 80 );
 
-	any_resolve = network_address_resolve( address_str );
-	EXPECT_EQ( array_size( any_resolve ), 1 );
-	EXPECT_TRUE( network_address_equal( any, any_resolve[0] ) );
-	
-	string_deallocate( address_str );
-	memory_deallocate( any_resolve[0] );
-	memory_deallocate( any );
-	array_deallocate( any_resolve );
-	
+		address_str = network_address_to_string( any, true );
+		log_debugf( HASH_NETWORK, "IPv6 any: %s", address_str );
+		EXPECT_STREQ( address_str, "[::]:80" );
+
+		any_resolve = network_address_resolve( address_str );
+		EXPECT_EQ( array_size( any_resolve ), 1 );
+		EXPECT_TRUE( network_address_equal( any, any_resolve[0] ) );
+
+		string_deallocate( address_str );
+		memory_deallocate( any_resolve[0] );
+		memory_deallocate( any );
+		array_deallocate( any_resolve );
+	}
+
 	return 0;
 }
 
 
 DECLARE_TEST( address, family )
 {
+	bool has_ipv4 = network_supports_ipv4();
+	bool has_ipv6 = network_supports_ipv6();
 	network_address_t** any_resolve;
 
-	network_address_t* any = network_address_ipv4_any();
-	EXPECT_EQ( network_address_family( any ), NETWORK_ADDRESSFAMILY_IPV4 );
+	if( has_ipv4 )
+	{
+		network_address_t* any = network_address_ipv4_any();
+		EXPECT_EQ( network_address_family( any ), NETWORK_ADDRESSFAMILY_IPV4 );
 
-	network_address_ip_set_port( any, 80 );
-	EXPECT_EQ( network_address_family( any ), NETWORK_ADDRESSFAMILY_IPV4 );
+		network_address_ip_set_port( any, 80 );
+		EXPECT_EQ( network_address_family( any ), NETWORK_ADDRESSFAMILY_IPV4 );
 
-	any_resolve = network_address_resolve( "0.0.0.0:80" );
-	EXPECT_EQ( array_size( any_resolve ), 1 );
-	EXPECT_EQ( network_address_family( any_resolve[0] ), NETWORK_ADDRESSFAMILY_IPV4 );
-	
-	memory_deallocate( any_resolve[0] );
-	memory_deallocate( any );
-	array_deallocate( any_resolve );
+		any_resolve = network_address_resolve( "0.0.0.0:80" );
+		EXPECT_EQ( array_size( any_resolve ), 1 );
+		EXPECT_EQ( network_address_family( any_resolve[0] ), NETWORK_ADDRESSFAMILY_IPV4 );
 
-	any = network_address_ipv6_any();
-	EXPECT_EQ( network_address_family( any ), NETWORK_ADDRESSFAMILY_IPV6 );
+		memory_deallocate( any_resolve[0] );
+		memory_deallocate( any );
+		array_deallocate( any_resolve );
+	}
 
-	network_address_ip_set_port( any, 80 );
-	EXPECT_EQ( network_address_family( any ), NETWORK_ADDRESSFAMILY_IPV6 );
+	if( has_ipv6 )
+	{
+		network_address_t* any = network_address_ipv6_any();
+		EXPECT_EQ( network_address_family( any ), NETWORK_ADDRESSFAMILY_IPV6 );
 
-	any_resolve = network_address_resolve( "[::]:80" );
-	EXPECT_EQ( array_size( any_resolve ), 1 );
-	EXPECT_EQ( network_address_family( any_resolve[0] ), NETWORK_ADDRESSFAMILY_IPV6 );
-	
-	memory_deallocate( any_resolve[0] );
-	memory_deallocate( any );
-	array_deallocate( any_resolve );
+		network_address_ip_set_port( any, 80 );
+		EXPECT_EQ( network_address_family( any ), NETWORK_ADDRESSFAMILY_IPV6 );
+
+		any_resolve = network_address_resolve( "[::]:80" );
+		EXPECT_EQ( array_size( any_resolve ), 1 );
+		EXPECT_EQ( network_address_family( any_resolve[0] ), NETWORK_ADDRESSFAMILY_IPV6 );
+
+		memory_deallocate( any_resolve[0] );
+		memory_deallocate( any );
+		array_deallocate( any_resolve );
+	}
 
 	return 0;
 }

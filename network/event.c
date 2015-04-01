@@ -1,10 +1,10 @@
 /* event.c  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
- * 
+ *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
- * 
+ *
  * https://github.com/rampantpixels/network_lib
- * 
+ *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
  */
@@ -23,7 +23,7 @@ typedef struct _network_event
 } network_event_t;
 
 
-static event_stream_t* _network_events = 0;
+static event_stream_t* _network_events;
 
 
 int _network_event_initialize( void )

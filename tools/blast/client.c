@@ -1,10 +1,10 @@
 /* client.c  -  Network blast tool  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
- * 
+ *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
- * 
+ *
  * https://github.com/rampantpixels/network_lib
- * 
+ *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
  */
@@ -24,6 +24,7 @@ blast_client_t* clients = 0;
 
 static void blast_client_deallocate( blast_client_t* client )
 {
+    FOUNDATION_UNUSED( client );
 }
 
 
@@ -32,22 +33,22 @@ static int blast_client_initialize( blast_client_t* client, network_address_t** 
     int iaddr, addrsize = 0;
     network_datagram_t datagram;
     packet_t packet;
-    
+
     client->address = address;
     client->sock = udp_socket_create();
-    
+
     if( !client->sock )
         return BLAST_ERROR_UNABLE_TO_CREATE_SOCKET;
-    
+
     datagram.size = sizeof( packet );
     datagram.data = &packet;
-    
+
     packet.type = PACKET_HANDSHAKE;
     packet.size = 0;
-    
+
     for( iaddr = 0, addrsize = array_size( address ); iaddr < addrsize; ++iaddr )
         udp_socket_sendto( client->sock, datagram, address[iaddr] );
-    
+
     return BLAST_RESULT_OK;
 }
 
@@ -60,10 +61,12 @@ int blast_client( network_address_t*** target, char** files )
 	int iclient, csize = 0;
 	int result = BLAST_RESULT_OK;
 
+    FOUNDATION_UNUSED( files );
+
 	for( isock = 0, asize = array_size( target ); isock < asize; ++isock )
 	{
 		blast_client_t client;
-		
+
 #if BUILD_ENABLE_LOG
 		char* targetaddress = 0;
 		for( iaddr = 0, addrsize = array_size( target[isock] ); iaddr < addrsize; ++iaddr )
@@ -83,6 +86,6 @@ int blast_client( network_address_t*** target, char** files )
 	for( iclient = 0, csize = array_size( clients ); iclient < csize; ++iclient )
 		blast_client_deallocate( &clients[iclient] );
 	array_deallocate( clients );
-	
+
 	return result;
 }
