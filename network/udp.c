@@ -581,6 +581,9 @@ network_datagram_t udp_socket_recvfrom( object_t id, network_address_t const** a
 		}
 	}
 
+	//Trigger read events again (or else poll->read->poll with same amount of buffered data will not trigger event)
+	sockbase->last_event = 0;
+
 exit:
 
 	if( sock )
@@ -601,7 +604,10 @@ uint64_t udp_socket_sendto( object_t id, const network_datagram_t datagram, cons
 		return 0;
 
 	sock = _socket_lookup( id );
-	if( !sock || ( sock->base < 0 ) )
+	if( !sock )
+		goto exit;
+
+	if( _socket_create_fd( sock, address->family ) == SOCKET_INVALID )
 		goto exit;
 
 	sockbase = _socket_base + sock->base;

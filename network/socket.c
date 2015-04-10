@@ -279,7 +279,7 @@ bool socket_connect( object_t id, const network_address_t* address, unsigned int
 	}
 
 	sockbase->flags &= ~( SOCKETFLAG_CONNECTION_PENDING | SOCKETFLAG_ERROR_PENDING | SOCKETFLAG_HANGUP_PENDING );
-    sockbase->last_event = 0;
+	sockbase->last_event = 0;
 
 	err = sock->connect_fn ? sock->connect_fn( sock, address, timeout ) : false;
 	if( err )
