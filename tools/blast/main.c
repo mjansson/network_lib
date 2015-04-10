@@ -164,10 +164,10 @@ void blast_print_usage( void )
 		"  blast [-s|--server] [-d|-daemon] [-c|--client] [-t|--target host[:port]] [-b|--bind host[:port]] <file> <file> <file> <...> [--]\n"
 		"    Required arguments for server:\n"
 		"      -s|--server              Start as server\n"
-		"      -b||-bind host[:port]    Bind ip address and optional port (muliple)\n"
+		"      -b||-bind host[:port]    Bind ip address and optional port (multiple)\n"
 		"    Required arguments for client:\n"
 		"      -c|--client              Start as client\n"
-		"      -t|--target host[:port]  Target host (ip or hostname) with optional port (muliple)\n"
+		"      -t|--target host[:port]  Target host (ip or hostname) with optional port (multiple)\n"
 		"      <file>                   File name (muliple)\n"
 		"    Optional arguments:\n"
 		"      -d|--daemon              Run server as daemon\n"
@@ -184,7 +184,6 @@ void blast_process_system_events( void )
 	system_process_events();
 
 	block = event_stream_process( system_event_stream() );
-	event = 0;
 
 	while( ( event = event_next( block, event ) ) )
 	{

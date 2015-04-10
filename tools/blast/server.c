@@ -1,10 +1,10 @@
 /* server.c  -  Network blast tool  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
- * 
+ *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
- * 
+ *
  * https://github.com/rampantpixels/network_lib
- * 
+ *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
  */
@@ -12,8 +12,49 @@
 #include "blast.h"
 
 
+static void blast_server_read( object_t sock )
+{
+	const network_address_t* address = 0;
+	network_datagram_t datagram = udp_socket_recvfrom( sock, &address );
+	while( datagram.size > 0 )
+	{
+		packet_t* packet = (packet_t*)datagram.data;
+		if( packet->type == PACKET_HANDSHAKE )
+		{
+			char* addr = network_address_to_string( address, true );
+			log_infof( HASH_BLAST, "Got handshake packet from %s (seq %d, timestamp %lld)", addr, (int)packet->seq, (tick_t)packet->timestamp );
+			udp_socket_sendto( sock, datagram, address );
+		}
+		else
+		{
+			log_warnf( HASH_BLAST, WARNING_SUSPICIOUS, "Unknown datagram on socket in handshake state" );
+		}
+		datagram = udp_socket_recvfrom( sock, &address );
+	}
+}
+
+
 static void blast_server_process_network_events( void )
 {
+	event_block_t* block;
+	event_t* event = 0;
+
+	block = event_stream_process( network_event_stream() );
+
+	while( ( event = event_next( block, event ) ) )
+	{
+		switch( event->id )
+		{
+			case NETWORKEVENT_DATAIN:
+			{
+				blast_server_read( network_event_socket( event ) );
+				break;
+			}
+
+			default:
+				break;
+		}
+	}
 }
 
 
@@ -26,7 +67,9 @@ static int blast_server_run( bool daemon, network_poll_t* poll )
         config_set_bool( HASH_APPLICATION, HASH_DAEMON, true );
         //TODO: Implement
     }
-    
+
+    network_poll_set_timeout( poll, -1 );
+
 	while( !blast_should_exit() )
 	{
 		network_poll( poll );
@@ -42,31 +85,37 @@ int blast_server( network_address_t** bind, bool daemon )
 {
 	int isock, asize, added = 0;
 	int result = BLAST_RESULT_OK;
+	unsigned int port;
 	network_poll_t* poll = 0;
 
-	poll = network_poll_allocate( array_size( bind ), 0 );
+	poll = network_poll_allocate( array_size( bind ) );
 
 	for( isock = 0, asize = array_size( bind ); isock < asize; ++isock )
 	{
 		object_t sock = udp_socket_create();
 
+		socket_set_blocking( sock, false );
+
+		if( !network_address_ip_port( bind[isock] ) && port )
+			network_address_ip_set_port( bind[isock], port );
+
 		if( socket_bind( sock, bind[isock] ) )
 		{
-			char* address = network_address_to_string( bind[isock], true );
-			log_infof( HASH_BLAST, "Listening to %s", address );
-			string_deallocate( address );
+			const network_address_t* address = socket_address_local( sock );
+			char* addr = network_address_to_string( address, true );
+			log_infof( HASH_BLAST, "Listening to %s", addr );
+			string_deallocate( addr );
 
 			network_poll_add_socket( poll, sock );
 
-			++added;
+			if( !port )
+				port = network_address_ip_port( address );
 
-			log_set_suppress( HASH_NETWORK, ERRORLEVEL_WARNING );
+			++added;
 		}
 
 		socket_destroy( sock );
 	}
-
-	log_set_suppress( HASH_NETWORK, ERRORLEVEL_INFO );
 
 	if( added )
 		result = blast_server_run( daemon, poll );
