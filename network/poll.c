@@ -1,10 +1,10 @@
 /* poll.c  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
- * 
+ *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
- * 
+ *
  * https://github.com/rampantpixels/network_lib
- * 
+ *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
  */
@@ -69,7 +69,7 @@ static int _network_poll_process_pending( network_poll_t* pollobj )
 		{
 			object_t sock = pollobj->queue_remove[iqueue];
 			pollobj->queue_remove[iqueue] = 0;
-				
+
 			for( islot = 0; islot < num_sockets; ++islot )
 			{
 				if( pollobj->slots[islot].sock == sock )
@@ -118,7 +118,7 @@ static int _network_poll_process_pending( network_poll_t* pollobj )
 			socket_destroy( sock );
 		}
 	}
-		
+
 	//Add pending sockets
 	for( iqueue = 0; ( num_sockets < max_sockets ) && ( iqueue < BUILD_SIZE_POLL_QUEUE ); ++iqueue )
 	{
@@ -133,7 +133,7 @@ static int _network_poll_process_pending( network_poll_t* pollobj )
 			sock = _socket_lookup( sockobj );
 			if( !sock )
 				continue;
-			
+
 			FOUNDATION_ASSERT( sock->base >= 0 );
 			sockbase = _socket_base + sock->base;
 
@@ -142,14 +142,14 @@ static int _network_poll_process_pending( network_poll_t* pollobj )
 			sockbase->flags &= ~( SOCKETFLAG_CONNECTION_PENDING | SOCKETFLAG_ERROR_PENDING | SOCKETFLAG_HANGUP_PENDING );
 			sockbase->flags |= SOCKETFLAG_POLLED;
 			sockbase->last_event = 0;
-				
+
 			pollobj->slots[ num_sockets ].sock = sockobj;
 			pollobj->slots[ num_sockets ].base = sock->base;
 			pollobj->slots[ num_sockets ].fd = sockbase->fd;
 
-            if( sockbase->state == SOCKETSTATE_CONNECTING )
+			if( sockbase->state == SOCKETSTATE_CONNECTING )
 				_socket_poll_state( sockbase );
-			
+
 #if FOUNDATION_PLATFORM_APPLE
 			pollobj->pollfds[ num_sockets ].fd = sockbase->fd;
 			pollobj->pollfds[ num_sockets ].events = ( ( sockbase->state == SOCKETSTATE_CONNECTING ) ? POLLOUT : POLLIN ) | POLLERR | POLLHUP;
@@ -175,10 +175,9 @@ static int _network_poll_process_pending( network_poll_t* pollobj )
 }
 
 
-network_poll_t* network_poll_allocate( unsigned int num_sockets, unsigned int timeoutms )
+network_poll_t* network_poll_allocate( unsigned int num_sockets )
 {
 	network_poll_t* poll = memory_allocate( HASH_NETWORK, sizeof( network_poll_t ) + sizeof( network_poll_slot_t ) * num_sockets, 8, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
-	poll->timeout = timeoutms;
 	poll->max_sockets = num_sockets;
 #if FOUNDATION_PLATFORM_APPLE
 	poll->pollfds = memory_allocate( HASH_NETWORK, sizeof( struct pollfd ) * num_sockets, 8, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
@@ -359,10 +358,8 @@ bool network_poll_has_socket( network_poll_t* pollobj, object_t sock )
 
 int network_poll( network_poll_t* pollobj )
 {
-	unsigned int num_sockets;
-	int timeout = pollobj->timeout;
 	int avail = 0;
-	
+
 #if FOUNDATION_PLATFORM_WINDOWS
 	//TODO: Refactor to keep fd_set across loop and rebuild on change (add/remove)
 	int num_fd = 0;
@@ -372,57 +369,55 @@ int network_poll( network_poll_t* pollobj )
 #endif
 
 	int num_events = _network_poll_process_pending( pollobj );
-	
-	num_sockets = pollobj->num_sockets;
 
-	if( !num_sockets )
+	if( !pollobj->num_sockets )
 		return num_events ? num_events : -1;
-		
+
 #if FOUNDATION_PLATFORM_APPLE
 
-	int ret = poll( pollobj->pollfds, pollobj->num_sockets, timeout );
-		
+	int ret = poll( pollobj->pollfds, pollobj->num_sockets, pollobj->timeout );
+
 #elif FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
-		
-	int ret = epoll_wait( pollobj->fd_poll, pollobj->events, pollobj->num_sockets + 1, timeout );
+
+	int ret = epoll_wait( pollobj->fd_poll, pollobj->events, pollobj->num_sockets + 1, pollobj->timeout );
 	int num_polled = ret;
-		
+
 #elif FOUNDATION_PLATFORM_WINDOWS
-	
+
 	FD_ZERO( &fdread );
 	FD_ZERO( &fdwrite );
 	FD_ZERO( &fderr );
-		
-	for( islot = 0; islot < num_sockets; ++islot )
+
+	for( islot = 0; islot < pollobj->num_sockets; ++islot )
 	{
 		int fd = pollobj->slots[islot].fd;
 
 		FD_SET( fd, &fdread );
 		FD_SET( fd, &fdwrite );
 		FD_SET( fd, &fderr );
-			
+
 		if( fd >= num_fd )
 			num_fd = fd + 1;
 	}
-		
+
 	if( !num_fd )
 	{
 		return num_events ? num_events : -1;
 	}
-	else		
+	else
 	{
 		struct timeval tv;
-			
-		tv.tv_sec  = timeout / 1000;
-		tv.tv_usec = ( timeout % 1000 ) * 1000;
-			
+
+		tv.tv_sec  = pollobj->timeout / 1000;
+		tv.tv_usec = ( pollobj->timeout % 1000 ) * 1000;
+
 		ret = select( num_fd, &fdread, &fdwrite, &fderr, &tv );
 	}
-	
+
 #else
 #  error Not implemented
 #endif
-		
+
 	if( ret < 0 )
 	{
 		log_warnf( HASH_NETWORK, WARNING_SUSPICIOUS, "Error in socket poll: %s", system_error_message( NETWORK_SOCKET_ERROR ) );
@@ -432,12 +427,12 @@ int network_poll( network_poll_t* pollobj )
 	}
 	if( !avail && !ret )
 		return num_events;
-		
+
 #if FOUNDATION_PLATFORM_APPLE
-		
+
 	struct pollfd* pfd = pollobj->pollfds;
 	network_poll_slot_t* slot = pollobj->slots;
-	for( unsigned int i = 0; i < num_sockets; ++i, ++pfd, ++slot )
+	for( unsigned int i = 0; i < pollobj->num_sockets; ++i, ++pfd, ++slot )
 	{
 		object_t sockobj = slot->sock;
 		socket_base_t* sockbase = _socket_base + slot->base;
@@ -504,14 +499,14 @@ int network_poll( network_poll_t* pollobj )
 			++num_events;
 		}
 	}
-		
+
 #elif FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
-		
+
 	struct epoll_event* event = pollobj->events;
 	for( int i = 0; i < num_polled; ++i, ++event )
 	{
 		FOUNDATION_ASSERT( pollobj->slots[ event->data.fd ].base >= 0 );
-		
+
 		object_t sockobj = pollobj->slots[ event->data.fd ].sock;
 		socket_base_t* sockbase = _socket_base + pollobj->slots[ event->data.fd ].base;
 		int fd = pollobj->slots[ event->data.fd ].fd;
@@ -583,16 +578,16 @@ int network_poll( network_poll_t* pollobj )
 			++num_events;
 		}
 	}
-		
+
 #elif FOUNDATION_PLATFORM_WINDOWS
-	
-	for( islot = 0; islot < num_sockets; ++islot )
+
+	for( islot = 0; islot < pollobj->num_sockets; ++islot )
 	{
 		int fd = pollobj->slots[islot].fd;
 		object_t sockobj = pollobj->slots[islot].sock;
 		socket_base_t* sockbase = _socket_base + pollobj->slots[islot].base;
 		FOUNDATION_ASSERT( sockbase->object == sockobj ); //Sanity check, if this fails socket was deleted or reassigned without added/removed on poll object
-			
+
 		if( FD_ISSET( fd, &fdread ) )
 		{
 			if( sockbase->state == SOCKETSTATE_LISTENING )
@@ -645,7 +640,7 @@ int network_poll( network_poll_t* pollobj )
 #else
 #  error Not implemented
 #endif
-	
+
 	return num_events;
 }
 
