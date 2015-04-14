@@ -12,6 +12,9 @@
 #include "blast.h"
 
 
+static uint64_t _blast_server_token = 0;
+
+
 static void blast_server_read( object_t sock )
 {
 	const network_address_t* address = 0;
@@ -21,9 +24,23 @@ static void blast_server_read( object_t sock )
 		packet_t* packet = (packet_t*)datagram.data;
 		if( packet->type == PACKET_HANDSHAKE )
 		{
+			packet_handshake_t* handshake = (packet_handshake_t*)packet;
 			char* addr = network_address_to_string( address, true );
-			log_infof( HASH_BLAST, "Got handshake packet from %s (seq %d, timestamp %lld)", addr, (int)packet->seq, (tick_t)packet->timestamp );
-			udp_socket_sendto( sock, datagram, address );
+
+			if( handshake->datasize > PACKET_DATA_MAXSIZE )
+				log_warnf( HASH_BLAST, WARNING_BAD_DATA, "Invalid data size %lld from %s", handshake->datasize, addr );
+			else if( !handshake->namesize || handshake->namesize > PACKET_NAME_MAXSIZE )
+				log_warnf( HASH_BLAST, WARNING_BAD_DATA, "Invalid name size %d from %s", handshake->namesize, addr );
+			else
+			{
+				log_infof( HASH_BLAST, "Got handshake packet from %s (seq %d, timestamp %lld)", addr, (int)packet->seq, (tick_t)packet->timestamp );
+
+				handshake->token = ( ++_blast_server_token ) & PACKET_TOKEN_MASK;
+				log_infof( HASH_BLAST, "Begin transfer of '%s' size %lld with token %d from %s", handshake->name, handshake->datasize, handshake->token, addr );
+
+				udp_socket_sendto( sock, datagram, address );
+			}
+			string_deallocate( addr );
 		}
 		else
 		{

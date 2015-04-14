@@ -22,7 +22,7 @@ network_lib = generator.lib( module = 'network', sources = [
 if not target.is_ios() and not target.is_android():
   configs = [ config for config in toolchain.configs if config not in [ 'profile', 'deploy' ] ]
   if not configs == []:
-    generator.bin( 'blast', [ 'main.c', 'client.c', 'server.c' ], 'blast', basepath = 'tools', implicit_deps = [ network_lib ], libs = [ 'network' ], configs = configs )
+    generator.bin( 'blast', [ 'main.c', 'client.c', 'reader.c', 'server.c', 'writer.c' ], 'blast', basepath = 'tools', implicit_deps = [ network_lib ], libs = [ 'network' ], configs = configs )
 
 includepaths = generator.test_includepaths()
 

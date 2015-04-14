@@ -10,6 +10,8 @@
  */
 
 #include "blast.h"
+#include "client.h"
+#include "server.h"
 
 
 typedef enum _blast_mode
@@ -36,16 +38,8 @@ typedef struct
 
 static bool                 should_exit;
 
-
 static blast_input_t        blast_parse_command_line( char const* const* cmdline );
-
 static void                 blast_print_usage( void );
-
-extern int                  blast_server( network_address_t** bind, bool daemon );
-extern int                  blast_client( network_address_t*** target, char** files );
-
-bool                        blast_should_exit( void );
-void                        blast_process_system_events( void );
 
 
 int main_initialize( void )
