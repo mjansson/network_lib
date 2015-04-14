@@ -497,14 +497,11 @@ network_datagram_t udp_socket_recvfrom( object_t id, network_address_t const** a
 		goto exit;
 
 	sockbase = _socket_base + sock->base;
+	if( ( sockbase->fd == SOCKET_INVALID ) || !sock->address_local )
+		goto exit;
 	if( sockbase->state != SOCKETSTATE_NOTCONNECTED )
 	{
 		FOUNDATION_ASSERT_FAILFORMAT_LOG( HASH_NETWORK, "Trying to datagram read from a connected UDP socket 0x%llx (0x%" PRIfixPTR " : %d) in state %u", sock->id, sock, sockbase->fd, sockbase->state );
-		goto exit;
-	}
-	if( ( sockbase->fd == SOCKET_INVALID ) || !sock->address_local )
-	{
-		FOUNDATION_ASSERT_FAILFORMAT_LOG( HASH_NETWORK, "Trying to datagram read from an unbound UDP socket 0x%llx (0x%" PRIfixPTR " : %d) in state %u", sock->id, sock, sockbase->fd, sockbase->state );
 		goto exit;
 	}
 
