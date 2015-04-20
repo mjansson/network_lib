@@ -11,20 +11,21 @@
 
 #pragma once
 
+typedef struct blast_writer_t blast_writer_t;
 
-typedef void   (*write_prepare_fn)( uint64_t offset, int size );
-typedef void*  (*write_map_fn)( uint64_t offset, int size );
-typedef void   (*write_unmap_fn)( void* buffer, uint64_t offset, int size );
+typedef void   (*write_prepare_fn)( blast_writer_t* writer, uint64_t offset, int size );
+typedef void*  (*write_map_fn)( blast_writer_t* writer, uint64_t offset, int size );
+typedef void   (*write_unmap_fn)( blast_writer_t* writer, void* buffer, uint64_t offset, int size );
 
-typedef struct blast_writer_t
+struct blast_writer_t
 {
-    const char*      name;
+    char*            name;
     void*            data;
     uint64_t         size;
     write_prepare_fn prepare;
     write_map_fn     map;
     write_unmap_fn   unmap;
-} blast_writer_t;
+};
 
-extern blast_writer_t*   blast_writer_open( const char* name, uint64_t size );
+extern blast_writer_t*   blast_writer_open( const char* name, uint64_t namesize, uint64_t datasize );
 extern void              blast_writer_close( blast_writer_t* writer );

@@ -36,6 +36,9 @@ typedef enum packet_type_t
 #define PACKET_NAME_MAXSIZE 256
 #define PACKET_DATA_MAXSIZE ( PACKET_CHUNK_SIZE * ( ( 1ULL << PACKET_SEQ_BITS ) - 1ULL ) )
 
+#define PACKET_ACK_COUNT 32
+#define PACKET_ACK_HISTORY 128
+
 #define PACKET_DECLARE \
     uint64_t        type:3; \
     uint64_t        token:9; \
@@ -60,3 +63,10 @@ typedef struct packet_payload_t
     PACKET_DECLARE;
     uint8_t  data[PACKET_CHUNK_SIZE];
 } packet_payload_t;
+
+typedef struct packet_ack_t
+{
+    PACKET_DECLARE;
+    uint32_t ack[PACKET_ACK_COUNT];
+} packet_ack_t;
+

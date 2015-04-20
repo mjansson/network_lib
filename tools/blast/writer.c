@@ -12,16 +12,48 @@
 #include "blast.h"
 #include "writer.h"
 
+static uint8_t writer_chunk[PACKET_CHUNK_SIZE];
 
-blast_writer_t* blast_writer_open( const char* name, uint64_t size )
+static void blast_writer_prepare( blast_writer_t* writer, uint64_t offset, int size )
 {
-    FOUNDATION_UNUSED( name );
+    FOUNDATION_UNUSED( writer );
+    FOUNDATION_UNUSED( offset );
     FOUNDATION_UNUSED( size );
-    return 0;
+}
+
+
+static void* blast_writer_map( blast_writer_t* writer, uint64_t offset, int size )
+{
+    FOUNDATION_UNUSED( writer );
+    FOUNDATION_UNUSED( offset );
+    FOUNDATION_UNUSED( size );
+    return writer_chunk;
+}
+
+
+static void blast_writer_unmap( blast_writer_t* writer, void* buffer, uint64_t offset, int size )
+{
+    FOUNDATION_UNUSED( writer );
+    FOUNDATION_UNUSED( buffer );
+    FOUNDATION_UNUSED( offset );
+    FOUNDATION_UNUSED( size );
+}
+
+
+blast_writer_t* blast_writer_open( const char* name, uint64_t namesize, uint64_t datasize )
+{
+    blast_writer_t* writer = memory_allocate( HASH_BLAST, sizeof( blast_writer_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
+    writer->name = string_substr( name, 0, namesize );
+    writer->size = datasize;
+    writer->prepare = blast_writer_prepare;
+    writer->map = blast_writer_map;
+    writer->unmap = blast_writer_unmap;
+    return writer;
 }
 
 
 void blast_writer_close( blast_writer_t* writer )
 {
-    FOUNDATION_UNUSED( writer );
+    string_deallocate( writer->name );
+    memory_deallocate( writer );
 }
