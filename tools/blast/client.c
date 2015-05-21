@@ -334,24 +334,39 @@ static int blast_client_send_data_chunk( blast_client_t* client, uint64_t seq )
 }
 
 
+static int blast_client_congest_control( blast_client_t* client, tick_t current )
+{
+	static float64_t mbps = 20.0;
+	static tick_t last_ts = 0;
+	static float64_t dt = 0.1;
+	if( last_ts )
+		dt = time_ticks_to_seconds( time_diff( last_ts, current ) );
+	float64_t kbytes = ( mbps * 1024.0 ) * dt;
+	FOUNDATION_UNUSED( client );
+	return 1024.0 * ( kbytes / (float64_t)PACKET_CHUNK_SIZE );
+}
+
+
 static int blast_client_send_data( blast_client_t* client )
 {
 	blast_pending_t pending;
 	bool only_pending;
-	bool sent_pending = false;
 	int ret = 0;
 	uint64_t timestamp;
 	int num_sent = 0;
+	int max_sent = 1;
 
 	only_pending = ( client->seq * PACKET_CHUNK_SIZE > client->readers[client->current]->size );
 	timestamp = time_current();
 
+	max_sent = blast_client_congest_control( client, timestamp );
+
 	if( array_size( client->pending ) )
 	{
 		int ipend, psize;
-		for( ipend = 0, psize = array_size( client->pending ); ipend < psize; ++ipend )
+		for( ipend = 0, psize = array_size( client->pending ); ( ipend < psize ) && ( num_sent < max_sent ); ++ipend )
 		{
-			if( time_elapsed( client->pending[ipend].last_send ) > 15.0f ) //TODO: Resend threshold based on round-trip time or only_pending
+			if( only_pending || ( time_elapsed( client->pending[ipend].last_send ) > 1.0f ) ) //TODO: Resend threshold based on round-trip time
 			{
 				//log_infof( HASH_BLAST, "Resend packet %lld from resend timeout", (uint64_t)client->pending[ipend].seq );
 				ret = blast_client_send_data_chunk( client, client->pending[ipend].seq );
@@ -360,13 +375,12 @@ static int blast_client_send_data( blast_client_t* client )
 				client->pending[ipend].last_send = timestamp;
 				client->packets_resent++;
 				client->last_send = timestamp;
-				sent_pending = true;
 				++num_sent;
 			}
 		}
 	}
 
-	while( ( num_sent < 100 ) && ( client->seq * PACKET_CHUNK_SIZE < client->readers[client->current]->size ) )
+	while( ( num_sent < max_sent ) && ( client->seq * PACKET_CHUNK_SIZE < client->readers[client->current]->size ) )
 	{
 		uint64_t seq = blast_seq( client->seq++ );
 		ret = blast_client_send_data_chunk( client, seq );
@@ -451,6 +465,8 @@ static int blast_client_transfer( blast_client_t* client, network_poll_t* poll )
 
 	FOUNDATION_UNUSED( poll );
 
+	socket_set_blocking( client->sock, false );
+
 	blast_client_read_ack( client );
 	ret = blast_client_send_data( client );
 
@@ -525,7 +541,7 @@ int blast_client( network_address_t*** target, char** files )
 	{
 		running = false;
 
-		network_poll_set_timeout( poll, 10 ); //TODO: set to 0, look for would-block sends, poll on writable (and readable)
+		network_poll_set_timeout( poll, 0 ); //TODO: set to 0, look for would-block sends, poll on writable (and readable)
 		network_poll( poll );
 
 		for( iclient = 0, csize = array_size( clients ); iclient < csize; ++iclient )

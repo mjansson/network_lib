@@ -401,12 +401,12 @@ void socket_set_reuse_port( object_t id, bool reuse )
 }
 
 
-bool socket_set_multicast_group( object_t id, network_address_t* address )
+bool socket_set_multicast_group( object_t id, network_address_t* address, bool allow_loopback )
 {
 	socket_base_t* sockbase;
 	int fd;
 	unsigned char ttl = 1;
-	unsigned char loopback = 0;
+	unsigned char loopback = ( allow_loopback ? 1 : 0 );
 	struct ip_mreq req;
 
 	socket_t* sock = _socket_lookup( id );
@@ -426,8 +426,6 @@ bool socket_set_multicast_group( object_t id, network_address_t* address )
 
 	//TODO: TTL 1 means local network, should be split out to separate control function
 	setsockopt( fd, IPPROTO_IP, IP_MULTICAST_TTL, (const char*)&ttl, sizeof( ttl ) );
-
-	//TODO: Disabling multicast loopback, should be split out to separate control function
 	setsockopt( fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const char*)&loopback, sizeof( loopback ) );
 
 	memset( &req, 0, sizeof( req ) );

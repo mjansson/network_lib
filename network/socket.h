@@ -1,10 +1,10 @@
 /* socket.h  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
- * 
+ *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
- * 
+ *
  * https://github.com/rampantpixels/network_lib
- * 
+ *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
  */
@@ -35,7 +35,7 @@ NETWORK_API void                          socket_set_reuse_address( object_t id,
 NETWORK_API bool                          socket_reuse_port( object_t id );
 NETWORK_API void                          socket_set_reuse_port( object_t id, bool reuse );
 
-NETWORK_API bool                          socket_set_multicast_group( object_t id, network_address_t* address );
+NETWORK_API bool                          socket_set_multicast_group( object_t id, network_address_t* address, bool allow_loopback );
 
 NETWORK_API const network_address_t*      socket_address_local( object_t id );
 NETWORK_API const network_address_t*      socket_address_remote( object_t id );

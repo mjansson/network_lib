@@ -68,7 +68,10 @@ blast_reader_t* blast_reader_open( const char* source )
     }
     lseek( fd, 0, SEEK_SET );
 
-    addr = mmap( 0, size, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0 );
+    addr = memory_allocate( HASH_BLAST, size, 0, MEMORY_PERSISTENT );
+    read( fd, addr, size );
+    close( fd );
+    /*addr = mmap( 0, size, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0 );
     if( addr == MAP_FAILED )
     {
         int err = system_error();
@@ -77,13 +80,13 @@ blast_reader_t* blast_reader_open( const char* source )
         return 0;
     }
 
-    log_infof( HASH_BLAST, "Mapped '%s' size %lld to memory region 0x%" PRIfixPTR, source, size, addr );
+    log_infof( HASH_BLAST, "Mapped '%s' size %lld to memory region 0x%" PRIfixPTR, source, size, addr );*/
 
     reader = memory_allocate( HASH_BLAST, sizeof( blast_reader_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 
     reader->name = path_file_name( source );
     reader->data = addr;
-    reader->id = fd;
+    //reader->id = fd;
     reader->size = (uint64_t)size;
     reader->cache = blast_reader_cache;
     reader->uncache = blast_reader_uncache;
