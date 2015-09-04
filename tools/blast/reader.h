@@ -13,22 +13,24 @@
 
 typedef struct blast_reader_t blast_reader_t;
 
-typedef void   (*read_cache_fn)( blast_reader_t* reader, uint64_t offset, int size );
-typedef void   (*read_uncache_fn)( blast_reader_t* reader, uint64_t offset, int size );
-typedef void*  (*read_map_fn)( blast_reader_t* reader, uint64_t offset, int size );
-typedef void   (*read_unmap_fn)( blast_reader_t* reader, void* buffer, uint64_t offset, int size );
+typedef void (*read_cache_fn)(blast_reader_t* reader, uint64_t offset, int size);
+typedef void (*read_uncache_fn)(blast_reader_t* reader, uint64_t offset, int size);
+typedef void* (*read_map_fn)(blast_reader_t* reader, uint64_t offset, int size);
+typedef void (*read_unmap_fn)(blast_reader_t* reader, void* buffer, uint64_t offset, int size);
 
-typedef struct blast_reader_t
-{
-    const char*      name;
-    void*            data;
-    int              id;
-    uint64_t         size;
-    read_cache_fn    cache;
-    read_uncache_fn  uncache;
-    read_map_fn      map;
-    read_unmap_fn    unmap;
+typedef struct blast_reader_t {
+	string_t         name;
+	void*            data;
+	int              id;
+	uint64_t         size;
+	read_cache_fn    cache;
+	read_uncache_fn  uncache;
+	read_map_fn      map;
+	read_unmap_fn    unmap;
 } blast_reader_t;
 
-extern blast_reader_t*   blast_reader_open( const char* source );
-extern void              blast_reader_close( blast_reader_t* reader );
+extern blast_reader_t*
+blast_reader_open(string_t source);
+
+extern void
+blast_reader_close(blast_reader_t* reader);

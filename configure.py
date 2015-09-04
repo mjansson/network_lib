@@ -19,12 +19,16 @@ toolchain = generator.toolchain
 network_lib = generator.lib( module = 'network', sources = [
   'address.c', 'event.c', 'network.c', 'poll.c', 'socket.c', 'tcp.c', 'udp.c', 'version.c' ] )
 
-if not target.is_ios() and not target.is_android():
-  configs = [ config for config in toolchain.configs if config not in [ 'profile', 'deploy' ] ]
-  if not configs == []:
-    generator.bin( 'blast', [ 'main.c', 'client.c', 'reader.c', 'server.c', 'writer.c' ], 'blast', basepath = 'tools', implicit_deps = [ network_lib ], libs = [ 'network' ], configs = configs )
+#if not target.is_ios() and not target.is_android():
+#  configs = [ config for config in toolchain.configs if config not in [ 'profile', 'deploy' ] ]
+#  if not configs == []:
+#    generator.bin( 'blast', [ 'main.c', 'client.c', 'reader.c', 'server.c', 'writer.c' ], 'blast', basepath = 'tools', implicit_deps = [ network_lib ], libs = [ 'network' ], configs = configs )
 
 includepaths = generator.test_includepaths()
+
+extralibs = []
+if target.is_windows():
+  extralibs += [ 'iphlpapi', 'ws2_32' ]
 
 test_cases = [
   'address', 'socket', 'tcp', 'udp'
@@ -52,6 +56,6 @@ if target.is_ios() or target.is_android() or target.is_pnacl():
     generator.app( module = '', sources = [ os.path.join( module, 'main.c' ) for module in test_cases ] + test_extrasources, binname = 'test-all', basepath = 'test', implicit_deps = [ network_lib ], libs = [ 'network', 'test', 'foundation' ], resources = test_resources, includepaths = includepaths )
 else:
   #Build one binary per test case
-  generator.bin( module = 'all', sources = [ 'main.c' ], binname = 'test-all', basepath = 'test', implicit_deps = [ network_lib ], libs = [ 'network', 'foundation' ], includepaths = includepaths )
+  generator.bin( module = 'all', sources = [ 'main.c' ], binname = 'test-all', basepath = 'test', implicit_deps = [ network_lib ], libs = [ 'network', 'foundation' ] + extralibs, includepaths = includepaths )
   for test in test_cases:
-    generator.bin( module = test, sources = [ 'main.c' ], binname = 'test-' + test, basepath = 'test', implicit_deps = [ network_lib ], libs = [ 'test', 'network', 'foundation' ], includepaths = includepaths )
+    generator.bin( module = test, sources = [ 'main.c' ], binname = 'test-' + test, basepath = 'test', implicit_deps = [ network_lib ], libs = [ 'test', 'network', 'foundation' ] + extralibs, includepaths = includepaths )

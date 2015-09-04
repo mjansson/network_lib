@@ -6,4 +6,4 @@
     Edit corresponding definitions file and rerun
     the foundation hashify tool to update this file */
 
-#define HASH_NETWORK static_hash_string( "network", 0xb876e45f8188af05ULL )
+#define HASH_NETWORK static_hash_string("network", 7, 0xb876e45f8188af05ULL)

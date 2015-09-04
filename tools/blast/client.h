@@ -11,5 +11,5 @@
 
 #pragma once
 
-
-extern int    blast_client( network_address_t*** target, char** files );
+extern int
+blast_client(network_address_t*** target, string_t* files);

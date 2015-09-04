@@ -11,10 +11,9 @@
 
 #pragma once
 
-
 //Error codes returned by blast tool
-#define BLAST_RESULT_OK                                   0
+#define BLAST_RESULT_OK                         0
 
-#define BLAST_ERROR_UNABLE_TO_CREATE_SOCKET              -1
-#define BLAST_ERROR_UNABLE_TO_OPEN_FILE                  -2
-#define BLAST_ERROR_UNABLE_TO_READ_FILE                  -3
+#define BLAST_ERROR_UNABLE_TO_CREATE_SOCKET    -1
+#define BLAST_ERROR_UNABLE_TO_OPEN_FILE        -2
+#define BLAST_ERROR_UNABLE_TO_READ_FILE        -3

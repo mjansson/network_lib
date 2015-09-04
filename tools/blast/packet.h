@@ -11,9 +11,7 @@
 
 #pragma once
 
-
-typedef enum packet_type_t
-{
+typedef enum {
     PACKET_HANDSHAKE = 0,
     PACKET_PAYLOAD = 1,
     PACKET_ACK = 2,
@@ -45,27 +43,23 @@ typedef enum packet_type_t
     uint64_t        timestamp:20; \
     uint64_t        seq:32
 
-typedef struct packet_t
-{
+typedef struct packet_t {
     PACKET_DECLARE;
 } packet_t;
 
-typedef struct packet_handshake_t
-{
+typedef struct packet_handshake_t {
     PACKET_DECLARE;
     uint64_t datasize;
     uint32_t namesize;
     char     name[PACKET_NAME_MAXSIZE];
 } packet_handshake_t;
 
-typedef struct packet_payload_t
-{
+typedef struct packet_payload_t {
     PACKET_DECLARE;
     uint8_t  data[PACKET_CHUNK_SIZE];
 } packet_payload_t;
 
-typedef struct packet_ack_t
-{
+typedef struct packet_ack_t {
     PACKET_DECLARE;
     uint32_t ack[PACKET_ACK_COUNT];
 } packet_ack_t;

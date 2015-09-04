@@ -19,6 +19,8 @@
 
 #include "packet.h"
 
+extern bool
+blast_should_exit(void);
 
-extern bool blast_should_exit( void );
-extern void blast_process_system_events( void );
+extern void
+blast_process_system_events(void);

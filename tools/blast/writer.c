@@ -14,36 +14,34 @@
 
 static uint8_t writer_chunk[PACKET_CHUNK_SIZE];
 
-static void blast_writer_prepare( blast_writer_t* writer, uint64_t offset, int size )
-{
-    FOUNDATION_UNUSED( writer );
-    FOUNDATION_UNUSED( offset );
-    FOUNDATION_UNUSED( size );
+static void
+blast_writer_prepare(blast_writer_t* writer, uint64_t offset, int size) {
+    FOUNDATION_UNUSED(writer);
+    FOUNDATION_UNUSED(offset);
+    FOUNDATION_UNUSED(size);
 }
 
-
-static void* blast_writer_map( blast_writer_t* writer, uint64_t offset, int size )
-{
-    FOUNDATION_UNUSED( writer );
-    FOUNDATION_UNUSED( offset );
-    FOUNDATION_UNUSED( size );
+static void*
+blast_writer_map(blast_writer_t* writer, uint64_t offset, int size) {
+    FOUNDATION_UNUSED(writer);
+    FOUNDATION_UNUSED(offset);
+    FOUNDATION_UNUSED(size);
     return writer_chunk;
 }
 
-
-static void blast_writer_unmap( blast_writer_t* writer, void* buffer, uint64_t offset, int size )
-{
-    FOUNDATION_UNUSED( writer );
-    FOUNDATION_UNUSED( buffer );
-    FOUNDATION_UNUSED( offset );
-    FOUNDATION_UNUSED( size );
+static void
+blast_writer_unmap(blast_writer_t* writer, void* buffer, uint64_t offset, int size) {
+    FOUNDATION_UNUSED(writer);
+    FOUNDATION_UNUSED(buffer);
+    FOUNDATION_UNUSED(offset);
+    FOUNDATION_UNUSED(size);
 }
 
-
-blast_writer_t* blast_writer_open( const char* name, uint64_t namesize, uint64_t datasize )
-{
-    blast_writer_t* writer = memory_allocate( HASH_BLAST, sizeof( blast_writer_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
-    writer->name = string_substr( name, 0, namesize );
+blast_writer_t*
+blast_writer_open(const char* name, uint64_t namesize, uint64_t datasize) {
+    blast_writer_t* writer = memory_allocate(HASH_BLAST, sizeof(blast_writer_t), 0,
+                                             MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+    writer->name = string_clone(name, namesize);
     writer->size = datasize;
     writer->prepare = blast_writer_prepare;
     writer->map = blast_writer_map;
@@ -51,9 +49,8 @@ blast_writer_t* blast_writer_open( const char* name, uint64_t namesize, uint64_t
     return writer;
 }
 
-
-void blast_writer_close( blast_writer_t* writer )
-{
-    string_deallocate( writer->name );
-    memory_deallocate( writer );
+void
+blast_writer_close(blast_writer_t* writer) {
+    string_deallocate(writer->name.str);
+    memory_deallocate(writer);
 }

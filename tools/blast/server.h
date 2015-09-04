@@ -11,5 +11,5 @@
 
 #pragma once
 
-
-extern int    blast_server( network_address_t** bind, bool daemon );
+extern int
+blast_server(network_address_t** bind, bool daemon);

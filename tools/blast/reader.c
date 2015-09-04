@@ -16,61 +16,54 @@
 
 #include <sys/mman.h>
 
-
-static void blast_reader_cache( blast_reader_t* reader, uint64_t offset, int size )
-{
-    FOUNDATION_UNUSED( reader );
-    FOUNDATION_UNUSED( offset );
-    FOUNDATION_UNUSED( size );
+static void
+blast_reader_cache(blast_reader_t* reader, uint64_t offset, int size) {
+    FOUNDATION_UNUSED(reader);
+    FOUNDATION_UNUSED(offset);
+    FOUNDATION_UNUSED(size);
 }
 
-
-static void blast_reader_uncache( blast_reader_t* reader, uint64_t offset, int size )
-{
-    FOUNDATION_UNUSED( reader );
-    FOUNDATION_UNUSED( offset );
-    FOUNDATION_UNUSED( size );
+static void
+blast_reader_uncache(blast_reader_t* reader, uint64_t offset, int size) {
+    FOUNDATION_UNUSED(reader);
+    FOUNDATION_UNUSED(offset);
+    FOUNDATION_UNUSED(size);
 }
 
-
-static void* blast_reader_map( blast_reader_t* reader, uint64_t offset, int size )
-{
-    FOUNDATION_UNUSED( size );
-    return pointer_offset( reader->data, offset );
+static void*
+blast_reader_map(blast_reader_t* reader, uint64_t offset, int size) {
+    FOUNDATION_UNUSED(size);
+    return pointer_offset(reader->data, offset);
 }
 
-
-void blast_reader_unmap( blast_reader_t* reader, void* buffer, uint64_t offset, int size )
-{
-    FOUNDATION_UNUSED( reader );
-    FOUNDATION_UNUSED( buffer );
-    FOUNDATION_UNUSED( offset );
-    FOUNDATION_UNUSED( size );
+void
+blast_reader_unmap(blast_reader_t* reader, void* buffer, uint64_t offset, int size) {
+    FOUNDATION_UNUSED(reader);
+    FOUNDATION_UNUSED(buffer);
+    FOUNDATION_UNUSED(offset);
+    FOUNDATION_UNUSED(size);
 }
 
-
-blast_reader_t* blast_reader_open( const char* source )
-{
+blast_reader_t*
+blast_reader_open(const char* source) {
     void* addr;
-    int fd;
     int64_t size;
     blast_reader_t* reader;
 
-    fd = open( source, O_RDONLY );
-    if( fd == 0 )
+    fd = open(source, O_RDONLY);
+    if (fd == 0)
         return 0;
 
-    size = lseek( fd, 0, SEEK_END );
-    if( size <= 0 )
-    {
-        close( fd );
+    size = lseek(fd, 0, SEEK_END);
+    if (size <= 0) {
+        close(fd);
         return 0;
     }
-    lseek( fd, 0, SEEK_SET );
+    lseek(fd, 0, SEEK_SET);
 
-    addr = memory_allocate( HASH_BLAST, size, 0, MEMORY_PERSISTENT );
-    read( fd, addr, size );
-    close( fd );
+    addr = memory_allocate(HASH_BLAST, size, 0, MEMORY_PERSISTENT);
+    read(fd, addr, size);
+    close(fd);
     /*addr = mmap( 0, size, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0 );
     if( addr == MAP_FAILED )
     {
@@ -82,9 +75,10 @@ blast_reader_t* blast_reader_open( const char* source )
 
     log_infof( HASH_BLAST, "Mapped '%s' size %lld to memory region 0x%" PRIfixPTR, source, size, addr );*/
 
-    reader = memory_allocate( HASH_BLAST, sizeof( blast_reader_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
+    reader = memory_allocate(HASH_BLAST, sizeof(blast_reader_t), 0,
+                             MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
-    reader->name = path_file_name( source );
+    reader->name = path_file_name(source);
     reader->data = addr;
     //reader->id = fd;
     reader->size = (uint64_t)size;
@@ -96,10 +90,10 @@ blast_reader_t* blast_reader_open( const char* source )
     return reader;
 }
 
-
-void blast_reader_close( blast_reader_t* reader )
-{
-    munmap( reader->data, reader->size );
-    close( reader->id );
-    memory_deallocate( reader );
+void
+blast_reader_close(blast_reader_t* reader) {
+    munmap(reader->data, reader->size);
+    close(reader->id);
+    string_deallocate(reader->name.str);
+    memory_deallocate(reader);
 }

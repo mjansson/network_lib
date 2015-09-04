@@ -4,7 +4,7 @@
 
 #include <foundation/foundation.h>
 
-version_t network_version( void )
-{
-	return version_make( 0, 0, 1, 0, 0x0 );
+version_t
+network_version(void) {
+	return version_make(0, 0, 1, 0, 0x0);
 }

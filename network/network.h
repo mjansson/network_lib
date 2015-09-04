@@ -25,16 +25,22 @@
 #include <network/tcp.h>
 #include <network/udp.h>
 
-
 //! Entry point
-NETWORK_API int         network_initialize( unsigned int max_sockets );
+NETWORK_API int
+network_initialize(network_config_t config);
 
-NETWORK_API bool        network_is_initialized( void );
+NETWORK_API bool
+network_is_initialized(void);
 
 //! Exit point
-NETWORK_API void        network_shutdown( void );
+NETWORK_API void
+network_finalize(void);
 
-NETWORK_API version_t   network_version( void );
+NETWORK_API version_t
+network_version(void);
 
-NETWORK_API bool        network_supports_ipv4( void );
-NETWORK_API bool        network_supports_ipv6( void );
+NETWORK_API bool
+network_supports_ipv4(void);
+
+NETWORK_API bool
+network_supports_ipv6(void);
