@@ -38,13 +38,15 @@ test_address_foundation_config(void) {
 
 int
 test_address_initialize(void) {
+	network_config_t config;
+	memset(&config, 0, sizeof(config));
 	log_set_suppress(HASH_NETWORK, ERRORLEVEL_INFO);
-	return network_initialize(32);
+	return network_module_initialize(config);
 }
 
 void
 test_address_finalize(void) {
-	network_finalize();
+	network_module_finalize();
 }
 
 DECLARE_TEST(address, local) {
@@ -58,14 +60,16 @@ DECLARE_TEST(address, local) {
 	char buffer[512];
 	string_t hostname;
 
+	EXPECT_TRUE(network_module_is_initialized());
+
 	EXPECT_GE(array_size(addresses), expected_addresses);
 
 	hostname = system_hostname(buffer, sizeof(buffer));
-	log_debugf(HASH_NETWORK, STRING_CONST("%u local addresses (%*s)"), array_size(addresses),
+	log_debugf(HASH_NETWORK, STRING_CONST("%u local addresses (%.*s)"), array_size(addresses),
 	           STRING_FORMAT(hostname));
 	for (iaddr = 0, addrsize = array_size(addresses); iaddr < addrsize; ++iaddr) {
 		string_t address_str = network_address_to_string(buffer, sizeof(buffer), addresses[iaddr], true);
-		log_debugf(HASH_NETWORK, "  %*s", STRING_FORMAT(address_str));
+		log_debugf(HASH_NETWORK, STRING_CONST("  %.*s"), STRING_FORMAT(address_str));
 
 		if (string_equal(STRING_ARGS(address_str), STRING_CONST("127.0.0.1")))
 			found_localhost_ipv4 = true;
@@ -99,7 +103,7 @@ DECLARE_TEST(address, resolve) {
 	EXPECT_EQ(array_size(addresses), expected_addresses);
 	for (iaddr = 0, addrsize = array_size(addresses); iaddr < addrsize; ++iaddr) {
 		string_t address_str = network_address_to_string(buffer, sizeof(buffer), addresses[iaddr], true);
-		log_debugf(HASH_NETWORK, "  %*s", STRING_FORMAT(address_str));
+		log_debugf(HASH_NETWORK, STRING_CONST("  %.*s"), STRING_FORMAT(address_str));
 		EXPECT_TRUE(string_equal(STRING_ARGS(address_str), STRING_CONST("127.0.0.1")) ||
 		            string_equal(STRING_ARGS(address_str), STRING_CONST("::1")) ||
 		            string_match_pattern(STRING_ARGS(address_str), STRING_CONST("fe80:*")));
@@ -111,7 +115,7 @@ DECLARE_TEST(address, resolve) {
 	EXPECT_EQ(array_size(addresses), expected_addresses);
 	for (iaddr = 0, addrsize = array_size(addresses); iaddr < addrsize; ++iaddr) {
 		string_t address_str = network_address_to_string(buffer, sizeof(buffer), addresses[iaddr], true);
-		log_debugf(HASH_NETWORK, STRING_CONST("  %s"), STRING_FORMAT(address_str));
+		log_debugf(HASH_NETWORK, STRING_CONST("  %.*s"), STRING_FORMAT(address_str));
 		EXPECT_TRUE(string_equal(STRING_ARGS(address_str), STRING_CONST("127.0.0.1:80")) ||
 		            string_equal(STRING_ARGS(address_str), STRING_CONST("[::1]:80")) ||
 		            string_match_pattern(STRING_ARGS(address_str), STRING_CONST("[fe80:*]:80")));
@@ -124,7 +128,7 @@ DECLARE_TEST(address, resolve) {
 		EXPECT_EQ(array_size(addresses), 1);
 		for (iaddr = 0, addrsize = array_size(addresses); iaddr < addrsize; ++iaddr) {
 			string_t address_str = network_address_to_string(buffer, sizeof(buffer), addresses[iaddr], true);
-			log_debugf(HASH_NETWORK, STRING_CONST("  %*s"), STRING_FORMAT(address_str));
+			log_debugf(HASH_NETWORK, STRING_CONST("  %.*s"), STRING_FORMAT(address_str));
 			EXPECT_TRUE(string_equal(STRING_ARGS(address_str), STRING_CONST("127.0.0.1")));
 		}
 		network_address_array_deallocate(addresses);
@@ -136,7 +140,7 @@ DECLARE_TEST(address, resolve) {
 		EXPECT_EQ(array_size(addresses), 1);
 		for (iaddr = 0, addrsize = array_size(addresses); iaddr < addrsize; ++iaddr) {
 			string_t address_str = network_address_to_string(buffer, sizeof(buffer), addresses[iaddr], true);
-			log_debugf(HASH_NETWORK, STRING_CONST("  %*s"), STRING_FORMAT(address_str));
+			log_debugf(HASH_NETWORK, STRING_CONST("  %.*s"), STRING_FORMAT(address_str));
 			EXPECT_TRUE(string_equal(STRING_ARGS(address_str), STRING_CONST("::1")));
 		}
 		network_address_array_deallocate(addresses);
@@ -148,7 +152,7 @@ DECLARE_TEST(address, resolve) {
 		EXPECT_EQ(array_size(addresses), 1);
 		for (iaddr = 0, addrsize = array_size(addresses); iaddr < addrsize; ++iaddr) {
 			string_t address_str = network_address_to_string(buffer, sizeof(buffer), addresses[iaddr], true);
-			log_debugf(HASH_NETWORK, STRING_CONST("  %*s"), STRING_FORMAT(address_str));
+			log_debugf(HASH_NETWORK, STRING_CONST("  %.*s"), STRING_FORMAT(address_str));
 			EXPECT_TRUE(string_equal(STRING_ARGS(address_str), STRING_CONST("127.0.0.1:512")));
 		}
 		network_address_array_deallocate(addresses);
@@ -160,18 +164,22 @@ DECLARE_TEST(address, resolve) {
 		EXPECT_EQ(array_size(addresses), 1);
 		for (iaddr = 0, addrsize = array_size(addresses); iaddr < addrsize; ++iaddr) {
 			string_t address_str = network_address_to_string(buffer, sizeof(buffer), addresses[iaddr], true);
-			log_debugf(HASH_NETWORK, STRING_CONST("  %*s"), STRING_FORMAT(address_str));
+			log_debugf(HASH_NETWORK, STRING_CONST("  %.*s"), STRING_FORMAT(address_str));
 			EXPECT_TRUE(string_equal(STRING_ARGS(address_str), STRING_CONST("[::1]:512")));
 		}
 		network_address_array_deallocate(addresses);
 	}
 
 	addresses = network_address_resolve(STRING_CONST("zion.rampantpixels.com:1234"));
+	if (has_ipv6 && (array_size(addresses) == (expected_addresses - 1))) {
+		has_ipv6 = false;
+		--expected_addresses;
+	}
 	log_debugf(HASH_NETWORK, STRING_CONST("zion.rampantpixels.com:1234 -> %u addresses"), array_size(addresses));
 	EXPECT_EQ(array_size(addresses), expected_addresses);
 	for (iaddr = 0, addrsize = array_size(addresses); iaddr < addrsize; ++iaddr) {
 		string_t address_str = network_address_to_string(buffer, sizeof(buffer), addresses[iaddr], true);
-		log_debugf(HASH_NETWORK, STRING_CONST("  %*s"), STRING_FORMAT(address_str));
+		log_debugf(HASH_NETWORK, STRING_CONST("  %.*s"), STRING_FORMAT(address_str));
 	}
 	network_address_array_deallocate(addresses);
 
@@ -180,7 +188,7 @@ DECLARE_TEST(address, resolve) {
 	EXPECT_GE(array_size(addresses), expected_addresses);
 	for (iaddr = 0, addrsize = array_size(addresses); iaddr < addrsize; ++iaddr) {
 		string_t address_str = network_address_to_string(buffer, sizeof(buffer), addresses[iaddr], true);
-		log_debugf(HASH_NETWORK, STRING_CONST("  %*s"), STRING_FORMAT(address_str));
+		log_debugf(HASH_NETWORK, STRING_CONST("  %.*s"), STRING_FORMAT(address_str));
 	}
 	network_address_array_deallocate(addresses);
 
@@ -198,7 +206,7 @@ DECLARE_TEST(address, any) {
 		network_address_t* any = network_address_ipv4_any();
 		EXPECT_NE(any, 0);
 		address_str = network_address_to_string(buffer, sizeof(buffer), any, true);
-		log_debugf(HASH_NETWORK, STRING_CONST("IPv4 any: %*s"), STRING_FORMAT(address_str));
+		log_debugf(HASH_NETWORK, STRING_CONST("IPv4 any: %.*s"), STRING_FORMAT(address_str));
 		EXPECT_STRINGEQ(address_str, string_const(STRING_CONST("0.0.0.0")));
 
 		any_resolve = network_address_resolve(STRING_ARGS(address_str));
@@ -213,7 +221,7 @@ DECLARE_TEST(address, any) {
 		network_address_t* any = network_address_ipv6_any();
 		EXPECT_NE(any, 0);
 		address_str = network_address_to_string(buffer, sizeof(buffer), any, true);
-		log_debugf(HASH_NETWORK, STRING_CONST("IPv6 any: %*s"), STRING_FORMAT(address_str));
+		log_debugf(HASH_NETWORK, STRING_CONST("IPv6 any: %.*s"), STRING_FORMAT(address_str));
 		EXPECT_STRINGEQ(address_str, string_const(STRING_CONST("::")));
 
 		any_resolve = network_address_resolve(STRING_ARGS(address_str));
@@ -242,7 +250,7 @@ DECLARE_TEST(address, port) {
 		EXPECT_EQ(network_address_ip_port(any), 80);
 
 		address_str = network_address_to_string(buffer, sizeof(buffer), any, true);
-		log_debugf(HASH_NETWORK, STRING_CONST("IPv4 any: %*s"), STRING_FORMAT(address_str));
+		log_debugf(HASH_NETWORK, STRING_CONST("IPv4 any: %.*s"), STRING_FORMAT(address_str));
 		EXPECT_STRINGEQ(address_str, string_const(STRING_CONST("0.0.0.0:80")));
 
 		any_resolve = network_address_resolve(STRING_ARGS(address_str));
@@ -261,7 +269,7 @@ DECLARE_TEST(address, port) {
 		EXPECT_EQ(network_address_ip_port(any), 80);
 
 		address_str = network_address_to_string(buffer, sizeof(buffer), any, true);
-		log_debugf(HASH_NETWORK, STRING_CONST("IPv6 any: %*s"), STRING_FORMAT(address_str));
+		log_debugf(HASH_NETWORK, STRING_CONST("IPv6 any: %.*s"), STRING_FORMAT(address_str));
 		EXPECT_STRINGEQ(address_str, string_const(STRING_CONST("[::]:80")));
 
 		any_resolve = network_address_resolve(STRING_ARGS(address_str));

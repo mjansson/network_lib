@@ -12,7 +12,7 @@
 #pragma once
 
 /*! \file types.h
-    Network abstraction on top of foundation streams */
+    Network data types */
 
 #include <foundation/platform.h>
 #include <foundation/types.h>
@@ -37,6 +37,7 @@
 #  endif
 #endif
 
+/*! Maximum length of a numeric network address string, including zero terminator */
 #define NETWORK_ADDRESS_NUMERIC_MAX_LENGTH 46
 
 typedef enum {
@@ -61,12 +62,17 @@ typedef enum {
 	NETWORKEVENT_TIMEOUT
 } network_event_id;
 
-// OPAQUE COMPLEX TYPES
+#if FOUNDATION_PLATFORM_POSIX
+typedef socklen_t network_address_size_t;
+#else
+typedef int       network_address_size_t;
+#endif
 
-typedef struct network_address_t network_address_t;
-typedef FOUNDATION_ALIGNED_STRUCT(network_poll_t, 8) network_poll_t;
-
-// COMPLEX TYPES
+typedef struct network_config_t    network_config_t;
+typedef struct network_datagram_t  network_datagram_t;
+typedef struct network_address_t   network_address_t;
+typedef struct network_poll_slot_t network_poll_slot_t;
+typedef struct network_poll_t      network_poll_t;
 
 struct network_config_t {
 	size_t max_sockets;
@@ -75,6 +81,7 @@ struct network_config_t {
 	size_t socket_write_buffer_size;
 	size_t socket_read_buffer_size;
 	size_t poll_queue_size;
+	size_t event_stream_size;
 };
 
 struct network_datagram_t {
@@ -82,4 +89,32 @@ struct network_datagram_t {
 	void*    data;
 };
 
-typedef struct network_datagram_t network_datagram_t;
+#define NETWORK_DECLARE_NETWORK_ADDRESS    \
+	network_address_family_t family;       \
+	network_address_size_t   address_size
+
+struct network_address_t {
+	NETWORK_DECLARE_NETWORK_ADDRESS;
+};
+
+struct network_poll_slot_t {
+	object_t             sock;
+	int                  base;
+	int                  fd;
+};
+
+FOUNDATION_ALIGNED_STRUCT(network_poll_t, 8) {
+	unsigned int timeout;
+	unsigned int max_sockets;
+	unsigned int num_sockets;
+#if FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
+	int fd_poll;
+	struct epoll_event* events;
+#elif FOUNDATION_PLATFORM_APPLE
+	struct pollfd* pollfds;
+#endif
+	object_t* queue_add;
+	object_t* queue_remove;
+	network_poll_slot_t* slots;
+	char databuffer[];
+};

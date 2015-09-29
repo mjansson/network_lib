@@ -128,9 +128,11 @@ test_should_terminate(void) {
 int
 main_initialize(void) {
 	foundation_config_t config;
+	network_config_t network_config;
 	application_t application;
 
 	memset(&config, 0, sizeof(config));
+	memset(&network_config, 0, sizeof(network_config));
 
 	memset(&application, 0, sizeof(application));
 	application.name = string_const(STRING_CONST("Network library test suite"));
@@ -155,7 +157,7 @@ main_initialize(void) {
 	if (foundation_initialize(memory_system_malloc(), application, config) < 0)
 		return -1;
 
-	return network_initialize(256);
+	return network_module_initialize(network_config);
 }
 
 #if FOUNDATION_PLATFORM_ANDROID
@@ -220,7 +222,7 @@ main_run(void* main_arg) {
 	log_set_suppress(HASH_TEST, ERRORLEVEL_DEBUG);
 
 	log_infof(HASH_TEST, STRING_CONST("Network library v%s built for %s using %s (%s)"),
-	          string_from_version_static(network_version()).str, FOUNDATION_PLATFORM_DESCRIPTION,
+	          string_from_version_static(network_module_version()).str, FOUNDATION_PLATFORM_DESCRIPTION,
 	          FOUNDATION_COMPILER_DESCRIPTION, build_name.str);
 
 	thread = thread_create(event_thread, STRING_CONST("event_thread"), THREAD_PRIORITY_NORMAL, 0);
@@ -347,7 +349,7 @@ main_run(void* main_arg) {
 		process_set_working_directory(process, STRING_ARGS(environment_executable_directory()));
 		process_set_flags(process, PROCESS_ATTACHED | exe_flags[iexe]);
 
-		log_infof(HASH_TEST, STRING_CONST("Running test executable: %*s"),
+		log_infof(HASH_TEST, STRING_CONST("Running test executable: %.*s"),
 		          STRING_FORMAT(exe_paths[iexe]));
 
 		process_result = process_spawn(process);
@@ -369,7 +371,7 @@ main_run(void* main_arg) {
 			goto exit;
 		}
 
-		log_infof(HASH_TEST, STRING_CONST("All tests from %*s passed (%d)"),
+		log_infof(HASH_TEST, STRING_CONST("All tests from %.*s passed (%d)"),
 		          STRING_FORMAT(exe_paths[iexe]), process_result);
 	}
 

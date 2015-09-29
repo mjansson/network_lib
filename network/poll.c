@@ -30,37 +30,16 @@
 #  include <sys/poll.h>
 #endif
 
-typedef struct network_poll_slot_t {
-	object_t             sock;
-	int                  base;
-	int                  fd;
-} network_poll_slot_t;
-
-typedef FOUNDATION_ALIGNED_STRUCT(network_poll_t, 8) {
-	object_t             queue_add[BUILD_SIZE_POLL_QUEUE];
-	object_t             queue_remove[BUILD_SIZE_POLL_QUEUE];
-	unsigned int         timeout;
-	unsigned int         max_sockets;
-	unsigned int         num_sockets;
-#if FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
-	int                  fd_poll;
-	struct epoll_event*  events;
-#elif FOUNDATION_PLATFORM_APPLE
-	struct pollfd*       pollfds;
-#endif
-	network_poll_slot_t  slots[];
-} network_poll_t;
-
 static int
 _network_poll_process_pending(network_poll_t* pollobj) {
 	unsigned int max_sockets = pollobj->max_sockets;
 	unsigned int num_sockets = pollobj->num_sockets;
 	int num_events = 0;
-	int iqueue;
+	size_t iqueue;
 	unsigned int islot;
 
 	//Remove pending sockets
-	for (iqueue = 0; iqueue < BUILD_SIZE_POLL_QUEUE; ++iqueue) {
+	for (iqueue = 0; iqueue < _network_config.poll_queue_size; ++iqueue) {
 		if (pollobj->queue_remove[iqueue]) {
 			object_t sock = pollobj->queue_remove[iqueue];
 			pollobj->queue_remove[iqueue] = 0;
@@ -113,7 +92,8 @@ _network_poll_process_pending(network_poll_t* pollobj) {
 	}
 
 	//Add pending sockets
-	for (iqueue = 0; (num_sockets < max_sockets) && (iqueue < BUILD_SIZE_POLL_QUEUE); ++iqueue) {
+	for (iqueue = 0; (num_sockets < max_sockets) &&
+	        (iqueue < _network_config.poll_queue_size); ++iqueue) {
 		if (pollobj->queue_add[iqueue]) {
 			socket_t* sock;
 			socket_base_t* sockbase;
@@ -170,29 +150,39 @@ _network_poll_process_pending(network_poll_t* pollobj) {
 
 network_poll_t*
 network_poll_allocate(unsigned int num_sockets) {
-	network_poll_t* poll = memory_allocate(HASH_NETWORK,
-	                                       sizeof(network_poll_t) + sizeof(network_poll_slot_t) * num_sockets, 8,
-	                                       MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-	poll->max_sockets = num_sockets;
+	network_poll_t* poll;
+	size_t memsize = sizeof(network_poll_t) +
+	                 sizeof(object_t) * (_network_config.poll_queue_size * 2) +
+	                 sizeof(network_poll_slot_t) * num_sockets;
 #if FOUNDATION_PLATFORM_APPLE
-	poll->pollfds = memory_allocate(HASH_NETWORK, sizeof(struct pollfd) * num_sockets, 8,
-	                                MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	memsize += sizeof(struct pollfd) * num_sockets;
 #elif FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
+	memsize += sizeof(struct epoll_event) * num_sockets;
+#endif
+	poll = memory_allocate(HASH_NETWORK, memsize, 8, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	poll->max_sockets = num_sockets;
+	poll->queue_add = (object_t*)poll->databuffer;
+	poll->queue_remove = pointer_offset(poll->queue_add,
+	                                    sizeof(object_t) * _network_config.poll_queue_size);
+	poll->slots = pointer_offset(poll->queue_remove,
+	                             sizeof(object_t) * _network_config.poll_queue_size);
+#if FOUNDATION_PLATFORM_APPLE
+	poll->pollfds = pointer_offset(poll->slots, sizeof(network_poll_slot_t) * num_sockets);
+#elif FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
+	poll->events = pointer_offset(poll->slots, sizeof(network_poll_slot_t) * num_sockets);
 	poll->fd_poll = epoll_create(num_sockets);
-	poll->events = memory_allocate(HASH_NETWORK, sizeof(struct epoll_event) * num_sockets, 8,
-	                               MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 #endif
 	return poll;
 }
 
 void
 network_poll_deallocate(network_poll_t* pollobj) {
-	int iqueue;
+	size_t iqueue;
 	unsigned int islot;
 
 	_network_poll_process_pending(pollobj);
 
-	for (iqueue = 0; iqueue < BUILD_SIZE_POLL_QUEUE; ++iqueue) {
+	for (iqueue = 0; iqueue < _network_config.poll_queue_size; ++iqueue) {
 		if (pollobj->queue_add[iqueue]) {
 			object_t sock = pollobj->queue_add[iqueue];
 			pollobj->queue_add[iqueue] = 0;
@@ -215,11 +205,8 @@ network_poll_deallocate(network_poll_t* pollobj) {
 		}
 	}
 
-#if FOUNDATION_PLATFORM_APPLE
-	memory_deallocate(pollobj->pollfds);
-#elif FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
+#if FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
 	close(pollobj->fd_poll);
-	memory_deallocate(pollobj->events);
 #endif
 	memory_deallocate(pollobj);
 }
@@ -254,15 +241,15 @@ network_poll_add_socket(network_poll_t* pollobj, object_t sock) {
 	FOUNDATION_ASSERT(pollobj);
 	FOUNDATION_ASSERT(sock);
 	do {
-		int iqueue;
-		for (iqueue = 0; iqueue < BUILD_SIZE_POLL_QUEUE; ++iqueue) {
+		size_t iqueue;
+		for (iqueue = 0; iqueue < _network_config.poll_queue_size; ++iqueue) {
 			if (!pollobj->queue_add[iqueue] &&
 			        atomic_cas64((atomic64_t*)(pollobj->queue_add + iqueue), sock, 0)) {
 				//Add reference
 				socket_t* sockptr = _socket_lookup(sock);
 				if (sockptr) {
-					int jqueue;
-					for (jqueue = 0; jqueue < BUILD_SIZE_POLL_QUEUE; ++jqueue) {
+					size_t jqueue;
+					for (jqueue = 0; jqueue < _network_config.poll_queue_size; ++jqueue) {
 						if (pollobj->queue_remove[jqueue] == sock)
 							atomic_cas64((atomic64_t*)(pollobj->queue_remove + jqueue), 0, sock);
 					}
@@ -290,12 +277,12 @@ network_poll_remove_socket(network_poll_t* pollobj, object_t sock) {
 	FOUNDATION_ASSERT(pollobj);
 	FOUNDATION_ASSERT(sock);
 	do {
-		int iqueue;
-		for (iqueue = 0; iqueue < BUILD_SIZE_POLL_QUEUE; ++iqueue) {
+		size_t iqueue;
+		for (iqueue = 0; iqueue < _network_config.poll_queue_size; ++iqueue) {
 			if (!pollobj->queue_remove[iqueue] &&
 			        atomic_cas64((atomic64_t*)(pollobj->queue_remove + iqueue), sock, 0)) {
-				int jqueue;
-				for (jqueue = 0; jqueue < BUILD_SIZE_POLL_QUEUE; ++jqueue) {
+				size_t jqueue;
+				for (jqueue = 0; jqueue < _network_config.poll_queue_size; ++jqueue) {
 					if (pollobj->queue_add[jqueue] == sock)
 						atomic_cas64((atomic64_t*)(pollobj->queue_add + jqueue), 0, sock);
 				}
@@ -314,21 +301,21 @@ network_poll_remove_socket(network_poll_t* pollobj, object_t sock) {
 
 bool
 network_poll_has_socket(network_poll_t* pollobj, object_t sock) {
-	int iqueue;
+	size_t iqueue;
 	unsigned int islot;
 	unsigned int num_sockets;
 	FOUNDATION_ASSERT(pollobj);
 	num_sockets = pollobj->num_sockets;
 	for (islot = 0; islot < num_sockets; ++islot) {
 		if (pollobj->slots[islot].sock == sock) {
-			for (iqueue = 0; iqueue < BUILD_SIZE_POLL_QUEUE; ++iqueue) {
+			for (iqueue = 0; iqueue < _network_config.poll_queue_size; ++iqueue) {
 				if (pollobj->queue_remove[iqueue] == sock)
 					return false;
 			}
 			return true;
 		}
 	}
-	for (iqueue = 0; iqueue < BUILD_SIZE_POLL_QUEUE; ++iqueue) {
+	for (iqueue = 0; iqueue < _network_config.poll_queue_size; ++iqueue) {
 		if (pollobj->queue_add[iqueue] == sock)
 			return true;
 	}
@@ -397,7 +384,7 @@ network_poll(network_poll_t* pollobj) {
 	if (ret < 0) {
 		int err = NETWORK_SOCKET_ERROR;
 		string_const_t errmsg = system_error_message(err);
-		log_warnf(HASH_NETWORK, WARNING_SUSPICIOUS, STRING_CONST("Error in socket poll: %*s (%d)"),
+		log_warnf(HASH_NETWORK, WARNING_SUSPICIOUS, STRING_CONST("Error in socket poll: %.*s (%d)"),
 		          STRING_FORMAT(errmsg), err);
 		if (!avail)
 			return -2;

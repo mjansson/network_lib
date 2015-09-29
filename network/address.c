@@ -118,7 +118,7 @@ network_address_resolve(const char* address, size_t length) {
 		int err = NETWORK_RESOLV_ERROR;
 		string_const_t errmsg = system_error_message(err);
 		log_warnf(HASH_NETWORK, WARNING_INVALID_VALUE,
-		          STRING_CONST("Unable to resolve network address '%*s' (%s): %*s (%d)"),
+		          STRING_CONST("Unable to resolve network address '%.*s' (%s): %.*s (%d)"),
 		          address, length, final_address, STRING_FORMAT(errmsg), err);
 	}
 
@@ -305,7 +305,7 @@ network_address_local(void) {
 		if (adapter_address)
 			memory_deallocate(adapter_address);
 		log_errorf(HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL,
-		           STRING_CONST("Unable to get adapters addresses: %*s (%d)"), STRING_FORMAT(errmsg), ret);
+		           STRING_CONST("Unable to get adapters addresses: %.*s (%d)"), STRING_FORMAT(errmsg), ret);
 		error_context_pop();
 		return 0;
 	}

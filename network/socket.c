@@ -26,7 +26,7 @@ static stream_vtable_t   _socket_stream_vtable;
 static void
 _socket_deallocate(socket_t* sock);
 
-static unsigned int
+static size_t
 _socket_buffered_in(const socket_t* sock);
 
 static void
@@ -41,16 +41,16 @@ _socket_stream_allocate(object_t id);
 static void
 _socket_stream_finalize(stream_t* stream);
 
-static uint64_t
-_socket_read(stream_t* stream, void* buffer, uint64_t size);
+static size_t
+_socket_read(stream_t* stream, void* buffer, size_t size);
 
-static uint64_t
-_socket_write(stream_t* stream, const void* buffer, uint64_t size);
+static size_t
+_socket_write(stream_t* stream, const void* buffer, size_t size);
 
 static bool
 _socket_eos(stream_t* stream);
 
-static uint64_t
+static size_t
 _socket_available_read(stream_t* stream);
 
 static void
@@ -60,15 +60,15 @@ static void
 _socket_flush(stream_t* stream);
 
 static void
-_socket_truncate(stream_t* stream, uint64_t size);
+_socket_truncate(stream_t* stream, size_t size);
 
-static uint64_t
+static size_t
 _socket_size(stream_t* stream);
 
 static void
-_socket_seek(stream_t* stream, int64_t offset, stream_seek_mode_t direction);
+_socket_seek(stream_t* stream, ssize_t offset, stream_seek_mode_t direction);
 
-static int64_t
+static size_t
 _socket_tell(stream_t* stream);
 
 static uint64_t
@@ -77,17 +77,22 @@ _socket_last_modified(const stream_t* stream);
 socket_t*
 _socket_allocate(void) {
 	socket_t* sock;
+	size_t size;
 	object_t object = _socket_map ? objectmap_reserve(_socket_map) : 0;
 	if (!object)
 		return 0;
 
-	sock = memory_allocate(HASH_NETWORK, sizeof(socket_t), 16,
+	size = sizeof(socket_t) + _network_config.socket_read_buffer_size +
+	       _network_config.socket_write_buffer_size;
+	sock = memory_allocate(HASH_NETWORK, size, 16,
 	                       MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	log_debugf(HASH_NETWORK, STRING_CONST("Allocated socket 0x%llx (0x%" PRIfixPTR ")"), object, sock);
 
 	sock->id = object;
 	sock->base = -1;
+	sock->buffer_in = sock->buffers;
+	sock->buffer_out = pointer_offset(sock->buffer_in, _network_config.socket_read_buffer_size);
 	atomic_store32(&sock->ref, 1);
 
 	objectmap_set(_socket_map, object, sock);
@@ -140,7 +145,8 @@ _socket_deallocate(socket_t* sock) {
 	int fd = SOCKET_INVALID;
 	if (sock->base >= 0)
 		fd = _socket_base[ sock->base ].fd;
-	log_debugf(HASH_NETWORK, STRING_CONST("Deallocating socket 0x%llx (0x%" PRIfixPTR " : %d)"), object, sock, fd);
+	log_debugf(HASH_NETWORK, STRING_CONST("Deallocating socket 0x%llx (0x%" PRIfixPTR " : %d)"), object,
+	           sock, fd);
 #endif
 
 	objectmap_free(_socket_map, object);
@@ -226,7 +232,8 @@ socket_bind(object_t id, const network_address_t* address) {
 
 	sock = _socket_lookup(id);
 	if (!sock) {
-		log_errorf(HASH_NETWORK, ERROR_INVALID_VALUE, "Trying to bind invalid socket 0x%llx", id);
+		log_errorf(HASH_NETWORK, ERROR_INVALID_VALUE, STRING_CONST("Trying to bind invalid socket 0x%llx"),
+		           id);
 		return false;
 	}
 
@@ -244,7 +251,7 @@ socket_bind(object_t id, const network_address_t* address) {
 			char buffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
 			string_t address_str = network_address_to_string(buffer, sizeof(buffer), sock->address_local, true);
 			log_infof(HASH_NETWORK, STRING_CONST("Bound socket 0x%llx (0x%" PRIfixPTR
-			                                     " : %d) to local address %*s"), sock->id, sock, sockbase->fd, STRING_FORMAT(address_str));
+			                                     " : %d) to local address %.*s"), sock->id, sock, sockbase->fd, STRING_FORMAT(address_str));
 		}
 #endif
 	}
@@ -255,7 +262,8 @@ socket_bind(object_t id, const network_address_t* address) {
 		string_const_t errmsg = system_error_message(sockerr);
 		string_t address_str = network_address_to_string(buffer, sizeof(buffer), address, true);
 		log_warnf(HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL,
-		          STRING_CONST("Unable to bind socket 0x%llx (0x%" PRIfixPTR " : %d) to local address %*s: %*s (%d)"),
+		          STRING_CONST("Unable to bind socket 0x%llx (0x%" PRIfixPTR
+		                       " : %d) to local address %.*s: %.*s (%d)"),
 		          id, sock, sockbase->fd, STRING_FORMAT(address_str), STRING_FORMAT(errmsg), sockerr);
 #endif
 	}
@@ -278,7 +286,8 @@ socket_connect(object_t id, const network_address_t* address, unsigned int timeo
 
 	sock = _socket_lookup(id);
 	if (!sock) {
-		log_errorf(HASH_NETWORK, ERROR_INVALID_VALUE, "Trying to connect invalid socket 0x%llx", id);
+		log_errorf(HASH_NETWORK, ERROR_INVALID_VALUE,
+		           STRING_CONST("Trying to connect invalid socket 0x%llx"), id);
 		return false;
 	}
 
@@ -292,7 +301,7 @@ socket_connect(object_t id, const network_address_t* address, unsigned int timeo
 		string_t address_str = network_address_to_string(buffer, sizeof(buffer), address, true);
 		log_warnf(HASH_NETWORK, WARNING_SUSPICIOUS,
 		          STRING_CONST("Unable to connect already connected socket 0x%llx (0x%" PRIfixPTR
-		                       " : %d) to remote address %*s"), id, sock, sockbase->fd, STRING_FORMAT(address_str));
+		                       " : %d) to remote address %.*s"), id, sock, sockbase->fd, STRING_FORMAT(address_str));
 #endif
 		goto exit;
 	}
@@ -309,7 +318,7 @@ socket_connect(object_t id, const network_address_t* address, unsigned int timeo
 		string_t address_str = network_address_to_string(buffer, sizeof(buffer), address, true);
 		log_warnf(HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL,
 		          STRING_CONST("Unable to connect socket 0x%llx (0x%" PRIfixPTR
-		                       " : %d) to remote address %*s: %*s (%d)"), id, sock, sockbase->fd, STRING_FORMAT(address_str),
+		                       " : %d) to remote address %.*s: %.*s (%d)"), id, sock, sockbase->fd, STRING_FORMAT(address_str),
 		          STRING_FORMAT(errmsg), err);
 #endif
 	}
@@ -345,7 +354,7 @@ socket_set_blocking(object_t id, bool block) {
 	socket_t* sock = _socket_lookup(id);
 	if (!sock) {
 		log_errorf(HASH_NETWORK, ERROR_INVALID_VALUE,
-		           "Trying to set blocking flag on an invalid socket 0x%llx", id);
+		           STRING_CONST("Trying to set blocking flag on an invalid socket 0x%llx"), id);
 		return;
 	}
 
@@ -373,7 +382,7 @@ socket_set_reuse_address(object_t id, bool reuse) {
 	socket_t* sock = _socket_lookup(id);
 	if (!sock) {
 		log_errorf(HASH_NETWORK, ERROR_INVALID_VALUE,
-		           "Trying to set reuse address flag on an invalid socket 0x%llx", id);
+		           STRING_CONST("Trying to set reuse address flag on an invalid socket 0x%llx"), id);
 		return;
 	}
 
@@ -401,7 +410,7 @@ socket_set_reuse_port(object_t id, bool reuse) {
 	socket_t* sock = _socket_lookup(id);
 	if (!sock) {
 		log_errorf(HASH_NETWORK, ERROR_INVALID_VALUE,
-		           "Trying to set reuse port flag on an invalid socket 0x%llx", id);
+		           STRING_CONST("Trying to set reuse port flag on an invalid socket 0x%llx"), id);
 		return;
 	}
 
@@ -421,7 +430,7 @@ socket_set_multicast_group(object_t id, network_address_t* address, bool allow_l
 	socket_t* sock = _socket_lookup(id);
 	if (!sock) {
 		log_errorf(HASH_NETWORK, ERROR_INVALID_VALUE,
-		           "Trying to set reuse port flag on an invalid socket 0x%llx", id);
+		           STRING_CONST("Trying to set reuse port flag on an invalid socket 0x%llx"), id);
 		return false;
 	}
 
@@ -441,10 +450,11 @@ socket_set_multicast_group(object_t id, network_address_t* address, bool allow_l
 	req.imr_multiaddr.s_addr = ((network_address_ipv4_t*)address)->saddr.sin_addr.s_addr;
 	req.imr_interface.s_addr = INADDR_ANY;
 	if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)&req, sizeof(req)) != 0) {
-		int sockerr = NETWORK_SOCKET_ERROR;
+		const int sockerr = NETWORK_SOCKET_ERROR;
+		const string_const_t errmsg = system_error_message(sockerr);
 		log_errorf(HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL,
-		           "Add multicast group failed on socket 0x%llx (0x%" PRIfixPTR " : %d): %s (%d)", sock->id, sock, fd,
-		           system_error_message(sockerr), sockerr);
+		           STRING_CONST("Add multicast group failed on socket 0x%llx (0x%" PRIfixPTR " : %d): %.*s (%d)"),
+		           sock->id, sock, fd, STRING_FORMAT(errmsg), sockerr);
 		FOUNDATION_UNUSED(sockerr);
 		return false;
 	}
@@ -574,7 +584,8 @@ _socket_close(socket_t* sock) {
 		sockbase->flags  = 0;
 	}
 
-	log_debugf(HASH_NETWORK, "Closing socket 0x%llx (0x%" PRIfixPTR " : %d)", sock->id, sock, fd);
+	log_debugf(HASH_NETWORK, STRING_CONST("Closing socket 0x%llx (0x%" PRIfixPTR " : %d)"),
+	           sock->id, sock, fd);
 
 	sock->address_local  = 0;
 	sock->address_remote = 0;
@@ -624,10 +635,12 @@ _socket_set_reuse_address(socket_t* sock, bool reuse) {
 		int ret = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
 #endif
 		if (ret < 0) {
-			int sockerr = NETWORK_SOCKET_ERROR;
+			const int sockerr = NETWORK_SOCKET_ERROR;
+			const string_const_t errmsg = system_error_message(sockerr);
 			log_warnf(HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL,
-			          "Unable to set reuse address option on socket 0x%llx (0x%" PRIfixPTR " : %d): %s (%d)",
-			          sockbase->object, sock, sockbase->fd, system_error_message(sockerr), sockerr);
+			          STRING_CONST("Unable to set reuse address option on socket 0x%llx (0x%" PRIfixPTR
+			                       " : %d): %.*s (%d)"),
+			          sockbase->object, sock, sockbase->fd, STRING_FORMAT(errmsg), sockerr);
 			FOUNDATION_UNUSED(sockerr);
 		}
 	}
@@ -655,10 +668,11 @@ _socket_set_reuse_port(socket_t* sock, bool reuse) {
 		int optval = reuse ? 1 : 0;
 		int ret = setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
 		if (ret < 0) {
-			int sockerr = NETWORK_SOCKET_ERROR;
+			const int sockerr = NETWORK_SOCKET_ERROR;
+			const string_const_t errmsg = system_error_message(sockerr);
 			log_warnf(HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL,
-			          "Unable to set reuse port option on socket 0x%llx (0x%" PRIfixPTR " : %d): %s (%d)",
-			          sockbase->object, sock, sockbase->fd, system_error_message(sockerr), sockerr);
+			          STRING_CONST("Unable to set reuse port option on socket 0x%llx (0x%" PRIfixPTR " : %d): %.*s (%d)"),
+			          sockbase->object, sock, sockbase->fd, STRING_FORMAT(errmsg), sockerr);
 			FOUNDATION_UNUSED(sockerr);
 		}
 #endif
@@ -695,12 +709,12 @@ _socket_set_blocking_fd(int fd, bool block) {
 #endif
 }
 
-static unsigned int
+static size_t
 _socket_buffered_in(const socket_t* sock) {
 	FOUNDATION_ASSERT(sock);
 	if (sock->offset_write_in >= sock->offset_read_in)
 		return sock->offset_write_in - sock->offset_read_in;
-	return (BUILD_SIZE_SOCKET_READBUFFER - sock->offset_read_in) + sock->offset_write_in;
+	return (_network_config.socket_read_buffer_size - sock->offset_read_in) + sock->offset_write_in;
 }
 
 /*static unsigned int
@@ -710,13 +724,13 @@ _socket_buffered_out( const socket_t* sock )
 	return sock->offset_write_out;
 }*/
 
-unsigned int
+size_t
 _socket_available_nonblock_read(const socket_t* sock) {
 	int available = 0;
 	FOUNDATION_ASSERT(sock);
 	if (sock->base >= 0)
 		available = _socket_available_fd(_socket_base[ sock->base ].fd);
-	return _socket_buffered_in(sock) + (available > 0 ? available : 0);
+	return _socket_buffered_in(sock) + (available > 0 ? (size_t)available : 0);
 }
 
 static void
@@ -739,77 +753,74 @@ _socket_doflush(socket_t* sock) {
 socket_state_t
 _socket_poll_state(socket_base_t* sockbase) {
 	socket_t* sock = 0;
+	struct timeval tv;
+	fd_set fdwrite, fderr;
+	int available;
 
 	if ((sockbase->state == SOCKETSTATE_NOTCONNECTED) || (sockbase->state == SOCKETSTATE_DISCONNECTED))
 		return sockbase->state;
 
 	switch (sockbase->state) {
-	case SOCKETSTATE_CONNECTING: {
-			struct timeval tv;
-			fd_set fdwrite, fderr;
+	case SOCKETSTATE_CONNECTING:
+		FD_ZERO(&fdwrite);
+		FD_ZERO(&fderr);
+		FD_SET(sockbase->fd, &fdwrite);
+		FD_SET(sockbase->fd, &fderr);
 
-			FD_ZERO(&fdwrite);
-			FD_ZERO(&fderr);
-			FD_SET(sockbase->fd, &fdwrite);
-			FD_SET(sockbase->fd, &fderr);
+		tv.tv_sec  = 0;
+		tv.tv_usec = 0;
 
-			tv.tv_sec  = 0;
-			tv.tv_usec = 0;
+		select((int)(sockbase->fd + 1), 0, &fdwrite, &fderr, &tv);
 
-			select((int)(sockbase->fd + 1), 0, &fdwrite, &fderr, &tv);
-
-			if (FD_ISSET(sockbase->fd, &fderr)) {
-				if (!sock)
-					sock = _socket_lookup(sockbase->object);
-				log_debugf(HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d): error in state CONNECTING",
-				           sockbase->object, sock, sockbase->fd);
-				if (sock)
-					_socket_close(sock);
-				//network_event_post( NETWORKEVENT_ERROR, sock );
-			}
-			else if (FD_ISSET(sockbase->fd, &fdwrite)) {
-#if BUILD_ENABLE_DEBUG_LOG
-				if (!sock)
-					sock = _socket_lookup(sockbase->object);
-				log_debugf(HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d): CONNECTING -> CONNECTED",
-				           sockbase->object, sock, sockbase->fd);
-#endif
-				//if( sock->state == SOCKETSTATE_CONNECTING )
-				//	network_event_post( NETWORKEVENT_CONNECTED, sock );
-				sockbase->state = SOCKETSTATE_CONNECTED;
-			}
-
-			break;
-		}
-
-	case SOCKETSTATE_CONNECTED: {
-			int available = _socket_available_fd(sockbase->fd);
-			if (available < 0) {
-#if BUILD_ENABLE_DEBUG_LOG
-				if (!sock)
-					sock = _socket_lookup(sockbase->object);
-				log_debugf(HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d): hangup in CONNECTED",
-				           sockbase->object, sock, sockbase->fd);
-#endif
-				sockbase->state = SOCKETSTATE_DISCONNECTED;
-				//network_event_post( NETWORKEVENT_HANGUP, sock );
-				//Fall through to disconnected check for close
-			}
-			else
-				break;
-		}
-
-	case SOCKETSTATE_DISCONNECTED: {
+		if (FD_ISSET(sockbase->fd, &fderr)) {
 			if (!sock)
 				sock = _socket_lookup(sockbase->object);
-			if (!_socket_buffered_in(sock)) {
-				log_debugf(HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR " : %d): all data read in DISCONNECTED",
-				           sockbase->object, sock, sockbase->fd);
-				if (sock)
-					_socket_close(sock);
-			}
-			break;
+			log_debugf(HASH_NETWORK,
+			           STRING_CONST("Socket 0x%llx (0x%" PRIfixPTR " : %d): error in state CONNECTING"),
+			           sockbase->object, sock, sockbase->fd);
+			if (sock)
+				_socket_close(sock);
 		}
+		else if (FD_ISSET(sockbase->fd, &fdwrite)) {
+#if BUILD_ENABLE_DEBUG_LOG
+			if (!sock)
+				sock = _socket_lookup(sockbase->object);
+			log_debugf(HASH_NETWORK,
+			           STRING_CONST("Socket 0x%llx (0x%" PRIfixPTR " : %d): CONNECTING -> CONNECTED"),
+			           sockbase->object, sock, sockbase->fd);
+#endif
+			sockbase->state = SOCKETSTATE_CONNECTED;
+		}
+
+		break;
+
+	case SOCKETSTATE_CONNECTED:
+		available = _socket_available_fd(sockbase->fd);
+		if (available < 0) {
+#if BUILD_ENABLE_DEBUG_LOG
+			if (!sock)
+				sock = _socket_lookup(sockbase->object);
+			log_debugf(HASH_NETWORK,
+			           STRING_CONST("Socket 0x%llx (0x%" PRIfixPTR " : %d): hangup in CONNECTED"),
+			           sockbase->object, sock, sockbase->fd);
+#endif
+			sockbase->state = SOCKETSTATE_DISCONNECTED;
+			//Fall through to disconnected check for close
+		}
+		else
+			break;
+
+	case SOCKETSTATE_DISCONNECTED:
+		if (!sock)
+			sock = _socket_lookup(sockbase->object);
+		if (!_socket_buffered_in(sock)) {
+			log_debugf(HASH_NETWORK,
+			           STRING_CONST("Socket 0x%llx (0x%" PRIfixPTR " : %d): all data read in DISCONNECTED"),
+			           sockbase->object, sock, sockbase->fd);
+			if (sock)
+				_socket_close(sock);
+		}
+		break;
 
 	default:
 		break;
@@ -902,13 +913,13 @@ _socket_stream_finalize(stream_t* stream) {
 		socket_destroy(id);
 }
 
-static uint64_t
-_socket_read(stream_t* stream, void* buffer, uint64_t size) {
+static size_t
+_socket_read(stream_t* stream, void* buffer, size_t size) {
 	socket_stream_t* sockstream;
 	socket_t* sock;
 	socket_base_t* sockbase;
-	uint64_t was_read = 0;
-	unsigned int copy;
+	size_t was_read = 0;
+	size_t copy;
 	int loop_counter = 0;
 	bool try_again = false;
 	bool polled;
@@ -942,14 +953,14 @@ _socket_read(stream_t* stream, void* buffer, uint64_t size) {
 		try_again = false;
 
 		do {
-			unsigned int want_read;
+			size_t want_read;
 
 			if (sock->offset_write_in >= sock->offset_read_in)
 				copy = (sock->offset_write_in - sock->offset_read_in);
 			else
-				copy = (BUILD_SIZE_SOCKET_READBUFFER - sock->offset_read_in);
+				copy = (_network_config.socket_read_buffer_size - sock->offset_read_in);
 
-			want_read = (unsigned int)(size - was_read);
+			want_read = size - was_read;
 			if (copy > want_read)
 				copy = want_read;
 
@@ -958,14 +969,14 @@ _socket_read(stream_t* stream, void* buffer, uint64_t size) {
 					memcpy(buffer, sock->buffer_in + sock->offset_read_in, (size_t)copy);
 
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
-				log_debugf(HASH_NETWORK, "Socket 0x%llx (0x%" PRIfixPTR
-				           " : %d) read %d of %d bytes bytes from buffer position %d", sock->id, sock, sockbase->fd, copy,
-				           want_read, sock->offset_read_in);
+				log_debugf(HASH_NETWORK, STRING_CONST("Socket 0x%llx (0x%" PRIfixPTR
+				                                      " : %d) read %d of %d bytes bytes from buffer position %d"),
+				           sock->id, sock, sockbase->fd, copy, want_read, sock->offset_read_in);
 #endif
 
 				was_read += copy;
 				sock->offset_read_in += copy;
-				if (sock->offset_read_in == BUILD_SIZE_SOCKET_READBUFFER)
+				if (sock->offset_read_in == _network_config.socket_read_buffer_size)
 					sock->offset_read_in = 0;
 
 				try_again = true;
@@ -984,8 +995,8 @@ _socket_read(stream_t* stream, void* buffer, uint64_t size) {
 	if (was_read < size) {
 		if (was_read)
 			log_warnf(HASH_NETWORK, WARNING_SUSPICIOUS,
-			          "Socket 0x%llx (0x%" PRIfixPTR " : %d): partial read %d of %d bytes", sock->id, sock, sockbase->fd,
-			          was_read, size);
+			          STRING_CONST("Socket 0x%llx (0x%" PRIfixPTR " : %d): partial read %d of %d bytes"),
+			          sock->id, sock, sockbase->fd, was_read, size);
 		_socket_poll_state(sockbase);
 	}
 
@@ -998,13 +1009,13 @@ exit:
 	return was_read;
 }
 
-static uint64_t
-_socket_write(stream_t* stream, const void* buffer, uint64_t size) {
+static size_t
+_socket_write(stream_t* stream, const void* buffer, size_t size) {
 	socket_stream_t* sockstream;
 	socket_t* sock;
 	socket_base_t* sockbase;
-	uint64_t was_written = 0;
-	unsigned int remain;
+	size_t was_written = 0;
+	size_t remain;
 
 	FOUNDATION_ASSERT(stream);
 	FOUNDATION_ASSERT(stream->type == STREAMTYPE_SOCKET);
@@ -1017,7 +1028,7 @@ _socket_write(stream_t* stream, const void* buffer, uint64_t size) {
 		return 0;
 
 	sockbase = _socket_base + sock->base;
-	remain = BUILD_SIZE_SOCKET_WRITEBUFFER - sock->offset_write_out;
+	remain = _network_config.socket_read_buffer_size - sock->offset_write_out;
 
 	if (sockbase->state != SOCKETSTATE_CONNECTED)
 		goto exit;
@@ -1049,12 +1060,12 @@ _socket_write(stream_t* stream, const void* buffer, uint64_t size) {
 
 		if (sockbase->state != SOCKETSTATE_CONNECTED) {
 			log_warnf(HASH_NETWORK, WARNING_SUSPICIOUS,
-			          "Socket %llx (0x%" PRIfixPTR " : %d): partial write %d of %d bytes", sock->id, sock, sockbase->fd,
-			          was_written, (unsigned int)size);
+			          STRING_CONST("Socket %llx (0x%" PRIfixPTR " : %d): partial write %d of %d bytes"),
+			          sock->id, sock, sockbase->fd, was_written, (unsigned int)size);
 			break;
 		}
 
-		remain = BUILD_SIZE_SOCKET_WRITEBUFFER - sock->offset_write_out;
+		remain = _network_config.socket_read_buffer_size - sock->offset_write_out;
 
 	}
 	while (remain);
@@ -1097,11 +1108,11 @@ _socket_eos(stream_t* stream) {
 	return eos;
 }
 
-static uint64_t
+static size_t
 _socket_available_read(stream_t* stream) {
 	socket_stream_t* sockstream;
 	socket_t* sock;
-	unsigned int available;
+	size_t available;
 
 	FOUNDATION_ASSERT(stream);
 	FOUNDATION_ASSERT(stream->type == STREAMTYPE_SOCKET);
@@ -1141,7 +1152,7 @@ _socket_buffer_read(stream_t* stream) {
 	if ((sockbase->state != SOCKETSTATE_CONNECTED) || (sockbase->flags & SOCKETFLAG_POLLED) ||
 	        (sockbase->fd == SOCKET_INVALID))
 		goto exit;
-	if (_socket_buffered_in(sock) == BUILD_SIZE_SOCKET_READBUFFER)
+	if (_socket_buffered_in(sock) == _network_config.socket_read_buffer_size)
 		goto exit;
 
 	available = _socket_available_fd(sockbase->fd);
@@ -1172,14 +1183,14 @@ _socket_flush(stream_t* stream) {
 }
 
 static void
-_socket_truncate(stream_t* stream, uint64_t size) {
+_socket_truncate(stream_t* stream, size_t size) {
 	FOUNDATION_ASSERT(stream);
 	FOUNDATION_ASSERT(stream->type == STREAMTYPE_SOCKET);
 	FOUNDATION_UNUSED(stream);
 	FOUNDATION_UNUSED(size);
 }
 
-static uint64_t
+static size_t
 _socket_size(stream_t* stream) {
 	FOUNDATION_ASSERT(stream);
 	FOUNDATION_ASSERT(stream->type == STREAMTYPE_SOCKET);
@@ -1188,7 +1199,7 @@ _socket_size(stream_t* stream) {
 }
 
 static void
-_socket_seek(stream_t* stream, int64_t offset, stream_seek_mode_t direction) {
+_socket_seek(stream_t* stream, ssize_t offset, stream_seek_mode_t direction) {
 	socket_stream_t* sockstream;
 	socket_t* sock;
 
@@ -1211,11 +1222,11 @@ _socket_seek(stream_t* stream, int64_t offset, stream_seek_mode_t direction) {
 	socket_destroy(sockstream->socket);
 }
 
-static int64_t
+static size_t
 _socket_tell(stream_t* stream) {
 	socket_stream_t* sockstream;
 	socket_t* sock;
-	int64_t pos;
+	size_t pos;
 
 	FOUNDATION_ASSERT(stream);
 	FOUNDATION_ASSERT(stream->type == STREAMTYPE_SOCKET);
@@ -1225,7 +1236,7 @@ _socket_tell(stream_t* stream) {
 	if (!sock)
 		return 0;
 
-	pos = (int64_t)sock->bytes_read;
+	pos = sock->bytes_read;
 
 	socket_destroy(sockstream->socket);
 
@@ -1240,7 +1251,7 @@ _socket_last_modified(const stream_t* stream) {
 }
 
 int
-socket_initialize(unsigned int max_sockets) {
+socket_initialize(size_t max_sockets) {
 	_socket_map = objectmap_allocate(max_sockets + (max_sockets > 256 ? 256 : 8));
 
 	_socket_base = memory_allocate(HASH_NETWORK, sizeof(socket_base_t) * max_sockets, 16,

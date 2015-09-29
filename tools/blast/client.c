@@ -80,7 +80,7 @@ blast_client_report_progress(blast_client_t* client, bool force) {
 		if (client->packets_sent > 0) {
 			real resend_rate = (real)((float64_t)client->packets_resent / (float64_t)client->packets_sent) *
 			                   REAL_C(100.0);
-			log_infof(HASH_BLAST, STRING_CONST("Progress: %*s %d%% (resend rate %.2" PRIREAL "%% %lld/%lld))"),
+			log_infof(HASH_BLAST, STRING_CONST("Progress: %.*s %d%% (resend rate %.2" PRIREAL "%% %lld/%lld))"),
 			          STRING_FORMAT(client->readers[client->current]->name), progress, resend_rate,
 			          client->packets_resent,
 			          client->packets_sent);
@@ -141,7 +141,7 @@ blast_client_send_handshake(blast_client_t* client, blast_reader_t* reader) {
 		{
 			char buffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
 			string_t addr = network_address_to_string(buffer, sizeof(buffer), addrarr[iaddr], true);
-			log_infof(HASH_BLAST, STRING_CONST("Sent handshake to %*s (seq %lld, timestamp %lld)"),
+			log_infof(HASH_BLAST, STRING_CONST("Sent handshake to %.*s (seq %lld, timestamp %lld)"),
 			          STRING_FORMAT(addr), packet.seq,
 			          (tick_t)packet.timestamp);
 		}
@@ -203,7 +203,7 @@ blast_client_handshake(blast_client_t* client, network_poll_t* poll) {
 				packet_handshake_t* handshake = (packet_handshake_t*)packet;
 
 				log_infof(HASH_BLAST,
-				          STRING_CONST("Got handshake packet from %*s (seq %d, timestamp %lld, latency %lld ms)"),
+				          STRING_CONST("Got handshake packet from %.*s (seq %d, timestamp %lld, latency %lld ms)"),
 				          STRING_FORMAT(addr), (int)packet->seq, (tick_t)packet->timestamp,
 				          blast_timestamp_elapsed_ms(client->begin_send, packet->timestamp));
 
@@ -214,7 +214,7 @@ blast_client_handshake(blast_client_t* client, network_poll_t* poll) {
 				}
 
 				if (client->state == BLAST_STATE_HANDSHAKE) {
-					log_infof(HASH_BLAST, STRING_CONST("Begin transfer of '%*s' %lld bytes with token %d to %s"),
+					log_infof(HASH_BLAST, STRING_CONST("Begin transfer of '%.*s' %lld bytes with token %d to %s"),
 					          STRING_FORMAT(client->readers[client->current]->name), client->readers[client->current]->size,
 					          handshake->token, STRING_FORMAT(addr));
 					client->token = (unsigned int)handshake->token;
@@ -423,7 +423,7 @@ blast_client_read_ack(blast_client_t* client) {
 		else {
 			char buffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
 			string_t addr = network_address_to_string(buffer, sizeof(buffer), address, true);
-			log_warnf(HASH_BLAST, WARNING_SUSPICIOUS, STRING_CONST("Ignoring datagram from unknown host %*s"),
+			log_warnf(HASH_BLAST, WARNING_SUSPICIOUS, STRING_CONST("Ignoring datagram from unknown host %.*s"),
 			          STRING_FORMAT(addr));
 		}
 
@@ -475,7 +475,7 @@ blast_client(network_address_t*** target, string_t* files) {
 	for (ifile = 0, fsize = array_size(files); ifile < fsize; ++ifile) {
 		reader = blast_reader_open(files[ifile]);
 		if (!reader) {
-			log_warnf(HASH_BLAST, WARNING_SUSPICIOUS, STRING_CONST("Unable to open reader for: %*s"),
+			log_warnf(HASH_BLAST, WARNING_SUSPICIOUS, STRING_CONST("Unable to open reader for: %.*s"),
 			          STRING_ARGS(files[ifile]));
 			return BLAST_ERROR_UNABLE_TO_OPEN_FILE;
 		}

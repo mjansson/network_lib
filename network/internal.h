@@ -58,20 +58,6 @@ typedef enum {
 	SOCKETFLAG_REUSE_PORT           = 0x00000100
 } socket_flag_t;
 
-#if FOUNDATION_PLATFORM_POSIX
-typedef socklen_t network_address_size_t;
-#else
-typedef int       network_address_size_t;
-#endif
-
-#define NETWORK_DECLARE_NETWORK_ADDRESS      \
-	network_address_family_t   family;       \
-	network_address_size_t     address_size
-
-struct network_address_t {
-	NETWORK_DECLARE_NETWORK_ADDRESS;
-};
-
 #define NETWORK_DECLARE_NETWORK_ADDRESS_IP   \
 	NETWORK_DECLARE_NETWORK_ADDRESS
 
@@ -106,8 +92,8 @@ typedef struct socket_stream_t  socket_stream_t;
 
 typedef void (*socket_open_fn)(socket_t*, unsigned int);
 typedef int (*socket_connect_fn)(socket_t*, const network_address_t*, unsigned int);
-typedef unsigned int (*socket_buffer_read_fn)(socket_t*, unsigned int);
-typedef unsigned int (*socket_buffer_write_fn)(socket_t*);
+typedef size_t (*socket_buffer_read_fn)(socket_t*, size_t);
+typedef size_t (*socket_buffer_write_fn)(socket_t*);
 typedef void (*socket_stream_initialize_fn)(socket_t*, stream_t*);
 
 FOUNDATION_ALIGNED_STRUCT(socket_stream_t, 16) {
@@ -132,11 +118,11 @@ FOUNDATION_ALIGNED_STRUCT(socket_t, 16) {
 	network_address_t* address_local;
 	network_address_t* address_remote;
 
-	unsigned int offset_read_in;
-	unsigned int offset_write_in;
-	unsigned int offset_write_out;
-	uint64_t bytes_read;
-	uint64_t bytes_written;
+	size_t offset_read_in;
+	size_t offset_write_in;
+	size_t offset_write_out;
+	size_t bytes_read;
+	size_t bytes_written;
 
 	socket_open_fn open_fn;
 	socket_connect_fn connect_fn;
@@ -151,9 +137,10 @@ FOUNDATION_ALIGNED_STRUCT(socket_t, 16) {
 	uint8_t  buffers[];
 };
 
-NETWORK_EXTERN socket_base_t* _socket_base;
-NETWORK_EXTERN int32_t        _socket_base_size;
-NETWORK_EXTERN atomic32_t     _socket_base_next;
+NETWORK_EXTERN network_config_t  _network_config;
+NETWORK_EXTERN socket_base_t*    _socket_base;
+NETWORK_EXTERN int32_t           _socket_base_size;
+NETWORK_EXTERN atomic32_t        _socket_base_next;
 
 NETWORK_API int
 _socket_create_fd(socket_t* sock, network_address_family_t family);
@@ -188,14 +175,14 @@ _socket_store_address_local(socket_t* sock, int family);
 NETWORK_API int
 _socket_available_fd(int fd);
 
-NETWORK_API unsigned int
+NETWORK_API size_t
 _socket_available_nonblock_read(const socket_t* sock);
 
 NETWORK_API socket_state_t
 _socket_poll_state(socket_base_t* sockbase);
 
 NETWORK_API int
-socket_initialize(unsigned int max_sockets);
+socket_initialize(size_t max_sockets);
 
 NETWORK_API void
 socket_finalize(void);

@@ -25,10 +25,10 @@ _udp_socket_open(socket_t*, unsigned int);
 static int
 _udp_socket_connect(socket_t*, const network_address_t*, unsigned int);
 
-static unsigned int
-_udp_socket_buffer_read(socket_t*, unsigned int);
+static size_t
+_udp_socket_buffer_read(socket_t*, size_t);
 
-static unsigned int
+static size_t
 _udp_socket_buffer_write(socket_t*);
 
 static void
@@ -72,7 +72,7 @@ _udp_socket_open(socket_t* sock, unsigned int family) {
 		int err = NETWORK_SOCKET_ERROR;
 		string_const_t errmsg = system_error_message(err);
 		log_errorf(HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL,
-		           STRING_CONST("Unable to open UDP socket 0x%llx (0x%" PRIfixPTR " : %d): %*s (%d)"), sock->id, sock,
+		           STRING_CONST("Unable to open UDP socket 0x%llx (0x%" PRIfixPTR " : %d): %.*s (%d)"), sock->id, sock,
 		           sockbase->fd, STRING_FORMAT(errmsg), err);
 		sockbase->fd = SOCKET_INVALID;
 	}
@@ -190,7 +190,7 @@ _udp_socket_connect(socket_t* sock, const network_address_t* address, unsigned i
 		char buffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
 		string_t address_str = network_address_to_string(buffer, sizeof(buffer), address, true);
 		log_debugf(HASH_NETWORK, STRING_CONST("Failed to connect socket 0x%llx (0x%" PRIfixPTR
-		                                      " : %d) to remote host %*s: %*s"),
+		                                      " : %d) to remote host %.*s: %.*s"),
 		           sock->id, sock, sockbase->fd, STRING_FORMAT(address_str), STRING_FORMAT(error_message));
 #endif
 		return err;
@@ -207,7 +207,7 @@ _udp_socket_connect(socket_t* sock, const network_address_t* address, unsigned i
 		char buffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
 		string_t address_str = network_address_to_string(buffer, sizeof(buffer), address, true);
 		log_debugf(HASH_NETWORK, STRING_CONST("%s socket 0x%llx (0x%" PRIfixPTR
-		                                      " : %d) to remote host %*s"),
+		                                      " : %d) to remote host %.*s"),
 		           (sockbase->state == SOCKETSTATE_CONNECTING) ? "Connecting" : "Connected", sock->id, sock,
 		           sockbase->fd, STRING_FORMAT(address_str));
 	}
@@ -216,13 +216,13 @@ _udp_socket_connect(socket_t* sock, const network_address_t* address, unsigned i
 	return 0;
 }
 
-static unsigned int
-_udp_socket_buffer_read(socket_t* sock, unsigned int wanted_size) {
+static size_t
+_udp_socket_buffer_read(socket_t* sock, size_t wanted_size) {
 	socket_base_t* sockbase;
-	unsigned int available;
-	unsigned int max_read = 0;
-	unsigned int try_read;
-	unsigned int total_read = 0;
+	size_t available;
+	size_t max_read = 0;
+	size_t try_read;
+	size_t total_read = 0;
 	bool is_blocking = false;
 	long ret;
 
@@ -231,10 +231,10 @@ _udp_socket_buffer_read(socket_t* sock, unsigned int wanted_size) {
 
 	if (sock->offset_write_in == sock->offset_read_in) {
 		sock->offset_write_in = sock->offset_read_in = 0;
-		max_read = BUILD_SIZE_SOCKET_READBUFFER - 1;
+		max_read = _network_config.socket_read_buffer_size - 1;
 	}
 	else if (sock->offset_write_in > sock->offset_read_in) {
-		max_read = BUILD_SIZE_SOCKET_READBUFFER - sock->offset_write_in;
+		max_read = _network_config.socket_read_buffer_size - sock->offset_write_in;
 		if (!sock->offset_read_in)
 			--max_read; //Don't read if write ptr wraps to 0 and equals read ptr (then the entire buffer is discarded)
 	}
@@ -265,14 +265,14 @@ _udp_socket_buffer_read(socket_t* sock, unsigned int wanted_size) {
 		try_read = max_read;
 	}
 
-	ret = recv(sockbase->fd, (char*)sock->buffer_in + sock->offset_write_in, try_read, 0);
+	ret = recv(sockbase->fd, (char*)sock->buffer_in + sock->offset_write_in, (int)try_read, 0);
 	if (!ret) {
 #if BUILD_ENABLE_DEBUG_LOG
 		char buffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
 		string_t address_str = network_address_to_string(buffer, sizeof(buffer), sock->address_remote,
 		                                                 true);
 		log_debugf(HASH_NETWORK, STRING_CONST("Socket closed gracefully on remote end 0x%llx (0x%" PRIfixPTR
-		                                      " : %d): %*s"), sock->id, sock, sockbase->fd, STRING_FORMAT(address_str));
+		                                      " : %d): %.*s"), sock->id, sock, sockbase->fd, STRING_FORMAT(address_str));
 #endif
 		_socket_close(sock);
 		if (!(sockbase->flags & SOCKETFLAG_HANGUP_PENDING)) {
@@ -316,8 +316,9 @@ _udp_socket_buffer_read(socket_t* sock, unsigned int wanted_size) {
 
 		sock->offset_write_in += ret;
 		total_read += ret;
-		FOUNDATION_ASSERT_MSG(sock->offset_write_in <= BUILD_SIZE_SOCKET_READBUFFER, "Buffer overwrite");
-		if (sock->offset_write_in >= BUILD_SIZE_SOCKET_READBUFFER)
+		FOUNDATION_ASSERT_MSG(sock->offset_write_in <= _network_config.socket_read_buffer_size,
+		                      "Buffer overwrite");
+		if (sock->offset_write_in >= _network_config.socket_read_buffer_size)
 			sock->offset_write_in = 0;
 	}
 	else {
@@ -330,9 +331,9 @@ _udp_socket_buffer_read(socket_t* sock, unsigned int wanted_size) {
 		{
 			string_const_t errmsg = system_error_message(sockerr);
 			log_warnf(HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL,
-			          STRING_CONST("Socket recv() failed on UDP socket 0x%llx (0x%" PRIfixPTR " : %d): %*s (%d)"),
-			                       sock->id, sock,
-			                       sockbase->fd, STRING_FORMAT(errmsg), sockerr);
+			          STRING_CONST("Socket recv() failed on UDP socket 0x%llx (0x%" PRIfixPTR " : %d): %.*s (%d)"),
+			          sock->id, sock,
+			          sockbase->fd, STRING_FORMAT(errmsg), sockerr);
 		}
 
 #if FOUNDATION_PLATFORM_WINDOWS
@@ -360,10 +361,10 @@ _udp_socket_buffer_read(socket_t* sock, unsigned int wanted_size) {
 	return total_read;
 }
 
-static unsigned int
+static size_t
 _udp_socket_buffer_write(socket_t* sock) {
 	socket_base_t* sockbase;
-	unsigned int sent = 0;
+	size_t sent = 0;
 	if (sock->base < 0)
 		return 0;
 
@@ -377,8 +378,8 @@ _udp_socket_buffer_write(socket_t* sock) {
 	}
 
 	while (sent < sock->offset_write_out) {
-		long res = send(sockbase->fd, (const char*)sock->buffer_out + sent, sock->offset_write_out - sent,
-		                0);
+		long res = send(sockbase->fd, (const char*)sock->buffer_out + sent,
+		                (int)(sock->offset_write_out - sent), 0);
 		if (res > 0) {
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 			const unsigned char* src = (const unsigned char*)sock->buffer_out + sent;
@@ -486,9 +487,9 @@ udp_socket_recvfrom(object_t id, network_address_t const** address) {
 	socket_t* sock;
 	socket_base_t* sockbase;
 	network_address_ip_t* addr_ip;
-	unsigned int available;
-	unsigned int max_read = BUILD_SIZE_SOCKET_READBUFFER;
-	unsigned int try_read;
+	size_t available;
+	size_t max_read = _network_config.socket_read_buffer_size;
+	size_t try_read;
 	bool is_blocking = false;
 	long ret;
 
@@ -527,7 +528,7 @@ udp_socket_recvfrom(object_t id, network_address_t const** address) {
 	}
 	addr_ip = (network_address_ip_t*)sock->address_remote;
 
-	ret = recvfrom(sockbase->fd, (char*)sock->buffer_in, try_read, 0, &addr_ip->saddr,
+	ret = recvfrom(sockbase->fd, (char*)sock->buffer_in, (int)try_read, 0, &addr_ip->saddr,
 	               &addr_ip->address_size);
 	if (ret > 0) {
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
@@ -578,7 +579,7 @@ udp_socket_recvfrom(object_t id, network_address_t const** address) {
 		{
 			string_const_t errmsg = system_error_message(sockerr);
 			log_warnf(HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL,
-			          STRING_CONST("Socket recvfrom() failed on UDP socket 0x%llx (0x%" PRIfixPTR " : %d): %*s (%d)"),
+			          STRING_CONST("Socket recvfrom() failed on UDP socket 0x%llx (0x%" PRIfixPTR " : %d): %.*s (%d)"),
 			          sock->id, sock,
 			          sockbase->fd, STRING_FORMAT(errmsg), sockerr);
 		}

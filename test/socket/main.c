@@ -39,13 +39,15 @@ test_socket_foundation_config(void) {
 
 int
 test_socket_initialize(void) {
+	network_config_t config;
+	memset(&config, 0, sizeof(config));
 	log_set_suppress(HASH_NETWORK, ERRORLEVEL_INFO);
-	return network_initialize(1024);
+	return network_module_initialize(config);
 }
 
 void
 test_socket_finalize(void) {
-	network_finalize();
+	network_module_finalize();
 }
 
 DECLARE_TEST(tcp, create) {

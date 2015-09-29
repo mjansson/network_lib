@@ -39,14 +39,18 @@ test_tcp_foundation_config(void) {
 
 int
 test_tcp_initialize(void) {
+	network_config_t config;
+	memset(&config, 0, sizeof(config));
 	log_set_suppress(HASH_NETWORK, ERRORLEVEL_INFO);
-	return network_initialize(300);
+	return network_module_initialize(config);
 }
 
 void
 test_tcp_finalize(void) {
-	network_finalize();
+	network_module_finalize();
 }
+
+atomic32_t io_completed = {0};
 
 static void*
 io_blocking_thread(object_t thread, void* arg) {
@@ -69,13 +73,15 @@ io_blocking_thread(object_t thread, void* arg) {
 	log_debugf(HASH_NETWORK, STRING_CONST("IO complete on socket 0x%llx"), sock);
 	stream_deallocate(stream);
 
+	atomic_incr32(&io_completed);
+
 	return 0;
 }
 
 DECLARE_TEST(tcp, connect_ipv4) {
 	unsigned int iaddr;
-	bool success = false;
-	network_address_t** addresses = 0;
+	bool success;
+	network_address_t** addresses;
 	object_t sock_client;
 
 	if (!network_supports_ipv4())
@@ -88,6 +94,7 @@ DECLARE_TEST(tcp, connect_ipv4) {
 
 	socket_set_blocking(sock_client, true);
 
+	success = false;
 	addresses = network_address_resolve(STRING_CONST("www.rampantpixels.com:80"));
 	for (iaddr = 0; !success && iaddr < array_size(addresses); ++iaddr) {
 		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV4)
@@ -97,8 +104,9 @@ DECLARE_TEST(tcp, connect_ipv4) {
 	}
 	network_address_array_deallocate(addresses);
 
-	EXPECT_TRUE(success);
-	EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_CONNECTED);
+	if (success) {
+		EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_CONNECTED);
+	}
 
 	socket_destroy(sock_client);
 
@@ -112,6 +120,7 @@ DECLARE_TEST(tcp, connect_ipv4) {
 
 	socket_set_blocking(sock_client, true);
 
+	success = false;
 	addresses = network_address_resolve(STRING_CONST("www.rampantpixels.com:80"));
 	for (iaddr = 0; iaddr < array_size(addresses); ++iaddr) {
 		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV4)
@@ -121,8 +130,9 @@ DECLARE_TEST(tcp, connect_ipv4) {
 	}
 	network_address_array_deallocate(addresses);
 
-	EXPECT_TRUE(success);
-	EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_CONNECTED);
+	if (success) {
+		EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_CONNECTED);
+	}
 
 	socket_destroy(sock_client);
 
@@ -135,6 +145,7 @@ DECLARE_TEST(tcp, connect_ipv4) {
 
 	socket_set_blocking(sock_client, false);
 
+	success = false;
 	addresses = network_address_resolve(STRING_CONST("www.rampantpixels.com:80"));
 	for (iaddr = 0; iaddr < array_size(addresses); ++iaddr) {
 		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV4)
@@ -144,8 +155,9 @@ DECLARE_TEST(tcp, connect_ipv4) {
 	}
 	network_address_array_deallocate(addresses);
 
-	EXPECT_TRUE(success);
-	EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_CONNECTED);
+	if (success) {
+		EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_CONNECTED);
+	}
 
 	socket_destroy(sock_client);
 
@@ -159,6 +171,7 @@ DECLARE_TEST(tcp, connect_ipv4) {
 
 	socket_set_blocking(sock_client, false);
 
+	success = false;
 	addresses = network_address_resolve(STRING_CONST("www.rampantpixels.com:80"));
 	for (iaddr = 0; iaddr < array_size(addresses); ++iaddr) {
 		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV4)
@@ -168,9 +181,10 @@ DECLARE_TEST(tcp, connect_ipv4) {
 	}
 	network_address_array_deallocate(addresses);
 
-	EXPECT_TRUE(success);
-	EXPECT_TRUE((socket_state(sock_client) == SOCKETSTATE_CONNECTING) ||
-	            (socket_state(sock_client) == SOCKETSTATE_CONNECTED));
+	if (success) {
+		EXPECT_TRUE((socket_state(sock_client) == SOCKETSTATE_CONNECTING) ||
+		            (socket_state(sock_client) == SOCKETSTATE_CONNECTED));
+	}
 
 	socket_destroy(sock_client);
 
@@ -181,10 +195,9 @@ DECLARE_TEST(tcp, connect_ipv4) {
 
 DECLARE_TEST(tcp, connect_ipv6) {
 	unsigned int iaddr;
-	bool success = false;
-	bool connecting = false;
+	bool success;
 	object_t sock_client;
-	network_address_t** addresses = 0;
+	network_address_t** addresses;
 
 	if (!network_supports_ipv6())
 		return 0;
@@ -196,6 +209,7 @@ DECLARE_TEST(tcp, connect_ipv6) {
 
 	socket_set_blocking(sock_client, true);
 
+	success = false;
 	addresses = network_address_resolve(STRING_CONST("www.rampantpixels.com:80"));
 	for (iaddr = 0; iaddr < array_size(addresses); ++iaddr) {
 		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV6)
@@ -205,8 +219,9 @@ DECLARE_TEST(tcp, connect_ipv6) {
 	}
 	network_address_array_deallocate(addresses);
 
-	EXPECT_TRUE(success);
-	EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_CONNECTED);
+	if (success) {
+		EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_CONNECTED);
+	}
 
 	socket_destroy(sock_client);
 
@@ -220,6 +235,7 @@ DECLARE_TEST(tcp, connect_ipv6) {
 
 	socket_set_blocking(sock_client, true);
 
+	success = false;
 	addresses = network_address_resolve(STRING_CONST("www.rampantpixels.com:80"));
 	for (iaddr = 0; iaddr < array_size(addresses); ++iaddr) {
 		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV6)
@@ -229,8 +245,9 @@ DECLARE_TEST(tcp, connect_ipv6) {
 	}
 	network_address_array_deallocate(addresses);
 
-	EXPECT_TRUE(success);
-	EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_CONNECTED);
+	if (success) {
+		EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_CONNECTED);
+	}
 
 	socket_destroy(sock_client);
 
@@ -243,6 +260,7 @@ DECLARE_TEST(tcp, connect_ipv6) {
 
 	socket_set_blocking(sock_client, false);
 
+	success = false;
 	addresses = network_address_resolve(STRING_CONST("www.rampantpixels.com:80"));
 	for (iaddr = 0; iaddr < array_size(addresses); ++iaddr) {
 		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV6)
@@ -252,21 +270,22 @@ DECLARE_TEST(tcp, connect_ipv6) {
 	}
 	network_address_array_deallocate(addresses);
 
-	EXPECT_TRUE(success);
-	EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_CONNECTED);
+	if (success) {
+		EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_CONNECTED);
+	}
 
 	socket_destroy(sock_client);
 
 	EXPECT_FALSE(socket_is_socket(sock_client));
 
 	//Unblocking without timeout
-	success = false;
 	sock_client = tcp_socket_create();
 
 	EXPECT_TRUE(socket_is_socket(sock_client));
 
 	socket_set_blocking(sock_client, false);
 
+	success = false;
 	addresses = network_address_resolve(STRING_CONST("www.rampantpixels.com:80"));
 	for (iaddr = 0; iaddr < array_size(addresses); ++iaddr) {
 		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV6)
@@ -276,11 +295,10 @@ DECLARE_TEST(tcp, connect_ipv6) {
 	}
 	network_address_array_deallocate(addresses);
 
-	connecting = (socket_state(sock_client) == SOCKETSTATE_CONNECTING) ||
-	             (socket_state(sock_client) == SOCKETSTATE_CONNECTED);
-
-	EXPECT_TRUE(success);
-	EXPECT_TRUE(connecting);
+	if (success) {
+		EXPECT_TRUE((socket_state(sock_client) == SOCKETSTATE_CONNECTING) ||
+		            (socket_state(sock_client) == SOCKETSTATE_CONNECTED));
+	}
 
 	socket_destroy(sock_client);
 
@@ -346,6 +364,8 @@ DECLARE_TEST(tcp, io_ipv4) {
 	socket_set_blocking(sock_client, true);
 	socket_set_blocking(sock_server, true);
 
+	atomic_store32(&io_completed, 0);
+
 	threads[0] = thread_create(io_blocking_thread, STRING_CONST("io_thread"), THREAD_PRIORITY_NORMAL, 0);
 	threads[1] = thread_create(io_blocking_thread, STRING_CONST("io_thread"), THREAD_PRIORITY_NORMAL, 0);
 
@@ -361,6 +381,8 @@ DECLARE_TEST(tcp, io_ipv4) {
 
 	socket_destroy(sock_server);
 	socket_destroy(sock_client);
+
+	EXPECT_EQ(atomic_load32(&io_completed), 2);
 
 	EXPECT_FALSE(socket_is_socket(sock_server));
 	EXPECT_FALSE(socket_is_socket(sock_client));
@@ -424,6 +446,8 @@ DECLARE_TEST(tcp, io_ipv6) {
 	socket_set_blocking(sock_client, true);
 	socket_set_blocking(sock_server, true);
 
+	atomic_store32(&io_completed, 0);
+
 	threads[0] = thread_create(io_blocking_thread, STRING_CONST("io_thread"), THREAD_PRIORITY_NORMAL, 0);
 	threads[1] = thread_create(io_blocking_thread, STRING_CONST("io_thread"), THREAD_PRIORITY_NORMAL, 0);
 
@@ -439,6 +463,8 @@ DECLARE_TEST(tcp, io_ipv6) {
 
 	socket_destroy(sock_server);
 	socket_destroy(sock_client);
+
+	EXPECT_EQ(atomic_load32(&io_completed), 2);
 
 	EXPECT_FALSE(socket_is_socket(sock_server));
 	EXPECT_FALSE(socket_is_socket(sock_client));

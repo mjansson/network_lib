@@ -10,6 +10,7 @@
  */
 
 #include <network/event.h>
+#include <network/internal.h>
 
 #include <foundation/foundation.h>
 
@@ -25,7 +26,7 @@ static event_stream_t* _network_events;
 int
 network_event_initialize(void) {
 	if (!_network_events)
-		_network_events = event_stream_allocate(BUILD_SIZE_NETWORK_EVENT_STREAM);
+		_network_events = event_stream_allocate(_network_config.event_stream_size);
 	return 0;
 }
 
