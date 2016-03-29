@@ -53,7 +53,7 @@ test_tcp_finalize(void) {
 atomic32_t io_completed = {0};
 
 static void*
-io_blocking_thread(object_t thread, void* arg) {
+io_blocking_thread(void* arg) {
 	int iloop;
 
 	object_t sock = *(object_t*)arg;
@@ -63,7 +63,7 @@ io_blocking_thread(object_t thread, void* arg) {
 
 	stream_t* stream = socket_stream(sock);
 
-	for (iloop = 0; !thread_should_terminate(thread) && iloop < 512; ++iloop) {
+	for (iloop = 0; !thread_try_wait(0) && iloop < 512; ++iloop) {
 		EXPECT_EQ(stream_write(stream, buffer_out, 317), 317);
 		stream_flush(stream);
 		EXPECT_EQ(stream_read(stream, buffer_in, 317), 317);
@@ -313,7 +313,7 @@ DECLARE_TEST(tcp, io_ipv4) {
 	network_address_t* address_connect = 0;
 
 	int state, iaddr, asize;
-	object_t threads[2] = {0};
+	thread_t threads[2];
 
 	object_t sock_listen = 0;
 	object_t sock_server = 0;
@@ -366,18 +366,16 @@ DECLARE_TEST(tcp, io_ipv4) {
 
 	atomic_store32(&io_completed, 0);
 
-	threads[0] = thread_create(io_blocking_thread, STRING_CONST("io_thread"), THREAD_PRIORITY_NORMAL, 0);
-	threads[1] = thread_create(io_blocking_thread, STRING_CONST("io_thread"), THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[0], io_blocking_thread, &sock_server, STRING_CONST("io_thread"), THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[1], io_blocking_thread, &sock_client, STRING_CONST("io_thread"), THREAD_PRIORITY_NORMAL, 0);
 
-	thread_start(threads[0], &sock_server);
-	thread_start(threads[1], &sock_client);
+	thread_start(&threads[0]);
+	thread_start(&threads[1]);
 
 	test_wait_for_threads_startup(threads, 2);
 
-	thread_destroy(threads[0]);
-	thread_destroy(threads[1]);
-
-	test_wait_for_threads_exit(threads, 2);
+	thread_finalize(&threads[0]);
+	thread_finalize(&threads[1]);
 
 	socket_destroy(sock_server);
 	socket_destroy(sock_client);
@@ -396,7 +394,7 @@ DECLARE_TEST(tcp, io_ipv6) {
 	network_address_t* address_connect = 0;
 
 	int state, iaddr, asize;
-	object_t threads[2] = {0};
+	thread_t threads[2];
 
 	object_t sock_listen = 0;
 	object_t sock_server = 0;
@@ -448,18 +446,16 @@ DECLARE_TEST(tcp, io_ipv6) {
 
 	atomic_store32(&io_completed, 0);
 
-	threads[0] = thread_create(io_blocking_thread, STRING_CONST("io_thread"), THREAD_PRIORITY_NORMAL, 0);
-	threads[1] = thread_create(io_blocking_thread, STRING_CONST("io_thread"), THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[0], io_blocking_thread, &sock_server, STRING_CONST("io_thread"), THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[0], io_blocking_thread, &sock_client, STRING_CONST("io_thread"), THREAD_PRIORITY_NORMAL, 0);
 
-	thread_start(threads[0], &sock_server);
-	thread_start(threads[1], &sock_client);
+	thread_start(&threads[0]);
+	thread_start(&threads[1]);
 
 	test_wait_for_threads_startup(threads, 2);
 
-	thread_destroy(threads[0]);
-	thread_destroy(threads[1]);
-
-	test_wait_for_threads_exit(threads, 2);
+	thread_finalize(&threads[0]);
+	thread_finalize(&threads[1]);
 
 	socket_destroy(sock_server);
 	socket_destroy(sock_client);

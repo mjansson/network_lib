@@ -1,33 +1,34 @@
 /* main.c  -  Foundation test launcher  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
  *
- * This library provides a cross-platform foundation library in C11 providing basic support data types and
- * functions to write applications and games in a platform-independent fashion. The latest source code is
- * always available at
+ * This library provides a cross-platform foundation library in C11 providing basic support
+ * data types and functions to write applications and games in a platform-independent fashion.
+ * The latest source code is always available at
  *
  * https://github.com/rampantpixels/foundation_lib
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
- *
+ * This library is put in the public domain; you can redistribute it and/or modify it without
+ * any restrictions.
  */
 
 #include <foundation/foundation.h>
 #include <network/network.h>
 #include <test/test.h>
 
-static volatile bool _test_should_start = false;
-static volatile bool _test_have_focus = false;
-static volatile bool _test_should_terminate = false;
+static volatile bool _test_should_start;
+static volatile bool _test_have_focus;
+static volatile bool _test_should_terminate;
 
 static void*
-event_thread(object_t thread, void* arg) {
+event_loop(void* arg) {
 	event_block_t* block;
 	event_t* event = 0;
 	FOUNDATION_UNUSED(arg);
 
-	while (!thread_should_terminate(thread)) {
+	event_stream_set_beacon(system_event_stream(), &thread_self()->beacon);
+
+	while (!_test_should_terminate) {
 		block = event_stream_process(system_event_stream());
 		event = 0;
-
 		while ((event = event_next(block, event))) {
 			switch (event->id) {
 			case FOUNDATIONEVENT_START:
@@ -59,8 +60,7 @@ event_thread(object_t thread, void* arg) {
 				break;
 			}
 		}
-
-		thread_sleep(10);
+		thread_wait();
 	}
 
 	log_debug(HASH_TEST, STRING_CONST("Application event thread exiting"));
@@ -157,6 +157,10 @@ main_initialize(void) {
 	if (foundation_initialize(memory_system_malloc(), application, config) < 0)
 		return -1;
 
+#if BUILD_MONOLITHIC
+	test_set_suitable_working_directory();
+#endif
+
 	return network_module_initialize(network_config);
 }
 
@@ -172,8 +176,7 @@ extern int test_udp_run( void );
 typedef int (*test_run_fn)(void);
 
 static void*
-test_runner(object_t obj, void* arg) {
-	FOUNDATION_UNUSED(obj);
+test_runner(void* arg) {
 	test_run_fn* tests = (test_run_fn*)arg;
 	int test_fn = 0;
 	int process_result = 0;
@@ -215,7 +218,7 @@ main_run(void* main_arg) {
 #endif
 	char* pathbuf;
 	int process_result = 0;
-	object_t thread = 0;
+	thread_t event_thread;
 	FOUNDATION_UNUSED(main_arg);
 	FOUNDATION_UNUSED(build_name);
 
@@ -225,12 +228,12 @@ main_run(void* main_arg) {
 	          string_from_version_static(network_module_version()).str, FOUNDATION_PLATFORM_DESCRIPTION,
 	          FOUNDATION_COMPILER_DESCRIPTION, build_name.str);
 
-	thread = thread_create(event_thread, STRING_CONST("event_thread"), THREAD_PRIORITY_NORMAL, 0);
-	thread_start(thread, 0);
+	thread_initialize(&event_thread, event_loop, 0, STRING_CONST("event_thread"), THREAD_PRIORITY_NORMAL, 0);
+	thread_start(&event_thread);
 
 	pathbuf = memory_allocate(HASH_STRING, BUILD_MAX_PATHLEN, 0, MEMORY_PERSISTENT);
 
-	while (!thread_is_running(thread))
+	while (!thread_is_running(&event_thread))
 		thread_sleep(10);
 
 #if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_PNACL
@@ -256,34 +259,31 @@ main_run(void* main_arg) {
 
 #if FOUNDATION_PLATFORM_ANDROID
 
-	object_t test_thread = thread_create(test_runner, STRING_CONST("test_runner"),
-	                                     THREAD_PRIORITY_NORMAL, 0);
-	thread_start(test_thread, tests);
+	thread_t test_thread;
+	thread_initialize(&test_thread, test_runner, tests, STRING_CONST("test_runner"),
+	                  THREAD_PRIORITY_NORMAL, 0);
+	thread_start(&test_thread);
 
 	log_debug(HASH_TEST, STRING_CONST("Starting test runner thread"));
 
-	while (!thread_is_running(test_thread)) {
+	while (!thread_is_running(&test_thread)) {
 		system_process_events();
 		thread_sleep(10);
 	}
 
-	while (thread_is_running(test_thread)) {
+	while (thread_is_running(&test_thread)) {
 		system_process_events();
 		thread_sleep(10);
 	}
 
-	test_result = thread_result(test_thread);
+	test_result = thread_join(&test_thread);
 	process_result = (int)(intptr_t)test_result;
-	thread_destroy(test_thread);
-
-	while (thread_is_thread(test_thread)) {
-		system_process_events();
-		thread_sleep(10);
-	}
+	
+	thread_finalize(&test_thread);
 
 #else
 
-	test_result = test_runner(0, tests);
+	test_result = test_runner(tests);
 	process_result = (int)(intptr_t)test_result;
 
 #endif
@@ -385,16 +385,15 @@ exit:
 
 #endif
 
-	thread_terminate(thread);
-	thread_destroy(thread);
-	while (thread_is_running(thread))
-		thread_sleep(10);
-	while (thread_is_thread(thread))
-		thread_sleep(10);
+	_test_should_terminate = true;
+
+	thread_signal(&event_thread);
+	thread_finalize(&event_thread);
 
 	memory_deallocate(pathbuf);
 
-	log_infof(HASH_TEST, STRING_CONST("Tests exiting: %d"), process_result);
+	log_infof(HASH_TEST, STRING_CONST("Tests exiting: %s (%d)"),
+	          process_result ? "FAILED" : "PASSED", process_result);
 
 	return process_result;
 }
@@ -405,6 +404,6 @@ main_finalize(void) {
 	thread_detach_jvm();
 #endif
 
+	network_module_finalize();
 	foundation_finalize();
 }
-

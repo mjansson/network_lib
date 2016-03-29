@@ -49,5 +49,5 @@ NETWORK_API int
 network_poll(network_poll_t* poll);
 
 NETWORK_API void*
-network_poll_thread(object_t thread, void* poll);
+network_poll_thread(void* poll);
 

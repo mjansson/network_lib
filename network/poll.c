@@ -22,7 +22,6 @@
 #  include <errno.h>
 #elif FOUNDATION_PLATFORM_WINDOWS
 #  include <foundation/windows.h>
-#  define FAR
 #endif
 #if FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
 #  include <sys/epoll.h>
@@ -572,17 +571,19 @@ network_poll(network_poll_t* pollobj) {
 }
 
 void*
-network_poll_thread(object_t thread, void* poll_raw) {
+network_poll_thread(void* poll_raw) {
 	network_poll_t* pollobj = poll_raw;
-	while (!thread_should_terminate(thread)) {
+	unsigned int timeout = 0;
+	while (!thread_try_wait(timeout)) {
 		int ret = network_poll(pollobj);
-		if ((ret <= 0) && (pollobj->timeout > 0)) {
+		if ((ret <= 0) && (pollobj->timeout > 0))
 			network_event_post(NETWORKEVENT_TIMEOUT, 0);
-			if (ret < 0)
-				thread_sleep(pollobj->timeout);
-		}
 		if (ret >= 0) {
 			thread_yield();
+			timeout = 0;
+		}
+		else {
+			timeout = pollobj->timeout;
 		}
 	}
 	return 0;

@@ -23,7 +23,6 @@
 
 #if FOUNDATION_PLATFORM_WINDOWS
 #  include <foundation/windows.h>
-#  define FAR
 #elif FOUNDATION_PLATFORM_POSIX
 #  include <foundation/posix.h>
 #  include <fcntl.h>

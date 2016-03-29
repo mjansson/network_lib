@@ -82,6 +82,8 @@ network_module_initialize(const network_config_t config) {
 	_network_supports_ipv6 = !(fd < 0);
 	_socket_close_fd(fd);
 
+	_network_initialized = true;
+
 	return 0;
 }
 

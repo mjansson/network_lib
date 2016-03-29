@@ -56,7 +56,7 @@ test_udp_finalize(void) {
 }
 
 static void*
-stream_blocking_thread(object_t thread, void* arg) {
+stream_blocking_thread(void* arg) {
 	int iloop;
 
 	object_t sock = *(object_t*)arg;
@@ -66,7 +66,7 @@ stream_blocking_thread(object_t thread, void* arg) {
 
 	stream_t* stream = socket_stream(sock);
 
-	for (iloop = 0; !thread_should_terminate(thread) && iloop < 512; ++iloop) {
+	for (iloop = 0; !thread_try_wait(0) && iloop < 512; ++iloop) {
 		log_infof(HASH_NETWORK, STRING_CONST("UDP write pass %d"), iloop);
 		EXPECT_EQ(stream_write(stream, buffer_out, 127), 127);
 		EXPECT_EQ(stream_write(stream, buffer_out + 127, 180), 180);
@@ -86,13 +86,13 @@ stream_blocking_thread(object_t thread, void* arg) {
 }
 
 static void*
-datagram_server_blocking_thread(object_t thread, void* arg) {
+datagram_server_blocking_thread(void* arg) {
 	int iloop;
 	const network_address_t* from;
 	object_t sock = *(object_t*)arg;
 	network_datagram_t datagram;
 
-	for (iloop = 0; !thread_should_terminate(thread) && iloop < 512 * 4; ++iloop) {
+	for (iloop = 0; !thread_try_wait(0) && iloop < 512 * 4; ++iloop) {
 		log_infof(HASH_NETWORK, STRING_CONST("UDP mirror pass %d"), iloop);
 		datagram = udp_socket_recvfrom(sock, &from);
 		EXPECT_EQ(datagram.size, 973);
@@ -106,7 +106,7 @@ datagram_server_blocking_thread(object_t thread, void* arg) {
 }
 
 static void*
-datagram_client_blocking_thread(object_t thread, void* arg) {
+datagram_client_blocking_thread(void* arg) {
 	int iloop;
 
 	test_datagram_arg_t* darg = arg;
@@ -119,7 +119,7 @@ datagram_client_blocking_thread(object_t thread, void* arg) {
 
 	log_debugf(HASH_NETWORK, STRING_CONST("IO start on socket 0x%llx"), sock);
 
-	for (iloop = 0; !thread_should_terminate(thread) && iloop < 512; ++iloop) {
+	for (iloop = 0; !thread_try_wait(0) && iloop < 512; ++iloop) {
 		log_infof(HASH_NETWORK, STRING_CONST("UDP read/write pass %d"), iloop);
 		EXPECT_EQ(udp_socket_sendto(sock, datagram, target), datagram.size);
 		datagram = udp_socket_recvfrom(sock, &address);
@@ -139,7 +139,7 @@ DECLARE_TEST(udp, stream_ipv4) {
 
 	int server_port, client_port;
 	int state, iaddr, asize;
-	object_t threads[2] = {0};
+	thread_t threads[2];
 
 	object_t sock_server;
 	object_t sock_client;
@@ -198,20 +198,18 @@ DECLARE_TEST(udp, stream_ipv4) {
 	socket_set_blocking(sock_server, true);
 	socket_set_blocking(sock_client, true);
 
-	threads[0] = thread_create(stream_blocking_thread, STRING_CONST("io_thread"),
-	                           THREAD_PRIORITY_NORMAL, 0);
-	threads[1] = thread_create(stream_blocking_thread, STRING_CONST("io_thread"),
-	                           THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[0], stream_blocking_thread, &sock_server, STRING_CONST("io_thread"),
+	                  THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[1], stream_blocking_thread, &sock_client, STRING_CONST("io_thread"),
+	                  THREAD_PRIORITY_NORMAL, 0);
 
-	thread_start(threads[0], &sock_server);
-	thread_start(threads[1], &sock_client);
+	thread_start(&threads[0]);
+	thread_start(&threads[1]);
 
 	test_wait_for_threads_startup(threads, 2);
 
-	thread_destroy(threads[0]);
-	thread_destroy(threads[1]);
-
-	test_wait_for_threads_exit(threads, 2);
+	thread_finalize(&threads[0]);
+	thread_finalize(&threads[1]);
 
 	socket_destroy(sock_server);
 	socket_destroy(sock_client);
@@ -228,7 +226,7 @@ DECLARE_TEST(udp, stream_ipv6) {
 
 	int server_port, client_port;
 	int state, iaddr, asize;
-	object_t threads[2] = {0};
+	thread_t threads[2];
 
 	object_t sock_server;
 	object_t sock_client;
@@ -287,20 +285,18 @@ DECLARE_TEST(udp, stream_ipv6) {
 	socket_set_blocking(sock_server, true);
 	socket_set_blocking(sock_client, true);
 
-	threads[0] = thread_create(stream_blocking_thread, STRING_CONST("io_thread"),
-	                           THREAD_PRIORITY_NORMAL, 0);
-	threads[1] = thread_create(stream_blocking_thread, STRING_CONST("io_thread"),
-	                           THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[0], stream_blocking_thread, &sock_server, STRING_CONST("io_thread"),
+	                  THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[1], stream_blocking_thread, &sock_client, STRING_CONST("io_thread"),
+	                  THREAD_PRIORITY_NORMAL, 0);
 
-	thread_start(threads[0], &sock_server);
-	thread_start(threads[1], &sock_client);
+	thread_start(&threads[0]);
+	thread_start(&threads[1]);
 
 	test_wait_for_threads_startup(threads, 2);
 
-	thread_destroy(threads[0]);
-	thread_destroy(threads[1]);
-
-	test_wait_for_threads_exit(threads, 2);
+	thread_finalize(&threads[0]);
+	thread_finalize(&threads[1]);
 
 	socket_destroy(sock_server);
 	socket_destroy(sock_client);
@@ -319,7 +315,7 @@ DECLARE_TEST(udp, datagram_ipv4) {
 
 	int server_port;
 	int state, iaddr, asize;
-	object_t threads[5] = {0};
+	thread_t threads[5];
 
 	object_t sock_server;
 	object_t sock_client[4];
@@ -382,40 +378,35 @@ DECLARE_TEST(udp, datagram_ipv4) {
 	socket_set_blocking(sock_client[2], true);
 	socket_set_blocking(sock_client[3], true);
 
-	threads[0] = thread_create(datagram_server_blocking_thread, STRING_CONST("server_thread"),
-	                           THREAD_PRIORITY_NORMAL, 0);
-	threads[1] = thread_create(datagram_client_blocking_thread, STRING_CONST("client_thread"),
-	                           THREAD_PRIORITY_NORMAL, 0);
-	threads[2] = thread_create(datagram_client_blocking_thread, STRING_CONST("client_thread"),
-	                           THREAD_PRIORITY_NORMAL, 0);
-	threads[3] = thread_create(datagram_client_blocking_thread, STRING_CONST("client_thread"),
-	                           THREAD_PRIORITY_NORMAL, 0);
-	threads[4] = thread_create(datagram_client_blocking_thread, STRING_CONST("client_thread"),
-	                           THREAD_PRIORITY_NORMAL, 0);
-
-	thread_start(threads[0], &sock_server);
-
 	client_arg[0].sock = sock_client[0]; client_arg[0].target = address_server;
-	thread_start(threads[1], &client_arg[0]);
-
 	client_arg[1].sock = sock_client[1]; client_arg[1].target = address_server;
-	thread_start(threads[2], &client_arg[1]);
-
 	client_arg[2].sock = sock_client[2]; client_arg[2].target = address_server;
-	thread_start(threads[3], &client_arg[2]);
-
 	client_arg[3].sock = sock_client[3]; client_arg[3].target = address_server;
-	thread_start(threads[4], &client_arg[3]);
+
+	thread_initialize(&threads[0], datagram_server_blocking_thread, &sock_server,
+	                  STRING_CONST("server_thread"), THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[1], datagram_client_blocking_thread, &client_arg[0],
+	                  STRING_CONST("client_thread"), THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[2], datagram_client_blocking_thread, &client_arg[1],
+	                  STRING_CONST("client_thread"), THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[3], datagram_client_blocking_thread, &client_arg[2],
+	                  STRING_CONST("client_thread"), THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[4], datagram_client_blocking_thread, &client_arg[3],
+	                  STRING_CONST("client_thread"), THREAD_PRIORITY_NORMAL, 0);
+
+	thread_start(&threads[0]);
+	thread_start(&threads[1]);
+	thread_start(&threads[2]);
+	thread_start(&threads[3]);
+	thread_start(&threads[4]);
 
 	test_wait_for_threads_startup(threads, 5);
 
-	thread_destroy(threads[0]);
-	thread_destroy(threads[1]);
-	thread_destroy(threads[2]);
-	thread_destroy(threads[3]);
-	thread_destroy(threads[4]);
-
-	test_wait_for_threads_exit(threads, 5);
+	thread_finalize(&threads[0]);
+	thread_finalize(&threads[1]);
+	thread_finalize(&threads[2]);
+	thread_finalize(&threads[3]);
+	thread_finalize(&threads[4]);
 
 	socket_destroy(sock_server);
 	socket_destroy(sock_client[0]);
@@ -442,7 +433,7 @@ DECLARE_TEST(udp, datagram_ipv6) {
 
 	int server_port;
 	int state, iaddr, asize;
-	object_t threads[5] = {0};
+	thread_t threads[5];
 
 	object_t sock_server;
 	object_t sock_client[4];
@@ -505,40 +496,35 @@ DECLARE_TEST(udp, datagram_ipv6) {
 	socket_set_blocking(sock_client[2], true);
 	socket_set_blocking(sock_client[3], true);
 
-	threads[0] = thread_create(datagram_server_blocking_thread, STRING_CONST("server_thread"),
-	                           THREAD_PRIORITY_NORMAL, 0);
-	threads[1] = thread_create(datagram_client_blocking_thread, STRING_CONST("client_thread"),
-	                           THREAD_PRIORITY_NORMAL, 0);
-	threads[2] = thread_create(datagram_client_blocking_thread, STRING_CONST("client_thread"),
-	                           THREAD_PRIORITY_NORMAL, 0);
-	threads[3] = thread_create(datagram_client_blocking_thread, STRING_CONST("client_thread"),
-	                           THREAD_PRIORITY_NORMAL, 0);
-	threads[4] = thread_create(datagram_client_blocking_thread, STRING_CONST("client_thread"),
-	                           THREAD_PRIORITY_NORMAL, 0);
-
-	thread_start(threads[0], &sock_server);
-
 	client_arg[0].sock = sock_client[0]; client_arg[0].target = address_server;
-	thread_start(threads[1], &client_arg[0]);
-
 	client_arg[1].sock = sock_client[1]; client_arg[1].target = address_server;
-	thread_start(threads[2], &client_arg[1]);
-
 	client_arg[2].sock = sock_client[2]; client_arg[2].target = address_server;
-	thread_start(threads[3], &client_arg[2]);
-
 	client_arg[3].sock = sock_client[3]; client_arg[3].target = address_server;
-	thread_start(threads[4], &client_arg[3]);
+
+	thread_initialize(&threads[0], datagram_server_blocking_thread, &sock_server,
+	                  STRING_CONST("server_thread"), THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[0], datagram_client_blocking_thread, &client_arg[0],
+	                  STRING_CONST("client_thread"), THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[0], datagram_client_blocking_thread, &client_arg[1],
+	                  STRING_CONST("client_thread"), THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[0], datagram_client_blocking_thread, &client_arg[2],
+	                  STRING_CONST("client_thread"), THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[0], datagram_client_blocking_thread, &client_arg[3],
+	                  STRING_CONST("client_thread"), THREAD_PRIORITY_NORMAL, 0);
+
+	thread_start(&threads[0]);
+	thread_start(&threads[1]);
+	thread_start(&threads[2]);
+	thread_start(&threads[3]);
+	thread_start(&threads[4]);
 
 	test_wait_for_threads_startup(threads, 5);
 
-	thread_destroy(threads[0]);
-	thread_destroy(threads[1]);
-	thread_destroy(threads[2]);
-	thread_destroy(threads[3]);
-	thread_destroy(threads[4]);
-
-	test_wait_for_threads_exit(threads, 5);
+	thread_finalize(&threads[0]);
+	thread_finalize(&threads[1]);
+	thread_finalize(&threads[2]);
+	thread_finalize(&threads[3]);
+	thread_finalize(&threads[4]);
 
 	socket_destroy(sock_server);
 	socket_destroy(sock_client[0]);
