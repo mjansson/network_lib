@@ -22,6 +22,9 @@
 NETWORK_API socket_t*
 tcp_socket_allocate(void);
 
+NETWORK_API void
+tcp_socket_initialize(socket_t* sock);
+
 NETWORK_API socket_t*
 tcp_socket_accept(socket_t* sock, unsigned int timeoutms);
 

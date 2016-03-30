@@ -98,8 +98,8 @@ NETWORK_EXTERN atomic32_t        _socket_base_next;
 NETWORK_API int
 _socket_create_fd(socket_t* sock, network_address_family_t family);
 
-NETWORK_API socket_t*
-_socket_allocate(void);
+NETWORK_API void
+_socket_initialize(socket_t* sock);
 
 NETWORK_API int
 _socket_allocate_base(socket_t* sock);

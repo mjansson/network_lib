@@ -64,12 +64,9 @@ _socket_stream_tell(stream_t* stream);
 static tick_t
 _socket_stream_last_modified(const stream_t* stream);
 
-socket_t*
-_socket_allocate(void) {
-	socket_t* sock = memory_allocate(HASH_NETWORK, sizeof(socket_t), 0,
-	                                 MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+void
+_socket_initialize(socket_t* sock) {
 	sock->base = -1;
-	return sock;
 }
 
 int

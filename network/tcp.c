@@ -31,14 +31,18 @@ _tcp_stream_initialize(socket_t*, stream_t*);
 
 socket_t*
 tcp_socket_allocate(void) {
-	socket_t* sock = _socket_allocate();
-	if (!sock)
-		return 0;
+	socket_t* sock = memory_allocate(HASH_NETWORK, sizeof(socket_t), 0,
+	                                 MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	tcp_socket_initialize(sock);
+	return sock;
+}
+
+void
+tcp_socket_initialize(socket_t* sock) {
+	_socket_initialize(sock);
 
 	sock->open_fn = _tcp_socket_open;
 	sock->stream_initialize_fn = _tcp_stream_initialize;
-
-	return sock;
 }
 
 bool

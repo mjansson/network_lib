@@ -19,6 +19,9 @@
 #include <network/types.h>
 
 NETWORK_API void
+socket_finalize(socket_t* sock);
+
+NETWORK_API void
 socket_deallocate(socket_t* sock);
 
 NETWORK_API bool

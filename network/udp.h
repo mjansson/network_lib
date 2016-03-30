@@ -22,6 +22,9 @@
 NETWORK_API socket_t*
 udp_socket_allocate(void);
 
+NETWORK_API void
+udp_socket_initialize(socket_t* sock);
+
 NETWORK_API size_t
 udp_socket_recvfrom(socket_t* sock, void* buffer, size_t capacity,
                     network_address_t const** address);
