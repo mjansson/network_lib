@@ -19,17 +19,17 @@
 #include <network/types.h>
 #include <network/socket.h>
 
-NETWORK_API object_t
-tcp_socket_create(void);
+NETWORK_API socket_t*
+tcp_socket_allocate(void);
 
-NETWORK_API object_t
-tcp_socket_accept(object_t id, unsigned int timeoutms);
-
-NETWORK_API bool
-tcp_socket_listen(object_t id);
+NETWORK_API socket_t*
+tcp_socket_accept(socket_t* sock, unsigned int timeoutms);
 
 NETWORK_API bool
-tcp_socket_delay(object_t id);
+tcp_socket_listen(socket_t* sock);
+
+NETWORK_API bool
+tcp_socket_delay(socket_t* sock);
 
 NETWORK_API void
-tcp_socket_set_delay(object_t id, bool delay);
+tcp_socket_set_delay(socket_t* sock, bool delay);

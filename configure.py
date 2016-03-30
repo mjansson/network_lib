@@ -17,7 +17,7 @@ writer = generator.writer
 toolchain = generator.toolchain
 
 network_lib = generator.lib( module = 'network', sources = [
-  'address.c', 'event.c', 'network.c', 'poll.c', 'socket.c', 'tcp.c', 'udp.c', 'version.c' ] )
+  'address.c', 'network.c', 'poll.c', 'socket.c', 'tcp.c', 'udp.c', 'version.c' ] )
 
 #if not target.is_ios() and not target.is_android():
 #  configs = [ config for config in toolchain.configs if config not in [ 'profile', 'deploy' ] ]

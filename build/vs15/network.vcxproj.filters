@@ -3,7 +3,6 @@
   <ItemGroup>
     <ClCompile Include="..\..\network\address.c" />
     <ClCompile Include="..\..\network\network.c" />
-    <ClCompile Include="..\..\network\event.c" />
     <ClCompile Include="..\..\network\poll.c" />
     <ClCompile Include="..\..\network\socket.c" />
     <ClCompile Include="..\..\network\tcp.c" />
@@ -18,7 +17,6 @@
     <ClInclude Include="..\..\network\socket.h" />
     <ClInclude Include="..\..\network\types.h" />
     <ClInclude Include="..\..\network\build.h" />
-    <ClInclude Include="..\..\network\event.h" />
     <ClInclude Include="..\..\network\hashstrings.h" />
     <ClInclude Include="..\..\network\tcp.h" />
     <ClInclude Include="..\..\network\udp.h" />

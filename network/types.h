@@ -68,25 +68,24 @@ typedef socklen_t network_address_size_t;
 typedef int       network_address_size_t;
 #endif
 
-typedef struct network_config_t    network_config_t;
-typedef struct network_datagram_t  network_datagram_t;
-typedef struct network_address_t   network_address_t;
-typedef struct network_poll_slot_t network_poll_slot_t;
-typedef struct network_poll_t      network_poll_t;
+typedef struct network_config_t      network_config_t;
+typedef struct network_datagram_t    network_datagram_t;
+typedef struct network_address_t     network_address_t;
+typedef struct network_poll_slot_t   network_poll_slot_t;
+typedef struct network_poll_event_t  network_poll_event_t;
+typedef struct network_poll_t        network_poll_t;
+typedef struct socket_t              socket_t;
+typedef struct socket_stream_t       socket_stream_t;
+
+typedef void (*socket_open_fn)(socket_t*, unsigned int);
+typedef void (*socket_stream_initialize_fn)(socket_t*, stream_t*);
 
 struct network_config_t {
 	size_t max_sockets;
 	size_t max_tcp_packet_size;
 	size_t max_udp_packet_size;
-	size_t socket_write_buffer_size;
-	size_t socket_read_buffer_size;
-	size_t poll_queue_size;
-	size_t event_stream_size;
-};
-
-struct network_datagram_t {
-	uint64_t size;
-	void*    data;
+	size_t stream_write_buffer_size;
+	size_t stream_read_buffer_size;
 };
 
 #define NETWORK_DECLARE_NETWORK_ADDRESS    \
@@ -98,23 +97,55 @@ struct network_address_t {
 };
 
 struct network_poll_slot_t {
-	object_t             sock;
-	int                  base;
-	int                  fd;
+	socket_t*  sock;
+	int        base;
+	int        fd;
 };
 
-FOUNDATION_ALIGNED_STRUCT(network_poll_t, 8) {
+FOUNDATION_ALIGNED_STRUCT(socket_stream_t, 8) {
+	FOUNDATION_DECLARE_STREAM;
+	socket_t* socket;
+
+	size_t read_in;
+	size_t write_in;
+	size_t write_out;
+
+	uint8_t* buffer_in;
+	uint8_t* buffer_out;
+	uint8_t  buffers[FOUNDATION_FLEXIBLE_ARRAY];
+};
+
+struct socket_t {
+	int base;
+	network_address_family_t family;
+
+	network_address_t* address_local;
+	network_address_t* address_remote;
+
+	size_t bytes_read;
+	size_t bytes_written;
+
+	socket_open_fn open_fn;
+	socket_stream_initialize_fn stream_initialize_fn;
+
+	socket_stream_t* stream;
+	void* client;
+};
+
+struct network_poll_t {
 	unsigned int timeout;
-	unsigned int max_sockets;
-	unsigned int num_sockets;
+	size_t max_sockets;
+	size_t num_sockets;
 #if FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
 	int fd_poll;
 	struct epoll_event* events;
 #elif FOUNDATION_PLATFORM_APPLE
 	struct pollfd* pollfds;
 #endif
-	object_t* queue_add;
-	object_t* queue_remove;
-	network_poll_slot_t* slots;
-	char databuffer[];
+	network_poll_slot_t slots[FOUNDATION_FLEXIBLE_ARRAY];
+};
+
+struct network_poll_event_t {
+	network_event_id event;
+	socket_t* socket;
 };

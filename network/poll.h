@@ -25,29 +25,21 @@ NETWORK_API void
 network_poll_deallocate(network_poll_t* poll);
 
 NETWORK_API bool
-network_poll_add_socket(network_poll_t* poll, object_t sock);
+network_poll_add_socket(network_poll_t* poll, socket_t* sock);
 
 NETWORK_API void
-network_poll_remove_socket(network_poll_t* poll, object_t sock);
+network_poll_remove_socket(network_poll_t* poll, socket_t* sock);
 
 NETWORK_API bool
-network_poll_has_socket(network_poll_t* poll, object_t sock);
+network_poll_has_socket(network_poll_t* poll, socket_t* sock);
 
-NETWORK_API unsigned int
-network_poll_timeout(network_poll_t* poll);
-
-NETWORK_API void
-network_poll_set_timeout(network_poll_t* poll, unsigned int timeoutms);
-
-NETWORK_API unsigned int
+NETWORK_API size_t
 network_poll_num_sockets(network_poll_t* poll);
 
 NETWORK_API void
-network_poll_sockets(network_poll_t* poll, object_t* sockets, unsigned int max_sockets);
+network_poll_sockets(network_poll_t* poll, socket_t** sockets, size_t max_sockets);
 
-NETWORK_API int
-network_poll(network_poll_t* poll);
-
-NETWORK_API void*
-network_poll_thread(void* poll);
+NETWORK_API size_t
+network_poll(network_poll_t* poll, network_poll_event_t* event, size_t capacity,
+             unsigned int timeoutms);
 

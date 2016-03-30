@@ -19,7 +19,6 @@
 #include <network/types.h>
 #include <network/hashstrings.h>
 #include <network/address.h>
-#include <network/event.h>
 #include <network/poll.h>
 #include <network/socket.h>
 #include <network/tcp.h>

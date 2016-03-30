@@ -30,7 +30,7 @@ test_socket_memory_system(void) {
 	return memory_system_malloc();
 }
 
-foundation_config_t 
+foundation_config_t
 test_socket_foundation_config(void) {
 	foundation_config_t config;
 	memset(&config, 0, sizeof(config));
@@ -51,21 +51,13 @@ test_socket_finalize(void) {
 }
 
 DECLARE_TEST(tcp, create) {
-	object_t sock = tcp_socket_create();
-
-	EXPECT_TRUE(socket_is_socket(sock));
-
-	socket_destroy(sock);
-
-	EXPECT_FALSE(socket_is_socket(sock));
-
+	socket_t* sock = tcp_socket_allocate();
+	socket_deallocate(sock);
 	return 0;
 }
 
 DECLARE_TEST(tcp, blocking) {
-	object_t sock = tcp_socket_create();
-
-	EXPECT_TRUE(socket_is_socket(sock));
+	socket_t* sock = tcp_socket_allocate();
 
 	socket_set_blocking(sock, false);
 	EXPECT_FALSE(socket_blocking(sock));
@@ -73,9 +65,7 @@ DECLARE_TEST(tcp, blocking) {
 	socket_set_blocking(sock, true);
 	EXPECT_TRUE(socket_blocking(sock));
 
-	socket_destroy(sock);
-
-	EXPECT_FALSE(socket_is_socket(sock));
+	socket_deallocate(sock);
 
 	return 0;
 }
@@ -87,9 +77,7 @@ DECLARE_TEST(tcp, bind) {
 	int port;
 
 	if (has_ipv4) {
-		object_t sock = tcp_socket_create();
-
-		EXPECT_TRUE(socket_is_socket(sock));
+		socket_t* sock = tcp_socket_allocate();
 
 		EXPECT_EQ(socket_address_local(sock), 0);
 		EXPECT_EQ(socket_address_remote(sock), 0);
@@ -113,15 +101,11 @@ DECLARE_TEST(tcp, bind) {
 		}
 		EXPECT_TRUE(was_bound);
 
-		socket_destroy(sock);
-
-		EXPECT_FALSE(socket_is_socket(sock));
+		socket_deallocate(sock);
 	}
 
 	if (has_ipv6) {
-		object_t sock = tcp_socket_create();
-
-		EXPECT_TRUE(socket_is_socket(sock));
+		socket_t* sock = tcp_socket_allocate();
 
 		was_bound = false;
 		for (port = 31890; !was_bound && (port < 32890); ++port) {
@@ -142,30 +126,20 @@ DECLARE_TEST(tcp, bind) {
 		}
 		EXPECT_TRUE(was_bound);
 
-		socket_destroy(sock);
-
-		EXPECT_FALSE(socket_is_socket(sock));
+		socket_deallocate(sock);
 	}
 
 	return 0;
 }
 
 DECLARE_TEST(udp, create) {
-	object_t sock = udp_socket_create();
-
-	EXPECT_TRUE(socket_is_socket(sock));
-
-	socket_destroy(sock);
-
-	EXPECT_FALSE(socket_is_socket(sock));
-
+	socket_t* sock = udp_socket_allocate();
+	socket_deallocate(sock);
 	return 0;
 }
 
 DECLARE_TEST(udp, blocking) {
-	object_t sock = udp_socket_create();
-
-	EXPECT_TRUE(socket_is_socket(sock));
+	socket_t* sock = udp_socket_allocate();
 
 	socket_set_blocking(sock, false);
 	EXPECT_FALSE(socket_blocking(sock));
@@ -173,9 +147,7 @@ DECLARE_TEST(udp, blocking) {
 	socket_set_blocking(sock, true);
 	EXPECT_TRUE(socket_blocking(sock));
 
-	socket_destroy(sock);
-
-	EXPECT_FALSE(socket_is_socket(sock));
+	socket_deallocate(sock);
 
 	return 0;
 }
@@ -187,9 +159,7 @@ DECLARE_TEST(udp, bind) {
 	int port;
 
 	if (has_ipv4) {
-		object_t sock = udp_socket_create();
-
-		EXPECT_TRUE(socket_is_socket(sock));
+		socket_t* sock = udp_socket_allocate();
 
 		EXPECT_EQ(socket_address_local(sock), 0);
 		EXPECT_EQ(socket_address_remote(sock), 0);
@@ -213,15 +183,11 @@ DECLARE_TEST(udp, bind) {
 		}
 		EXPECT_TRUE(was_bound);
 
-		socket_destroy(sock);
-
-		EXPECT_FALSE(socket_is_socket(sock));
+		socket_deallocate(sock);
 	}
 
 	if (has_ipv6) {
-		object_t sock = udp_socket_create();
-
-		EXPECT_TRUE(socket_is_socket(sock));
+		socket_t* sock = udp_socket_allocate();
 
 		was_bound = false;
 		for (port = 31890; !was_bound && (port < 32890); ++port) {
@@ -242,9 +208,7 @@ DECLARE_TEST(udp, bind) {
 		}
 		EXPECT_TRUE(was_bound);
 
-		socket_destroy(sock);
-
-		EXPECT_FALSE(socket_is_socket(sock));
+		socket_deallocate(sock);
 	}
 
 	return 0;

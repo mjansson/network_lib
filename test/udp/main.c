@@ -15,8 +15,8 @@
 #include <test/test.h>
 
 typedef struct _test_datagram_arg {
-	object_t              sock;
-	network_address_t*    target;
+	socket_t*          sock;
+	network_address_t* target;
 } test_datagram_arg_t;
 
 application_t
@@ -59,7 +59,7 @@ static void*
 stream_blocking_thread(void* arg) {
 	int iloop;
 
-	object_t sock = *(object_t*)arg;
+	socket_t* sock = (socket_t*)arg;
 
 	char buffer_out[317] = {0};
 	char buffer_in[317] = {0};
@@ -68,14 +68,14 @@ stream_blocking_thread(void* arg) {
 
 	for (iloop = 0; !thread_try_wait(0) && iloop < 512; ++iloop) {
 		log_infof(HASH_NETWORK, STRING_CONST("UDP write pass %d"), iloop);
-		EXPECT_EQ(stream_write(stream, buffer_out, 127), 127);
-		EXPECT_EQ(stream_write(stream, buffer_out + 127, 180), 180);
+		EXPECT_SIZEEQ(stream_write(stream, buffer_out, 127), 127);
+		EXPECT_SIZEEQ(stream_write(stream, buffer_out + 127, 180), 180);
 		stream_flush(stream);
-		EXPECT_EQ(stream_write(stream, buffer_out + 307, 10), 10);
+		EXPECT_SIZEEQ(stream_write(stream, buffer_out + 307, 10), 10);
 		stream_flush(stream);
 		log_infof(HASH_NETWORK, STRING_CONST("UDP read pass %d"), iloop);
-		EXPECT_EQ(stream_read(stream, buffer_in, 235), 235);
-		EXPECT_EQ(stream_read(stream, buffer_in + 235, 82), 82);
+		EXPECT_SIZEEQ(stream_read(stream, buffer_in, 235), 235);
+		EXPECT_SIZEEQ(stream_read(stream, buffer_in + 235, 82), 82);
 		thread_yield();
 	}
 
@@ -89,14 +89,14 @@ static void*
 datagram_server_blocking_thread(void* arg) {
 	int iloop;
 	const network_address_t* from;
-	object_t sock = *(object_t*)arg;
-	network_datagram_t datagram;
+	socket_t* sock = (socket_t*)arg;
+	char buffer[1024];
 
-	for (iloop = 0; !thread_try_wait(0) && iloop < 512 * 4; ++iloop) {
+	for (iloop = 0; iloop < 512 * 4; ++iloop) {
 		log_infof(HASH_NETWORK, STRING_CONST("UDP mirror pass %d"), iloop);
-		datagram = udp_socket_recvfrom(sock, &from);
-		EXPECT_EQ(datagram.size, 973);
-		EXPECT_EQ(udp_socket_sendto(sock, datagram, from), datagram.size);
+		size_t read = udp_socket_recvfrom(sock, buffer, sizeof(buffer), &from);
+		EXPECT_EQ(read, 973);
+		EXPECT_EQ(udp_socket_sendto(sock, buffer, read, from), read);
 		thread_yield();
 	}
 
@@ -110,20 +110,21 @@ datagram_client_blocking_thread(void* arg) {
 	int iloop;
 
 	test_datagram_arg_t* darg = arg;
-	object_t sock = darg->sock;
+	socket_t* sock = darg->sock;
 	network_address_t* target = darg->target;
 	const network_address_t* address;
 
 	char buffer[1024] = {0};
-	network_datagram_t datagram = { 973, buffer };
+	size_t send = 973;
+	size_t recv;
 
 	log_debugf(HASH_NETWORK, STRING_CONST("IO start on socket 0x%llx"), sock);
 
-	for (iloop = 0; !thread_try_wait(0) && iloop < 512; ++iloop) {
+	for (iloop = 0; iloop < 512; ++iloop) {
 		log_infof(HASH_NETWORK, STRING_CONST("UDP read/write pass %d"), iloop);
-		EXPECT_EQ(udp_socket_sendto(sock, datagram, target), datagram.size);
-		datagram = udp_socket_recvfrom(sock, &address);
-		EXPECT_EQ(datagram.size, 973);
+		EXPECT_EQ(udp_socket_sendto(sock, buffer, send, target), send);
+		recv = udp_socket_recvfrom(sock, buffer, send, &address);
+		EXPECT_EQ(recv, send);
 		EXPECT_TRUE(network_address_equal(target, address));
 		thread_yield();
 	}
@@ -141,17 +142,14 @@ DECLARE_TEST(udp, stream_ipv4) {
 	int state, iaddr, asize;
 	thread_t threads[2];
 
-	object_t sock_server;
-	object_t sock_client;
+	socket_t* sock_server;
+	socket_t* sock_client;
 
 	if (!network_supports_ipv4())
 		return 0;
 
-	sock_server = udp_socket_create();
-	sock_client = udp_socket_create();
-
-	EXPECT_TRUE(socket_is_socket(sock_server));
-	EXPECT_TRUE(socket_is_socket(sock_client));
+	sock_server = udp_socket_allocate();
+	sock_client = udp_socket_allocate();
 
 	address_local = network_address_local();
 	for (iaddr = 0, asize = array_size(address_local); iaddr < asize; ++iaddr) {
@@ -198,9 +196,9 @@ DECLARE_TEST(udp, stream_ipv4) {
 	socket_set_blocking(sock_server, true);
 	socket_set_blocking(sock_client, true);
 
-	thread_initialize(&threads[0], stream_blocking_thread, &sock_server, STRING_CONST("io_thread"),
+	thread_initialize(&threads[0], stream_blocking_thread, sock_server, STRING_CONST("io_thread"),
 	                  THREAD_PRIORITY_NORMAL, 0);
-	thread_initialize(&threads[1], stream_blocking_thread, &sock_client, STRING_CONST("io_thread"),
+	thread_initialize(&threads[1], stream_blocking_thread, sock_client, STRING_CONST("io_thread"),
 	                  THREAD_PRIORITY_NORMAL, 0);
 
 	thread_start(&threads[0]);
@@ -211,11 +209,8 @@ DECLARE_TEST(udp, stream_ipv4) {
 	thread_finalize(&threads[0]);
 	thread_finalize(&threads[1]);
 
-	socket_destroy(sock_server);
-	socket_destroy(sock_client);
-
-	EXPECT_FALSE(socket_is_socket(sock_server));
-	EXPECT_FALSE(socket_is_socket(sock_client));
+	socket_deallocate(sock_server);
+	socket_deallocate(sock_client);
 
 	return 0;
 }
@@ -228,17 +223,14 @@ DECLARE_TEST(udp, stream_ipv6) {
 	int state, iaddr, asize;
 	thread_t threads[2];
 
-	object_t sock_server;
-	object_t sock_client;
+	socket_t* sock_server;
+	socket_t* sock_client;
 
 	if (!network_supports_ipv6())
 		return 0;
 
-	sock_server = udp_socket_create();
-	sock_client = udp_socket_create();
-
-	EXPECT_TRUE(socket_is_socket(sock_server));
-	EXPECT_TRUE(socket_is_socket(sock_client));
+	sock_server = udp_socket_allocate();
+	sock_client = udp_socket_allocate();
 
 	address_local = network_address_local();
 	for (iaddr = 0, asize = array_size(address_local); iaddr < asize; ++iaddr) {
@@ -285,9 +277,9 @@ DECLARE_TEST(udp, stream_ipv6) {
 	socket_set_blocking(sock_server, true);
 	socket_set_blocking(sock_client, true);
 
-	thread_initialize(&threads[0], stream_blocking_thread, &sock_server, STRING_CONST("io_thread"),
+	thread_initialize(&threads[0], stream_blocking_thread, sock_server, STRING_CONST("io_thread"),
 	                  THREAD_PRIORITY_NORMAL, 0);
-	thread_initialize(&threads[1], stream_blocking_thread, &sock_client, STRING_CONST("io_thread"),
+	thread_initialize(&threads[1], stream_blocking_thread, sock_client, STRING_CONST("io_thread"),
 	                  THREAD_PRIORITY_NORMAL, 0);
 
 	thread_start(&threads[0]);
@@ -298,11 +290,8 @@ DECLARE_TEST(udp, stream_ipv6) {
 	thread_finalize(&threads[0]);
 	thread_finalize(&threads[1]);
 
-	socket_destroy(sock_server);
-	socket_destroy(sock_client);
-
-	EXPECT_FALSE(socket_is_socket(sock_server));
-	EXPECT_FALSE(socket_is_socket(sock_client));
+	socket_deallocate(sock_server);
+	socket_deallocate(sock_client);
 
 	return 0;
 }
@@ -317,23 +306,17 @@ DECLARE_TEST(udp, datagram_ipv4) {
 	int state, iaddr, asize;
 	thread_t threads[5];
 
-	object_t sock_server;
-	object_t sock_client[4];
+	socket_t* sock_server;
+	socket_t* sock_client[4];
 
 	if (!network_supports_ipv4())
 		return 0;
 
-	sock_server = udp_socket_create();
-	sock_client[0] = udp_socket_create();
-	sock_client[1] = udp_socket_create();
-	sock_client[2] = udp_socket_create();
-	sock_client[3] = udp_socket_create();
-
-	EXPECT_TRUE(socket_is_socket(sock_server));
-	EXPECT_TRUE(socket_is_socket(sock_client[0]));
-	EXPECT_TRUE(socket_is_socket(sock_client[1]));
-	EXPECT_TRUE(socket_is_socket(sock_client[2]));
-	EXPECT_TRUE(socket_is_socket(sock_client[3]));
+	sock_server = udp_socket_allocate();
+	sock_client[0] = udp_socket_allocate();
+	sock_client[1] = udp_socket_allocate();
+	sock_client[2] = udp_socket_allocate();
+	sock_client[3] = udp_socket_allocate();
 
 	address_local = network_address_local();
 	for (iaddr = 0, asize = array_size(address_local); iaddr < asize; ++iaddr) {
@@ -383,7 +366,7 @@ DECLARE_TEST(udp, datagram_ipv4) {
 	client_arg[2].sock = sock_client[2]; client_arg[2].target = address_server;
 	client_arg[3].sock = sock_client[3]; client_arg[3].target = address_server;
 
-	thread_initialize(&threads[0], datagram_server_blocking_thread, &sock_server,
+	thread_initialize(&threads[0], datagram_server_blocking_thread, sock_server,
 	                  STRING_CONST("server_thread"), THREAD_PRIORITY_NORMAL, 0);
 	thread_initialize(&threads[1], datagram_client_blocking_thread, &client_arg[0],
 	                  STRING_CONST("client_thread"), THREAD_PRIORITY_NORMAL, 0);
@@ -408,17 +391,11 @@ DECLARE_TEST(udp, datagram_ipv4) {
 	thread_finalize(&threads[3]);
 	thread_finalize(&threads[4]);
 
-	socket_destroy(sock_server);
-	socket_destroy(sock_client[0]);
-	socket_destroy(sock_client[1]);
-	socket_destroy(sock_client[2]);
-	socket_destroy(sock_client[3]);
-
-	EXPECT_FALSE(socket_is_socket(sock_server));
-	EXPECT_FALSE(socket_is_socket(sock_client[0]));
-	EXPECT_FALSE(socket_is_socket(sock_client[1]));
-	EXPECT_FALSE(socket_is_socket(sock_client[2]));
-	EXPECT_FALSE(socket_is_socket(sock_client[3]));
+	socket_deallocate(sock_server);
+	socket_deallocate(sock_client[0]);
+	socket_deallocate(sock_client[1]);
+	socket_deallocate(sock_client[2]);
+	socket_deallocate(sock_client[3]);
 
 	memory_deallocate(address_server);
 
@@ -435,23 +412,17 @@ DECLARE_TEST(udp, datagram_ipv6) {
 	int state, iaddr, asize;
 	thread_t threads[5];
 
-	object_t sock_server;
-	object_t sock_client[4];
+	socket_t* sock_server;
+	socket_t* sock_client[4];
 
 	if (!network_supports_ipv6())
 		return 0;
 
-	sock_server = udp_socket_create();
-	sock_client[0] = udp_socket_create();
-	sock_client[1] = udp_socket_create();
-	sock_client[2] = udp_socket_create();
-	sock_client[3] = udp_socket_create();
-
-	EXPECT_TRUE(socket_is_socket(sock_server));
-	EXPECT_TRUE(socket_is_socket(sock_client[0]));
-	EXPECT_TRUE(socket_is_socket(sock_client[1]));
-	EXPECT_TRUE(socket_is_socket(sock_client[2]));
-	EXPECT_TRUE(socket_is_socket(sock_client[3]));
+	sock_server = udp_socket_allocate();
+	sock_client[0] = udp_socket_allocate();
+	sock_client[1] = udp_socket_allocate();
+	sock_client[2] = udp_socket_allocate();
+	sock_client[3] = udp_socket_allocate();
 
 	address_local = network_address_local();
 	for (iaddr = 0, asize = array_size(address_local); iaddr < asize; ++iaddr) {
@@ -501,15 +472,15 @@ DECLARE_TEST(udp, datagram_ipv6) {
 	client_arg[2].sock = sock_client[2]; client_arg[2].target = address_server;
 	client_arg[3].sock = sock_client[3]; client_arg[3].target = address_server;
 
-	thread_initialize(&threads[0], datagram_server_blocking_thread, &sock_server,
+	thread_initialize(&threads[0], datagram_server_blocking_thread, sock_server,
 	                  STRING_CONST("server_thread"), THREAD_PRIORITY_NORMAL, 0);
-	thread_initialize(&threads[0], datagram_client_blocking_thread, &client_arg[0],
+	thread_initialize(&threads[1], datagram_client_blocking_thread, &client_arg[0],
 	                  STRING_CONST("client_thread"), THREAD_PRIORITY_NORMAL, 0);
-	thread_initialize(&threads[0], datagram_client_blocking_thread, &client_arg[1],
+	thread_initialize(&threads[2], datagram_client_blocking_thread, &client_arg[1],
 	                  STRING_CONST("client_thread"), THREAD_PRIORITY_NORMAL, 0);
-	thread_initialize(&threads[0], datagram_client_blocking_thread, &client_arg[2],
+	thread_initialize(&threads[3], datagram_client_blocking_thread, &client_arg[2],
 	                  STRING_CONST("client_thread"), THREAD_PRIORITY_NORMAL, 0);
-	thread_initialize(&threads[0], datagram_client_blocking_thread, &client_arg[3],
+	thread_initialize(&threads[4], datagram_client_blocking_thread, &client_arg[3],
 	                  STRING_CONST("client_thread"), THREAD_PRIORITY_NORMAL, 0);
 
 	thread_start(&threads[0]);
@@ -526,17 +497,11 @@ DECLARE_TEST(udp, datagram_ipv6) {
 	thread_finalize(&threads[3]);
 	thread_finalize(&threads[4]);
 
-	socket_destroy(sock_server);
-	socket_destroy(sock_client[0]);
-	socket_destroy(sock_client[1]);
-	socket_destroy(sock_client[2]);
-	socket_destroy(sock_client[3]);
-
-	EXPECT_FALSE(socket_is_socket(sock_server));
-	EXPECT_FALSE(socket_is_socket(sock_client[0]));
-	EXPECT_FALSE(socket_is_socket(sock_client[1]));
-	EXPECT_FALSE(socket_is_socket(sock_client[2]));
-	EXPECT_FALSE(socket_is_socket(sock_client[3]));
+	socket_deallocate(sock_server);
+	socket_deallocate(sock_client[0]);
+	socket_deallocate(sock_client[1]);
+	socket_deallocate(sock_client[2]);
+	socket_deallocate(sock_client[3]);
 
 	memory_deallocate(address_server);
 

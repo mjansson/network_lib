@@ -25,22 +25,16 @@ static bool _network_supports_ipv6;
 
 static void
 network_initialize_config(const network_config_t config) {
-	_network_config.max_sockets              = config.max_sockets              ?
-	                                           config.max_sockets              : 128;
+	_network_config.max_sockets              = config.max_sockets      ?
+	                                           config.max_sockets      : 32;
 	_network_config.max_tcp_packet_size      = config.max_tcp_packet_size      ?
 	                                           config.max_tcp_packet_size      : 1024;
 	_network_config.max_udp_packet_size      = config.max_udp_packet_size      ?
 	                                           config.max_udp_packet_size      : 1024;
-	_network_config.socket_write_buffer_size = config.socket_write_buffer_size ?
-	                                           config.socket_write_buffer_size : 8192;
-	_network_config.socket_read_buffer_size  = config.socket_read_buffer_size  ?
-	                                           config.socket_read_buffer_size  : 8192;
-	_network_config.poll_queue_size          = config.poll_queue_size          ?
-	                                           config.poll_queue_size          : 32;
-	_network_config.event_stream_size        = config.event_stream_size        ?
-	                                           config.event_stream_size        : 1024;
-
-	_network_config.max_sockets = math_clamp(_network_config.max_sockets, 8, 65535);
+	_network_config.stream_write_buffer_size = config.stream_write_buffer_size ?
+	                                           config.stream_write_buffer_size : 1024;
+	_network_config.stream_read_buffer_size  = config.stream_read_buffer_size  ?
+	                                           config.stream_read_buffer_size  : 1024;
 }
 
 int
@@ -67,10 +61,7 @@ network_module_initialize(const network_config_t config) {
 	}
 #endif
 
-	if (network_event_initialize() < 0)
-		return -1;
-
-	if (socket_initialize(_network_config.max_sockets) < 0)
+	if (socket_module_initialize(_network_config.max_sockets) < 0)
 		return -1;
 
 	//Check support
@@ -99,8 +90,7 @@ network_module_finalize(void) {
 
 	log_debug(HASH_NETWORK, STRING_CONST("Terminating network services"));
 
-	socket_finalize();
-	network_event_finalize();
+	socket_module_finalize();
 
 #if FOUNDATION_PLATFORM_WINDOWS
 	WSACleanup();

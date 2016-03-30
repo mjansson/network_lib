@@ -19,12 +19,13 @@
 #include <network/types.h>
 #include <network/socket.h>
 
-NETWORK_API object_t
-udp_socket_create(void);
+NETWORK_API socket_t*
+udp_socket_allocate(void);
 
-NETWORK_API network_datagram_t
-udp_socket_recvfrom(object_t sock, network_address_t const** address);
+NETWORK_API size_t
+udp_socket_recvfrom(socket_t* sock, void* buffer, size_t capacity,
+                    network_address_t const** address);
 
-NETWORK_API uint64_t
-udp_socket_sendto(object_t sock, const network_datagram_t datagram,
+NETWORK_API size_t
+udp_socket_sendto(socket_t* sock, const void* buffer, size_t size,
                   const network_address_t* address);

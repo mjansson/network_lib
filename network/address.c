@@ -210,11 +210,11 @@ void
 network_address_ip_set_port(network_address_t* address, unsigned int port) {
 	if (address->family == NETWORK_ADDRESSFAMILY_IPV4) {
 		network_address_ipv4_t* addr_ipv4 = (network_address_ipv4_t*)address;
-		addr_ipv4->saddr.sin_port = htons(port);
+		addr_ipv4->saddr.sin_port = htons((unsigned short)port);
 	}
 	else if (address->family == NETWORK_ADDRESSFAMILY_IPV6) {
 		network_address_ipv6_t* addr_ipv6 = (network_address_ipv6_t*)address;
-		addr_ipv6->saddr.sin6_port = htons(port);
+		addr_ipv6->saddr.sin6_port = htons((unsigned short)port);
 	}
 }
 

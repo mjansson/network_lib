@@ -18,53 +18,56 @@
 
 #include <network/types.h>
 
-NETWORK_API object_t
-socket_ref(object_t id);
+NETWORK_API void
+socket_deallocate(socket_t* sock);
+
+NETWORK_API bool
+socket_bind(socket_t* sock, const network_address_t* address);
+
+NETWORK_API bool
+socket_connect(socket_t* sock, const network_address_t* address, unsigned int timeoutms);
 
 NETWORK_API void
-socket_destroy(object_t id);
+socket_close(socket_t* sock);
 
 NETWORK_API bool
-socket_bind(object_t id, const network_address_t* address);
-
-NETWORK_API bool
-socket_connect(object_t id, const network_address_t* address, unsigned int timeoutms);
+socket_blocking(const socket_t* sock);
 
 NETWORK_API void
-socket_close(object_t id);
+socket_set_blocking(socket_t* sock, bool block);
 
 NETWORK_API bool
-socket_blocking(object_t id);
+socket_reuse_address(const socket_t* sock);
 
 NETWORK_API void
-socket_set_blocking(object_t id, bool block);
+socket_set_reuse_address(socket_t* sock, bool reuse);
 
 NETWORK_API bool
-socket_reuse_address(object_t id);
+socket_reuse_port(const socket_t* sock);
 
 NETWORK_API void
-socket_set_reuse_address(object_t id, bool reuse);
+socket_set_reuse_port(socket_t* sock, bool reuse);
 
 NETWORK_API bool
-socket_reuse_port(object_t id);
-
-NETWORK_API void
-socket_set_reuse_port(object_t id, bool reuse);
-
-NETWORK_API bool
-socket_set_multicast_group(object_t id, network_address_t* address, bool allow_loopback);
+socket_set_multicast_group(socket_t* sock, network_address_t* address, bool allow_loopback);
 
 NETWORK_API const network_address_t*
-socket_address_local(object_t id);
+socket_address_local(const socket_t* sock);
 
 NETWORK_API const network_address_t*
-socket_address_remote(object_t id);
+socket_address_remote(const socket_t* sock);
 
 NETWORK_API socket_state_t
-socket_state(object_t id);
+socket_state(const socket_t* sock);
+
+NETWORK_API size_t
+socket_available_read(const socket_t* sock);
+
+NETWORK_API size_t
+socket_read(socket_t* sock, void* buffer, size_t size);
+
+NETWORK_API size_t
+socket_write(socket_t* sock, const void* buffer, size_t size);
 
 NETWORK_API stream_t*
-socket_stream(object_t id);
-
-NETWORK_API bool
-socket_is_socket(object_t id);
+socket_stream(socket_t* sock);
