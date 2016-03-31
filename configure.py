@@ -19,16 +19,16 @@ toolchain = generator.toolchain
 network_lib = generator.lib( module = 'network', sources = [
   'address.c', 'network.c', 'poll.c', 'socket.c', 'tcp.c', 'udp.c', 'version.c' ] )
 
-#if not target.is_ios() and not target.is_android():
-#  configs = [ config for config in toolchain.configs if config not in [ 'profile', 'deploy' ] ]
-#  if not configs == []:
-#    generator.bin( 'blast', [ 'main.c', 'client.c', 'reader.c', 'server.c', 'writer.c' ], 'blast', basepath = 'tools', implicit_deps = [ network_lib ], libs = [ 'network' ], configs = configs )
-
 includepaths = generator.test_includepaths()
 
 extralibs = []
 if target.is_windows():
   extralibs += [ 'iphlpapi', 'ws2_32' ]
+
+if not target.is_ios() and not target.is_android():
+  configs = [ config for config in toolchain.configs if config not in [ 'profile', 'deploy' ] ]
+  if not configs == []:
+    generator.bin( 'blast', [ 'main.c', 'client.c', 'reader.c', 'server.c', 'writer.c' ], 'blast', basepath = 'tools', implicit_deps = [ network_lib ], libs = [ 'network', 'foundation' ] + extralibs, configs = configs )
 
 test_cases = [
   'address', 'socket', 'tcp', 'udp'

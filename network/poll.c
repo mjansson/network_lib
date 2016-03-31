@@ -78,16 +78,6 @@ network_poll_sockets(network_poll_t* pollobj, socket_t** sockets, size_t max_soc
 		sockets[is] = pollobj->slots[is].sock;
 }
 
-unsigned int
-network_poll_timeout(network_poll_t* pollobj) {
-	return pollobj->timeout;
-}
-
-void
-network_poll_set_timeout(network_poll_t* pollobj, unsigned int timeoutms) {
-	pollobj->timeout = timeoutms;
-}
-
 bool
 network_poll_add_socket(network_poll_t* pollobj, socket_t* sock) {
 	size_t num_sockets = pollobj->num_sockets;
@@ -206,9 +196,11 @@ network_poll(network_poll_t* pollobj, network_poll_event_t* events, size_t capac
 
 	for (islot = 0; islot < pollobj->num_sockets; ++islot) {
 		int fd = pollobj->slots[islot].fd;
+		socket_base_t* sockbase = _socket_base + pollobj->slots[islot].base;
 
 		FD_SET(fd, &fdread);
-		FD_SET(fd, &fdwrite);
+		if (sockbase->state == SOCKETSTATE_CONNECTING)
+			FD_SET(fd, &fdwrite);
 		FD_SET(fd, &fderr);
 
 		if (fd >= num_fd)

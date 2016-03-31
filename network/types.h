@@ -58,8 +58,7 @@ typedef enum {
 	NETWORKEVENT_CONNECTED,
 	NETWORKEVENT_DATAIN,
 	NETWORKEVENT_ERROR,
-	NETWORKEVENT_HANGUP,
-	NETWORKEVENT_TIMEOUT
+	NETWORKEVENT_HANGUP
 } network_event_id;
 
 #if FOUNDATION_PLATFORM_POSIX
@@ -69,7 +68,6 @@ typedef int       network_address_size_t;
 #endif
 
 typedef struct network_config_t      network_config_t;
-typedef struct network_datagram_t    network_datagram_t;
 typedef struct network_address_t     network_address_t;
 typedef struct network_poll_slot_t   network_poll_slot_t;
 typedef struct network_poll_event_t  network_poll_event_t;

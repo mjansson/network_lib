@@ -38,7 +38,7 @@ blast_writer_unmap(blast_writer_t* writer, void* buffer, uint64_t offset, int si
 }
 
 blast_writer_t*
-blast_writer_open(const char* name, uint64_t namesize, uint64_t datasize) {
+blast_writer_open(const char* name, size_t namesize, uint64_t datasize) {
     blast_writer_t* writer = memory_allocate(HASH_BLAST, sizeof(blast_writer_t), 0,
                                              MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
     writer->name = string_clone(name, namesize);

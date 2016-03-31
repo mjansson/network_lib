@@ -28,7 +28,7 @@ typedef struct {
 
 	//Client args
 	network_address_t***    target;
-	char**                  files;
+	string_t*               files;
 } blast_input_t;
 
 static bool should_exit;
@@ -43,9 +43,11 @@ int
 main_initialize(void) {
 	int ret = 0;
 	foundation_config_t config;
+	network_config_t network_config;
 	application_t application;
 
 	memset(&config, 0, sizeof(config));
+	memset(&network_config, 0, sizeof(network_config));
 
 	memset(&application, 0, sizeof(application));
 	application.name = string_const(STRING_CONST("blast"));
@@ -62,10 +64,8 @@ main_initialize(void) {
 	log_set_suppress(HASH_NETWORK, ERRORLEVEL_INFO);
 	log_set_suppress(HASH_BLAST, ERRORLEVEL_DEBUG);
 
-	if ((ret = network_initialize(1024)) < 0)
+	if ((ret = network_module_initialize(network_config)) < 0)
 		return ret;
-
-	config_set_int(HASH_FOUNDATION, HASH_TEMPORARY_MEMORY, 32 * 1024);
 
 	return 0;
 }
@@ -96,9 +96,9 @@ main_run(void* main_arg) {
 }
 
 void
-main_shutdown(void) {
-	network_shutdown();
-	foundation_shutdown();
+main_finalize(void) {
+	network_module_finalize();
+	foundation_finalize();
 }
 
 blast_input_t
@@ -107,7 +107,7 @@ blast_parse_command_line(const string_const_t* cmdline) {
 	int arg, asize;
 	int addr, addrsize;
 
-	error_context_push("parsing command line", "");
+	error_context_push(STRING_CONST("parsing command line"), STRING_CONST(""));
 	memset(&input, 0, sizeof(input));
 	for (arg = 1, asize = array_size(cmdline); arg < asize; ++arg) {
 		if (string_equal(STRING_ARGS(cmdline[arg]), STRING_CONST("-s")) ||
@@ -122,7 +122,7 @@ blast_parse_command_line(const string_const_t* cmdline) {
 		else if (string_equal(STRING_ARGS(cmdline[arg]), STRING_CONST("-b")) ||
 		         string_equal(STRING_ARGS(cmdline[arg]), STRING_CONST("--bind"))) {
 			if (++arg < asize) {
-				network_address_t** resolved = network_address_resolve(cmdline[arg]);
+				network_address_t** resolved = network_address_resolve(STRING_ARGS(cmdline[arg]));
 				for (addr = 0, addrsize = array_size(resolved); addr < addrsize; ++addr)
 					array_push(input.bind, resolved[addr]);
 			}
@@ -130,17 +130,17 @@ blast_parse_command_line(const string_const_t* cmdline) {
 		else if (string_equal(STRING_ARGS(cmdline[arg]), STRING_CONST("-t")) ||
 		         string_equal(STRING_ARGS(cmdline[arg]), STRING_CONST("--target"))) {
 			if (++arg < asize) {
-				network_address_t** resolved = network_address_resolve(cmdline[arg]);
+				network_address_t** resolved = network_address_resolve(STRING_ARGS(cmdline[arg]));
 				if (resolved && array_size(resolved))
 					array_push(input.target, resolved);
 			}
 		}
 		else if (string_equal(STRING_ARGS(cmdline[arg]), STRING_CONST("--")))
 			break; //Stop parsing cmdline options
-		else if ((cmdline[arg].length > 1) && (cmdline[arg][0] == '-'))
+		else if ((cmdline[arg].length > 1) && (cmdline[arg].str[0] == '-'))
 			continue; //Cmdline argument not parsed here
 		else
-			array_push(input.files, string_clone(cmdline[arg]));
+			array_push(input.files, string_clone(STRING_ARGS(cmdline[arg])));
 	}
 	error_context_pop();
 

@@ -30,8 +30,8 @@ typedef struct blast_client_t {
 	unsigned int              token;
 	network_address_t**       address;
 	const network_address_t*  target;
-	object_t*                 socks;
-	object_t                  sock;
+	socket_t**                socks;
+	socket_t*                 sock;
 	blast_client_state_t      state;
 	tick_t                    begin_send;
 	tick_t                    last_send;
@@ -80,7 +80,7 @@ blast_client_report_progress(blast_client_t* client, bool force) {
 		if (client->packets_sent > 0) {
 			real resend_rate = (real)((float64_t)client->packets_resent / (float64_t)client->packets_sent) *
 			                   REAL_C(100.0);
-			log_infof(HASH_BLAST, STRING_CONST("Progress: %.*s %d%% (resend rate %.2" PRIREAL "%% %lld/%lld))"),
+			log_infof(HASH_BLAST, STRING_CONST("Progress: %.*s %d%% (resend rate %.2" PRIreal "%% %lld/%lld))"),
 			          STRING_FORMAT(client->readers[client->current]->name), progress, resend_rate,
 			          client->packets_resent,
 			          client->packets_sent);
@@ -95,10 +95,10 @@ blast_client_deallocate(blast_client_t* client) {
 	int isock, ssize = 0;
 
 	if (client->sock)
-		socket_destroy(client->sock);
+		socket_deallocate(client->sock);
 
 	for (isock = 0, ssize = array_size(client->socks); isock < ssize; ++isock)
-		socket_destroy(client->socks[isock]);
+		socket_deallocate(client->socks[isock]);
 	array_deallocate(client->socks);
 
 	array_deallocate(client->pending);
@@ -107,9 +107,8 @@ blast_client_deallocate(blast_client_t* client) {
 static int
 blast_client_send_handshake(blast_client_t* client, blast_reader_t* reader) {
 	int iaddr, addrsize = 0;
-	object_t* socks;
+	socket_t** socks;
 	const network_address_t** addrarr;
-	network_datagram_t datagram;
 	packet_handshake_t packet;
 
 	packet.type = PACKET_HANDSHAKE;
@@ -119,9 +118,6 @@ blast_client_send_handshake(blast_client_t* client, blast_reader_t* reader) {
 	packet.seq = blast_seq(client->seq++);
 	packet.namesize = (uint32_t)string_copy(packet.name, sizeof(packet.name),
 	                                        STRING_ARGS(reader->name)).length;
-
-	datagram.size = sizeof(packet_handshake_t) - (PACKET_NAME_MAXSIZE - packet.namesize) + 1;
-	datagram.data = &packet;
 
 	if (client->target) {
 		addrarr = &client->target;
@@ -135,7 +131,9 @@ blast_client_send_handshake(blast_client_t* client, blast_reader_t* reader) {
 	}
 
 	for (iaddr = 0; iaddr < addrsize; ++iaddr) {
-		udp_socket_sendto(socks[iaddr], datagram, addrarr[iaddr]);
+		udp_socket_sendto(socks[iaddr],
+		                  &packet, sizeof(packet_handshake_t) - (PACKET_NAME_MAXSIZE - packet.namesize) + 1,
+		                  addrarr[iaddr]);
 
 #if BUILD_ENABLE_LOG
 		{
@@ -154,7 +152,7 @@ blast_client_send_handshake(blast_client_t* client, blast_reader_t* reader) {
 }
 
 static int
-blast_client_initialize(blast_client_t* client, network_address_t** address, network_poll_t* poll) {
+blast_client_initialize(blast_client_t* client, network_address_t** address) {
 	int iaddr, addrsize = 0;
 
 	memset(client, 0, sizeof(blast_client_t));
@@ -164,21 +162,18 @@ blast_client_initialize(blast_client_t* client, network_address_t** address, net
 	array_reserve(client->pending, 1024);
 
 	for (iaddr = 0, addrsize = array_size(client->address); iaddr < addrsize; ++iaddr) {
-		object_t sock = udp_socket_create();
+		socket_t* sock = udp_socket_allocate();
 		array_push(client->socks, sock);
-
 		socket_set_blocking(sock, false);
-
-		network_poll_add_socket(poll, sock);
 	}
 
 	return BLAST_RESULT_OK;
 }
 
 static int
-blast_client_handshake(blast_client_t* client, network_poll_t* poll) {
+blast_client_handshake(blast_client_t* client) {
 	int isock, ssize;
-	object_t* socks;
+	socket_t** socks;
 
 	if (blast_time_elapsed_ms(client->last_send) > 10)
 		blast_client_send_handshake(client, client->readers[client->current]);
@@ -194,9 +189,10 @@ blast_client_handshake(blast_client_t* client, network_poll_t* poll) {
 
 	for (isock = 0; isock < ssize; ++isock) {
 		const network_address_t* address = 0;
-		network_datagram_t datagram = udp_socket_recvfrom(socks[isock], &address);
-		if (datagram.size > 0) {
-			packet_t* packet = (packet_t*)datagram.data;
+		char packetbuffer[PACKET_DATABUF_SIZE];
+		size_t size = udp_socket_recvfrom(socks[isock], packetbuffer, sizeof(packetbuffer), &address);
+		if (size > 0) {
+			packet_t* packet = (packet_t*)packetbuffer;
 			if (packet->type == PACKET_HANDSHAKE) {
 				char buffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
 				string_t addr = network_address_to_string(buffer, sizeof(buffer), address, true);
@@ -214,7 +210,7 @@ blast_client_handshake(blast_client_t* client, network_poll_t* poll) {
 				}
 
 				if (client->state == BLAST_STATE_HANDSHAKE) {
-					log_infof(HASH_BLAST, STRING_CONST("Begin transfer of '%.*s' %lld bytes with token %d to %s"),
+					log_infof(HASH_BLAST, STRING_CONST("Begin transfer of '%.*s' %lld bytes with token %d to %.*s"),
 					          STRING_FORMAT(client->readers[client->current]->name), client->readers[client->current]->size,
 					          handshake->token, STRING_FORMAT(addr));
 					client->token = (unsigned int)handshake->token;
@@ -223,6 +219,7 @@ blast_client_handshake(blast_client_t* client, network_poll_t* poll) {
 					client->seq = 0;
 					array_clear(client->pending);
 					client->state = BLAST_STATE_TRANSFER;
+					return 1;
 				}
 			}
 			else {
@@ -234,11 +231,8 @@ blast_client_handshake(blast_client_t* client, network_poll_t* poll) {
 
 	if (client->state != BLAST_STATE_HANDSHAKE) {
 		for (isock = 0, ssize = array_size(client->socks); isock < ssize; ++isock) {
-			object_t sock = client->socks[isock];
-			if (sock) {
-				network_poll_remove_socket(poll, sock);
-				socket_destroy(sock);
-			}
+			socket_t* sock = client->socks[isock];
+			socket_deallocate(sock);
 		}
 		array_deallocate(client->socks);
 		client->socks = 0;
@@ -280,7 +274,6 @@ blast_client_process_ack(blast_client_t* client, uint32_t* seq, tick_t timestamp
 static int
 blast_client_send_data_chunk(blast_client_t* client, uint64_t seq) {
 	packet_payload_t packet;
-	network_datagram_t datagram;
 	void* data;
 	uint64_t res;
 
@@ -292,16 +285,14 @@ blast_client_send_data_chunk(blast_client_t* client, uint64_t seq) {
 	data = client->readers[client->current]->map(client->readers[client->current],
 	                                             packet.seq * PACKET_CHUNK_SIZE, PACKET_CHUNK_SIZE);
 	if (!data) {
-		log_errorf(HASH_BLAST, ERROR_SYSTEM_CALL_FAIL, "Unable to map source segment at offset %lld",
+		log_errorf(HASH_BLAST, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Unable to map source segment at offset %lld"),
 		           packet.seq * PACKET_CHUNK_SIZE);
 		return BLAST_ERROR_UNABLE_TO_READ_FILE;
 	}
 	memcpy(packet.data, data, PACKET_CHUNK_SIZE);
 	client->readers[client->current]->unmap(client->readers[client->current], data,
 	                                        packet.seq * PACKET_CHUNK_SIZE, PACKET_CHUNK_SIZE);
-
-	datagram.size = sizeof(packet_payload_t);
-	datagram.data = &packet;
 
 	/*
 	#if BUILD_ENABLE_LOG
@@ -311,9 +302,10 @@ blast_client_send_data_chunk(blast_client_t* client, uint64_t seq) {
 	#endif
 	*/
 
-	res = udp_socket_sendto(client->sock, datagram, client->target);
+	size_t payload_size = sizeof(packet_payload_t);
+	res = udp_socket_sendto(client->sock, &packet, payload_size, client->target);
 
-	return (res == datagram.size ? 0 : -1);
+	return (res == payload_size ? 0 : -1);
 }
 
 static int
@@ -346,9 +338,8 @@ blast_client_send_data(blast_client_t* client) {
 		int ipend, psize;
 		for (ipend = 0, psize = array_size(client->pending); (ipend < psize) &&
 		        (num_sent < max_sent); ++ipend) {
-			if (only_pending ||
-			        (time_elapsed(client->pending[ipend].last_send) >
-			         1.0f)) { //TODO: Resend threshold based on round-trip time
+			//TODO: Resend threshold based on round-trip time
+			if (only_pending || (time_elapsed(client->pending[ipend].last_send) > 1.0f)) {
 				//log_infof(HASH_BLAST, STRING_CONST("Resend packet %lld from resend timeout", (uint64_t)client->pending[ipend].seq));
 				ret = blast_client_send_data_chunk(client, client->pending[ipend].seq);
 				if (ret < 0)
@@ -382,7 +373,9 @@ blast_client_send_data(blast_client_t* client) {
 	if (only_pending) {
 		if (array_size(client->pending) == 0) {
 			blast_client_report_progress(client, true);
-			log_infof(HASH_BLAST, STRING_CONST("Transfer complete"));
+			deltatime_t elapsed = time_elapsed(client->begin_send);
+			log_infof(HASH_BLAST, STRING_CONST("Transfer complete: %.2fs (%.2fMiB/s)"), elapsed,
+				(real)(client->readers[client->current]->size / (1024*1024)) / elapsed);
 			if (client->current + 1 >= (int)array_size(client->readers)) {
 				log_infof(HASH_BLAST, STRING_CONST("All transfers complete"));
 				return 0;
@@ -406,9 +399,10 @@ blast_client_send_data(blast_client_t* client) {
 static void
 blast_client_read_ack(blast_client_t* client) {
 	const network_address_t* address = 0;
-	network_datagram_t datagram = udp_socket_recvfrom(client->sock, &address);
-	while (datagram.size > 0) {
-		packet_t* packet = (packet_t*)datagram.data;
+	char databuf[PACKET_DATABUF_SIZE];
+	size_t size = udp_socket_recvfrom(client->sock, databuf, sizeof(databuf), &address);
+	while (size > 0) {
+		packet_t* packet = (packet_t*)databuf;
 		if (network_address_equal(address, socket_address_remote(client->sock))) {
 			if (packet->type == PACKET_ACK) {
 				packet_ack_t* ack = (packet_ack_t*)packet;
@@ -427,15 +421,13 @@ blast_client_read_ack(blast_client_t* client) {
 			          STRING_FORMAT(addr));
 		}
 
-		datagram = udp_socket_recvfrom(client->sock, &address);
+		size = udp_socket_recvfrom(client->sock, databuf, sizeof(databuf), &address);
 	}
 }
 
 static int
-blast_client_transfer(blast_client_t* client, network_poll_t* poll) {
+blast_client_transfer(blast_client_t* client) {
 	int ret;
-
-	FOUNDATION_UNUSED(poll);
 
 	socket_set_blocking(client->sock, false);
 
@@ -446,13 +438,13 @@ blast_client_transfer(blast_client_t* client, network_poll_t* poll) {
 }
 
 static int
-blast_client_process(blast_client_t* client, network_poll_t* poll) {
+blast_client_process(blast_client_t* client) {
 	switch (client->state) {
 	case BLAST_STATE_HANDSHAKE:
-		return blast_client_handshake(client, poll);
+		return blast_client_handshake(client);
 
 	case BLAST_STATE_TRANSFER:
-		return blast_client_transfer(client, poll);
+		return blast_client_transfer(client);
 
 	default:
 		break;
@@ -462,13 +454,12 @@ blast_client_process(blast_client_t* client, network_poll_t* poll) {
 }
 
 int
-blast_client(network_address_t*** target, string_t* files) {
+blast_client(network_address_t** * target, string_t* files) {
 	int itarg, tsize = 0;
 	int iclient, csize = 0;
 	int ifile, fsize = 0;
 	bool running = true;
 	int result = BLAST_RESULT_OK;
-	network_poll_t* poll = 0;
 	blast_reader_t* reader = 0;
 	blast_reader_t** readers = 0;
 
@@ -488,16 +479,10 @@ blast_client(network_address_t*** target, string_t* files) {
 		return BLAST_ERROR_UNABLE_TO_OPEN_FILE;
 	}
 
-	poll = network_poll_allocate(array_size(clients));
-
 	for (itarg = 0, tsize = array_size(target); itarg < tsize; ++itarg) {
 		blast_client_t client;
-		if (blast_client_initialize(&client, target[itarg], poll) == BLAST_RESULT_OK) {
-			network_poll_set_timeout(poll, 0);
-			network_poll(poll);
-
+		if (blast_client_initialize(&client, target[itarg]) == BLAST_RESULT_OK) {
 			client.readers = readers;
-
 			array_push(clients, client);
 		}
 	}
@@ -505,17 +490,11 @@ blast_client(network_address_t*** target, string_t* files) {
 	while (running && !blast_should_exit()) {
 		running = false;
 
-		network_poll_set_timeout(poll,
-		                         0);   //TODO: set to 0, look for would-block sends, poll on writable (and readable)
-		network_poll(poll);
-
 		for (iclient = 0, csize = array_size(clients); iclient < csize; ++iclient)
-			running |= blast_client_process(clients + iclient, poll);
+			running |= blast_client_process(clients + iclient);
 
 		blast_process_system_events();
 	}
-
-	network_poll_deallocate(poll);
 
 	for (iclient = 0, csize = array_size(clients); iclient < csize; ++iclient)
 		blast_client_deallocate(&clients[iclient]);

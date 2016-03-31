@@ -28,14 +28,16 @@ typedef enum {
 #define PACKET_TOKEN_BITS 9
 #define PACKET_TOKEN_MASK ( ( 1ULL << PACKET_TOKEN_BITS ) - 1ULL )
 //Chunk size * maximum sequence gives max transmission size
-//1020 * ((1 << 32) - 1) = 4078 GiB ~= 4 TiB
-#define PACKET_CHUNK_SIZE 1020ULL
+//1016 * ((1 << 32) - 1) = 4063 GiB ~= 4 TiB
+#define PACKET_CHUNK_SIZE 1016ULL
 
 #define PACKET_NAME_MAXSIZE 256
 #define PACKET_DATA_MAXSIZE ( PACKET_CHUNK_SIZE * ( ( 1ULL << PACKET_SEQ_BITS ) - 1ULL ) )
 
 #define PACKET_ACK_COUNT 32
 #define PACKET_ACK_HISTORY 128
+
+#define PACKET_DATABUF_SIZE 1024
 
 #define PACKET_DECLARE \
     uint64_t        type:3; \

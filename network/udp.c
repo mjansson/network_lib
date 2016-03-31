@@ -159,10 +159,11 @@ udp_socket_recvfrom(socket_t* sock, void* buffer, size_t capacity, network_addre
 	if (sockerr != EAGAIN)
 #endif
 	{
+		string_const_t errmsg = system_error_message(sockerr);
 		log_warnf(HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL,
 		          STRING_CONST("Socket recvfrom() failed on UDP socket (0x%" PRIfixPTR
-		                       " : %d): %s (%d) (SO_ERROR %d)"),
-		          sock, sockbase->fd, system_error_message(sockerr), sockerr, serr);
+		                       " : %d): %.*s (%d) (SO_ERROR %d)"),
+		          sock, sockbase->fd, STRING_FORMAT(errmsg), sockerr, serr);
 	}
 
 	return 0;
@@ -258,10 +259,11 @@ udp_socket_sendto(socket_t* sock, const void* buffer, size_t size,
 	if (sockerr != EAGAIN)
 #endif
 	{
+		string_const_t errmsg = system_error_message(sockerr);
 		log_warnf(HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL,
 		          STRING_CONST("Socket sendto() failed on UDP socket (0x%" PRIfixPTR
-		                       " : %d): %s (%d) (SO_ERROR %d)"),
-		          sock, sockbase->fd, system_error_message(sockerr), sockerr, serr);
+		                       " : %d): %.*s (%d) (SO_ERROR %d)"),
+		          sock, sockbase->fd, STRING_FORMAT(errmsg), sockerr, serr);
 	}
 
 	return 0;

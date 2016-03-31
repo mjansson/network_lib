@@ -131,12 +131,17 @@ _socket_create_fd(socket_t* sock, network_address_family_t family) {
 
 void
 socket_deallocate(socket_t* sock) {
+	if (!sock)
+		return;
+
 #if BUILD_ENABLE_DEBUG_LOG
-	int fd = SOCKET_INVALID;
-	if (sock->base >= 0)
-		fd = _socket_base[ sock->base ].fd;
-	log_debugf(HASH_NETWORK, STRING_CONST("Deallocating socket (0x%" PRIfixPTR " : %d)"),
-	           sock, fd);
+	{
+		int fd = SOCKET_INVALID;
+		if (sock->base >= 0)
+			fd = _socket_base[ sock->base ].fd;
+		log_debugf(HASH_NETWORK, STRING_CONST("Deallocating socket (0x%" PRIfixPTR " : %d)"),
+		           sock, fd);
+	}
 #endif
 
 	socket_close(sock);

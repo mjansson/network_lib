@@ -27,7 +27,7 @@ struct blast_writer_t {
 };
 
 extern blast_writer_t*
-blast_writer_open(const char* name, uint64_t namesize, uint64_t datasize);
+blast_writer_open(const char* name, size_t namesize, uint64_t datasize);
 
 extern void
 blast_writer_close(blast_writer_t* writer);
