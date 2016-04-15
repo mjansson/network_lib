@@ -79,7 +79,7 @@ event_loop(void* arg) {
 #include <test/test.h>
 
 static void
-test_log_callback(hash_t context, error_level_t severity, const char* msg, size_t length) {
+test_log_handler(hash_t context, error_level_t severity, const char* msg, size_t length) {
 	FOUNDATION_UNUSED(context);
 	FOUNDATION_UNUSED(severity);
 
@@ -111,7 +111,7 @@ test_log_callback(hash_t context, error_level_t severity, const char* msg, size_
 #if !BUILD_MONOLITHIC
 
 void
-test_crash_handler(const char* dump_file, size_t length) {
+test_exception_handler(const char* dump_file, size_t length) {
 	FOUNDATION_UNUSED(dump_file);
 	FOUNDATION_UNUSED(length);
 	log_error(HASH_TEST, ERROR_EXCEPTION, STRING_CONST("Test crashed"));
@@ -137,10 +137,10 @@ main_initialize(void) {
 	memset(&application, 0, sizeof(application));
 	application.name = string_const(STRING_CONST("Network library test suite"));
 	application.short_name = string_const(STRING_CONST("test_all"));
-	application.config_dir = string_const(STRING_CONST("test_all"));
+	application.company = string_const(STRING_CONST("Rampant Pixels"));
 	application.version = foundation_version();
 	application.flags = APPLICATION_UTILITY;
-	application.dump_callback = test_crash_handler;
+	application.exception_handler = test_exception_handler;
 
 	log_set_suppress(0, ERRORLEVEL_INFO);
 

@@ -52,7 +52,7 @@ main_initialize(void) {
 	memset(&application, 0, sizeof(application));
 	application.name = string_const(STRING_CONST("blast"));
 	application.short_name = string_const(STRING_CONST("blast"));
-	application.config_dir = string_const(STRING_CONST("blast"));
+	application.company = string_const(STRING_CONST("Rampant Pixels"));
 	application.flags = APPLICATION_UTILITY;
 
 	log_enable_prefix(false);

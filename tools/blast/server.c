@@ -307,7 +307,6 @@ blast_server_run(bool daemon, network_poll_t* poll, blast_server_t* server) {
 	bool complete;
 
 	if (daemon) {
-		config_set_bool(HASH_APPLICATION, HASH_DAEMON, true);
 		//TODO: Implement
 	}
 

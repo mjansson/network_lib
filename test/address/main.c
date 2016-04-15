@@ -19,8 +19,9 @@ test_address_application(void) {
 	memset(&app, 0, sizeof(app));
 	app.name = string_const(STRING_CONST("Network address tests"));
 	app.short_name = string_const(STRING_CONST("test_address"));
-	app.config_dir = string_const(STRING_CONST("test_address"));
+	app.company = string_const(STRING_CONST("Rampant Pixels"));
 	app.flags = APPLICATION_UTILITY;
+	app.exception_handler = test_exception_handler;
 	return app;
 }
 

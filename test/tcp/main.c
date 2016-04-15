@@ -20,8 +20,9 @@ test_tcp_application(void) {
 	memset(&app, 0, sizeof(app));
 	app.name = string_const(STRING_CONST("Network TCP/IP tests"));
 	app.short_name = string_const(STRING_CONST("test_tcp"));
-	app.config_dir = string_const(STRING_CONST("test_tcp"));
+	app.company = string_const(STRING_CONST("Rampant Pixels"));
 	app.flags = APPLICATION_UTILITY;
+	app.exception_handler = test_exception_handler;
 	return app;
 }
 
@@ -358,9 +359,9 @@ DECLARE_TEST(tcp, io_ipv4) {
 	socket_set_blocking(sock_client, false);
 	socket_connect(sock_client, address_connect, 0);
 	state = socket_state(sock_client);
-	network_address_array_deallocate(address_local);
 	EXPECT_TRUE((state == SOCKETSTATE_CONNECTING) || (state == SOCKETSTATE_CONNECTED));
 
+	network_address_array_deallocate(address_local);
 	thread_sleep(100);
 
 	sock_server = tcp_socket_accept(sock_listen, 0);
@@ -436,6 +437,7 @@ DECLARE_TEST(tcp, io_ipv6) {
 	state = socket_state(sock_client);
 	EXPECT_TRUE((state == SOCKETSTATE_CONNECTING) || (state == SOCKETSTATE_CONNECTED));
 
+	network_address_array_deallocate(address_local);
 	thread_sleep(100);
 
 	sock_server = tcp_socket_accept(sock_listen, 0);
@@ -509,9 +511,9 @@ DECLARE_TEST(tcp, stream_ipv4) {
 	socket_set_blocking(sock_client, false);
 	socket_connect(sock_client, address_connect, 0);
 	state = socket_state(sock_client);
-	network_address_array_deallocate(address_local);
 	EXPECT_TRUE((state == SOCKETSTATE_CONNECTING) || (state == SOCKETSTATE_CONNECTED));
 
+	network_address_array_deallocate(address_local);
 	thread_sleep(100);
 
 	sock_server = tcp_socket_accept(sock_listen, 0);
@@ -587,6 +589,7 @@ DECLARE_TEST(tcp, stream_ipv6) {
 	state = socket_state(sock_client);
 	EXPECT_TRUE((state == SOCKETSTATE_CONNECTING) || (state == SOCKETSTATE_CONNECTED));
 
+	network_address_array_deallocate(address_local);
 	thread_sleep(100);
 
 	sock_server = tcp_socket_accept(sock_listen, 0);
