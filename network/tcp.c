@@ -23,9 +23,6 @@
 static void
 _tcp_socket_open(socket_t*, unsigned int);
 
-static int
-_tcp_socket_connect(socket_t*, const network_address_t*, unsigned int);
-
 static void
 _tcp_stream_initialize(socket_t*, stream_t*);
 
@@ -68,7 +65,7 @@ tcp_socket_listen(socket_t* sock) {
 		string_t address = network_address_to_string(buffer, sizeof(buffer), sock->address_local, true);
 		log_infof(HASH_NETWORK,
 		          STRING_CONST("Listening on TCP/IP socket (0x%" PRIfixPTR " : %d) %.*s"),
-		          sock, sockbase->fd, STRING_FORMAT(address));
+		          (uintptr_t)sock, sockbase->fd, STRING_FORMAT(address));
 #endif
 		sockbase->state = SOCKETSTATE_LISTENING;
 		return true;
@@ -81,7 +78,7 @@ tcp_socket_listen(socket_t* sock) {
 		string_const_t errmsg = system_error_message(sockerr);
 		log_errorf(HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL,
 		           STRING_CONST("Unable to listen on TCP/IP socket (0x%" PRIfixPTR " : %d) %.*s: %.*s (%d)"),
-		           sock, sockbase->fd, STRING_FORMAT(address), STRING_FORMAT(errmsg), sockerr);
+		           (uintptr_t)sock, sockbase->fd, STRING_FORMAT(address), STRING_FORMAT(errmsg), sockerr);
 	}
 #endif
 
@@ -110,7 +107,7 @@ tcp_socket_accept(socket_t* sock, unsigned int timeoutms) {
 		log_errorf(HASH_NETWORK, ERROR_INVALID_VALUE,
 		           STRING_CONST("Unable to accept on a non-listening/unbound TCP/IP socket (%" PRIfixPTR
 		                        " : %d) state %d)"),
-		           sock, sockbase->fd, sockbase->state);
+		           (uintptr_t)sock, sockbase->fd, sockbase->state);
 		return 0;
 	}
 
@@ -188,17 +185,17 @@ tcp_socket_accept(socket_t* sock, unsigned int timeoutms) {
 		char listenbuf[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
 		char localbuf[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
 		char remotebuf[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
-		string_t address_listen = network_address_to_string(listenbuf, sizeof(listenbuf),
-		                                                    sock->address_local, true);
-		string_t address_local = network_address_to_string(localbuf, sizeof(localbuf),
-		                                                   accepted->address_local, true);
-		string_t address_remote = network_address_to_string(remotebuf, sizeof(remotebuf),
-		                                                    accepted->address_remote, true);
+		string_t listenstr = network_address_to_string(listenbuf, sizeof(listenbuf),
+		                                               sock->address_local, true);
+		string_t localstr = network_address_to_string(localbuf, sizeof(localbuf),
+		                                              accepted->address_local, true);
+		string_t remotestr = network_address_to_string(remotebuf, sizeof(remotebuf),
+		                                               accepted->address_remote, true);
 		log_infof(HASH_NETWORK,
 		          STRING_CONST("Accepted connection on TCP/IP socket (0x%"
 		                       PRIfixPTR" : %d) %.*s: created socket (0x%" PRIfixPTR " : %d) %.*s with remote address %.*s"),
-		          sock, sockbase->fd, STRING_FORMAT(address_listen), accepted, acceptbase->fd,
-		          STRING_FORMAT(address_local), STRING_FORMAT(address_remote));
+		          (uintptr_t)sock, sockbase->fd, STRING_FORMAT(listenstr), (uintptr_t)accepted, acceptbase->fd,
+		          STRING_FORMAT(localstr), STRING_FORMAT(remotestr));
 	}
 #endif
 
@@ -247,12 +244,12 @@ _tcp_socket_open(socket_t* sock, unsigned int family) {
 		string_const_t errmsg = system_error_message(err);
 		log_errorf(HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL,
 		           STRING_CONST("Unable to open TCP/IP socket (0x%" PRIfixPTR " : %d): %.*s (%d)"),
-		           sock, sockbase->fd, STRING_FORMAT(errmsg), err);
+		           (uintptr_t)sock, sockbase->fd, STRING_FORMAT(errmsg), err);
 		sockbase->fd = SOCKET_INVALID;
 	}
 	else {
 		log_debugf(HASH_NETWORK, STRING_CONST("Opened TCP/IP socket (0x%" PRIfixPTR " : %d)"),
-		           sock, sockbase->fd);
+		           (uintptr_t)sock, sockbase->fd);
 		tcp_socket_set_delay(sock, sockbase->flags & SOCKETFLAG_TCPDELAY);
 	}
 }
@@ -261,6 +258,6 @@ void
 _tcp_stream_initialize(socket_t* sock, stream_t* stream) {
 	stream->inorder = 1;
 	stream->reliable = 1;
-	stream->path = string_allocate_format(STRING_CONST("tcp://%" PRIfixPTR), sock);
+	stream->path = string_allocate_format(STRING_CONST("tcp://%" PRIfixPTR), (uintptr_t)sock);
 }
 

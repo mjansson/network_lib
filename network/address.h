@@ -50,6 +50,9 @@ NETWORK_API uint32_t
 network_address_ipv4_ip(network_address_t* address);
 
 NETWORK_API network_address_family_t
+network_address_type(const network_address_t* address);
+
+NETWORK_API network_address_family_t
 network_address_family(const network_address_t* address);
 
 NETWORK_API network_address_t**

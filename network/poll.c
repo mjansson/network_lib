@@ -85,7 +85,7 @@ network_poll_add_socket(network_poll_t* pollobj, socket_t* sock) {
 		socket_base_t* sockbase = _socket_base + sock->base;
 
 		log_debugf(HASH_NETWORK, STRING_CONST("Network poll: Adding socket (0x%" PRIfixPTR " : %d)"),
-		           sock, sockbase->fd);
+		           (uintptr_t)sock, sockbase->fd);
 
 		pollobj->slots[ num_sockets ].sock = sock;
 		pollobj->slots[ num_sockets ].base = sock->base;
@@ -122,7 +122,7 @@ network_poll_remove_socket(network_poll_t* pollobj, socket_t* sock) {
 #endif
 			log_debugf(HASH_NETWORK,
 			           STRING_CONST("Network poll: Removing socket (0x%" PRIfixPTR " : %d)"),
-			           pollobj->slots[islot].sock, pollobj->slots[islot].fd);
+			           (uintptr_t)pollobj->slots[islot].sock, pollobj->slots[islot].fd);
 
 			//Swap with last slot and erase
 			if (islot < pollobj->num_sockets - 1) {
@@ -181,7 +181,7 @@ network_poll(network_poll_t* pollobj, network_poll_event_t* events, size_t capac
 
 #if FOUNDATION_PLATFORM_APPLE
 
-	int ret = poll(pollobj->pollfds, pollobj->num_sockets, timeoutms);
+	int ret = poll(pollobj->pollfds, (nfds_t)pollobj->num_sockets, (int)timeoutms);
 
 #elif FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
 
@@ -242,7 +242,6 @@ network_poll(network_poll_t* pollobj, network_poll_event_t* events, size_t capac
 	for (size_t i = 0; i < pollobj->num_sockets; ++i, ++pfd, ++slot) {
 		socket_t* sock = slot->sock;
 		socket_base_t* sockbase = _socket_base + slot->base;
-		int fd = slot->fd;
 		if (pfd->revents & POLLIN) {
 			if (sockbase->state == SOCKETSTATE_LISTENING) {
 				network_poll_push_event(events, capacity, num_events, NETWORKEVENT_CONNECTION, sock);

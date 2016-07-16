@@ -19,6 +19,10 @@
 
 #include <network/build.h>
 
+#if FOUNDATION_PLATFORM_POSIX
+#  include <sys/socket.h>
+#endif
+
 #if defined( NETWORK_COMPILE ) && NETWORK_COMPILE
 #  ifdef __cplusplus
 #  define NETWORK_EXTERN extern "C"

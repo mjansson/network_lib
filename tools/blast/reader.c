@@ -8,17 +8,13 @@
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
  */
-#define _CRT_SECURE_NO_WARNINGS 1
 
 #include "blast.h"
 #include "reader.h"
 
 #include <foundation/posix.h>
 
-#include <io.h>
 #include <fcntl.h>
-#include <sys\types.h>
-#include <sys\stat.h>
 #include <stdio.h>
 
 //#include <sys/mman.h>
@@ -43,7 +39,7 @@ blast_reader_map(blast_reader_t* reader, uint64_t offset, int size) {
     return pointer_offset(reader->data, offset);
 }
 
-void
+static void
 blast_reader_unmap(blast_reader_t* reader, void* buffer, uint64_t offset, int size) {
     FOUNDATION_UNUSED(reader);
     FOUNDATION_UNUSED(buffer);
@@ -58,20 +54,20 @@ blast_reader_open(string_t source) {
     blast_reader_t* reader;
     int fd;
 
-    fd = _open(source.str, O_RDONLY);
+    fd = open(source.str, O_RDONLY);
     if (fd == 0)
         return 0;
 
-    size = _lseek(fd, 0, SEEK_END);
+    size = lseek(fd, 0, SEEK_END);
     if (size <= 0) {
-        _close(fd);
+        close(fd);
         return 0;
     }
-    _lseek(fd, 0, SEEK_SET);
+    lseek(fd, 0, SEEK_SET);
 
     addr = memory_allocate(HASH_BLAST, (size_t)size, 0, MEMORY_PERSISTENT);
-    _read(fd, addr, (int)size);
-    _close(fd);
+    read(fd, addr, (size_t)size);
+    close(fd);
     /*addr = mmap( 0, size, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0 );
     if( addr == MAP_FAILED )
     {

@@ -13,7 +13,7 @@
 #include <foundation/foundation.h>
 #include <test/test.h>
 
-application_t
+static application_t
 test_address_application(void) {
 	application_t app;
 	memset(&app, 0, sizeof(app));
@@ -25,19 +25,19 @@ test_address_application(void) {
 	return app;
 }
 
-memory_system_t
+static memory_system_t
 test_address_memory_system(void) {
 	return memory_system_malloc();
 }
 
-foundation_config_t 
+static foundation_config_t 
 test_address_foundation_config(void) {
 	foundation_config_t config;
 	memset(&config, 0, sizeof(config));
 	return config;
 }
 
-int
+static int
 test_address_initialize(void) {
 	network_config_t config;
 	memset(&config, 0, sizeof(config));
@@ -45,7 +45,7 @@ test_address_initialize(void) {
 	return network_module_initialize(config);
 }
 
-void
+static void
 test_address_finalize(void) {
 	network_module_finalize();
 }
@@ -149,7 +149,7 @@ DECLARE_TEST(address, resolve) {
 
 	if (has_ipv4) {
 		addresses = network_address_resolve(STRING_CONST("127.0.0.1:512"));
-		log_debugf(HASH_NETWORK, "127.0.0.1:512 -> %u addresses", array_size(addresses));
+		log_debugf(HASH_NETWORK, STRING_CONST("127.0.0.1:512 -> %u addresses"), array_size(addresses));
 		EXPECT_EQ(array_size(addresses), 1);
 		for (iaddr = 0, addrsize = array_size(addresses); iaddr < addrsize; ++iaddr) {
 			string_t address_str = network_address_to_string(buffer, sizeof(buffer), addresses[iaddr], true);
@@ -322,7 +322,7 @@ DECLARE_TEST(address, family) {
 	return 0;
 }
 
-void
+static void
 test_address_declare(void) {
 	ADD_TEST(address, local);
 	ADD_TEST(address, resolve);
@@ -331,16 +331,20 @@ test_address_declare(void) {
 	ADD_TEST(address, family);
 }
 
-test_suite_t test_address_suite = {
+static test_suite_t test_address_suite = {
 	test_address_application,
 	test_address_memory_system,
 	test_address_foundation_config,
 	test_address_declare,
 	test_address_initialize,
-	test_address_finalize
+	test_address_finalize,
+	0
 };
 
-#if FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_IOS
+#if BUILD_MONOLITHIC
+
+int
+test_address_run(void);
 
 int
 test_address_run(void) {
@@ -349,6 +353,9 @@ test_address_run(void) {
 }
 
 #else
+
+test_suite_t
+test_suite_define(void);
 
 test_suite_t
 test_suite_define(void) {

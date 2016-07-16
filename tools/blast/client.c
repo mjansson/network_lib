@@ -106,7 +106,7 @@ blast_client_deallocate(blast_client_t* client) {
 
 static int
 blast_client_send_handshake(blast_client_t* client, blast_reader_t* reader) {
-	int iaddr, addrsize = 0;
+	unsigned int iaddr, addrsize = 0;
 	socket_t** socks;
 	const network_address_t** addrarr;
 	packet_handshake_t packet;
@@ -153,7 +153,7 @@ blast_client_send_handshake(blast_client_t* client, blast_reader_t* reader) {
 
 static int
 blast_client_initialize(blast_client_t* client, network_address_t** address) {
-	int iaddr, addrsize = 0;
+	unsigned int iaddr, addrsize = 0;
 
 	memset(client, 0, sizeof(blast_client_t));
 	client->address = address;
@@ -172,7 +172,7 @@ blast_client_initialize(blast_client_t* client, network_address_t** address) {
 
 static int
 blast_client_handshake(blast_client_t* client) {
-	int isock, ssize;
+	unsigned int isock, ssize;
 	socket_t** socks;
 
 	if (blast_time_elapsed_ms(client->last_send) > 10)
@@ -189,10 +189,13 @@ blast_client_handshake(blast_client_t* client) {
 
 	for (isock = 0; isock < ssize; ++isock) {
 		const network_address_t* address = 0;
-		char packetbuffer[PACKET_DATABUF_SIZE];
-		size_t size = udp_socket_recvfrom(socks[isock], packetbuffer, sizeof(packetbuffer), &address);
+		union {
+			char buffer[PACKET_DATABUF_SIZE];
+			packet_t packet;
+		} packetbuffer;
+		size_t size = udp_socket_recvfrom(socks[isock], packetbuffer.buffer, sizeof(packetbuffer.buffer), &address);
 		if (size > 0) {
-			packet_t* packet = (packet_t*)packetbuffer;
+			packet_t* packet = &packetbuffer.packet;
 			if (packet->type == PACKET_HANDSHAKE) {
 				char buffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
 				string_t addr = network_address_to_string(buffer, sizeof(buffer), address, true);
@@ -243,8 +246,8 @@ blast_client_handshake(blast_client_t* client) {
 
 static int
 blast_client_process_ack(blast_client_t* client, uint32_t* seq, tick_t timestamp) {
-	int ipend, psize;
-	int iack, asize;
+	unsigned int ipend, psize;
+	unsigned int iack, asize;
 	for (iack = 0, asize = PACKET_ACK_COUNT; iack < asize; ++iack) {
 		for (ipend = 0, psize = array_size(client->pending); ipend < psize; ++ipend) {
 			if (client->pending[ipend].seq == seq[iack]) {
@@ -279,7 +282,7 @@ blast_client_send_data_chunk(blast_client_t* client, uint64_t seq) {
 
 	packet.type = PACKET_PAYLOAD;
 	packet.token = client->token;
-	packet.timestamp = blast_timestamp(client->begin_send);
+	packet.timestamp = (uint64_t)blast_timestamp(client->begin_send);
 	packet.seq = seq;
 
 	data = client->readers[client->current]->map(client->readers[client->current],
@@ -314,7 +317,7 @@ blast_client_congest_control(blast_client_t* client, tick_t current) {
 	static tick_t last_ts = 0;
 	static float64_t dt = 0.1;
 	if (last_ts)
-		dt = time_ticks_to_seconds(time_diff(last_ts, current));
+		dt = (float64_t)time_ticks_to_seconds(time_diff(last_ts, current));
 	float64_t kbytes = (mbps * 1024.0) * dt;
 	FOUNDATION_UNUSED(client);
 	return (int)(1024.0 * (kbytes / (float64_t)PACKET_CHUNK_SIZE));
@@ -325,7 +328,7 @@ blast_client_send_data(blast_client_t* client) {
 	blast_pending_t pending;
 	bool only_pending;
 	int ret = 0;
-	uint64_t timestamp;
+	tick_t timestamp;
 	int num_sent = 0;
 	int max_sent = 1;
 
@@ -335,7 +338,7 @@ blast_client_send_data(blast_client_t* client) {
 	max_sent = blast_client_congest_control(client, timestamp);
 
 	if (array_size(client->pending)) {
-		int ipend, psize;
+		unsigned int ipend, psize;
 		for (ipend = 0, psize = array_size(client->pending); (ipend < psize) &&
 		        (num_sent < max_sent); ++ipend) {
 			//TODO: Resend threshold based on round-trip time
@@ -374,7 +377,8 @@ blast_client_send_data(blast_client_t* client) {
 		if (array_size(client->pending) == 0) {
 			blast_client_report_progress(client, true);
 			deltatime_t elapsed = time_elapsed(client->begin_send);
-			log_infof(HASH_BLAST, STRING_CONST("Transfer complete: %.2fs (%.2fMiB/s)"), elapsed,
+			log_infof(HASH_BLAST, STRING_CONST("Transfer complete: %.2" PRIreal "s (%.2" PRIreal "MiB/s)"),
+				(real)elapsed,
 				(real)(client->readers[client->current]->size / (1024*1024)) / elapsed);
 			if (client->current + 1 >= (int)array_size(client->readers)) {
 				log_infof(HASH_BLAST, STRING_CONST("All transfers complete"));
@@ -399,10 +403,13 @@ blast_client_send_data(blast_client_t* client) {
 static void
 blast_client_read_ack(blast_client_t* client) {
 	const network_address_t* address = 0;
-	char databuf[PACKET_DATABUF_SIZE];
-	size_t size = udp_socket_recvfrom(client->sock, databuf, sizeof(databuf), &address);
+	union {
+		char databuf[PACKET_DATABUF_SIZE];
+		packet_t packet;
+	} data;
+	size_t size = udp_socket_recvfrom(client->sock, data.databuf, sizeof(data.databuf), &address);
 	while (size > 0) {
-		packet_t* packet = (packet_t*)databuf;
+		packet_t* packet = &data.packet;
 		if (network_address_equal(address, socket_address_remote(client->sock))) {
 			if (packet->type == PACKET_ACK) {
 				packet_ack_t* ack = (packet_ack_t*)packet;
@@ -421,7 +428,7 @@ blast_client_read_ack(blast_client_t* client) {
 			          STRING_FORMAT(addr));
 		}
 
-		size = udp_socket_recvfrom(client->sock, databuf, sizeof(databuf), &address);
+		size = udp_socket_recvfrom(client->sock, data.databuf, sizeof(data.databuf), &address);
 	}
 }
 
@@ -446,6 +453,7 @@ blast_client_process(blast_client_t* client) {
 	case BLAST_STATE_TRANSFER:
 		return blast_client_transfer(client);
 
+	case BLAST_STATE_FINISHED:
 	default:
 		break;
 	}
@@ -455,9 +463,9 @@ blast_client_process(blast_client_t* client) {
 
 int
 blast_client(network_address_t** * target, string_t* files) {
-	int itarg, tsize = 0;
-	int iclient, csize = 0;
-	int ifile, fsize = 0;
+	unsigned int itarg, tsize = 0;
+	unsigned int iclient, csize = 0;
+	unsigned int ifile, fsize = 0;
 	bool running = true;
 	int result = BLAST_RESULT_OK;
 	blast_reader_t* reader = 0;
@@ -467,7 +475,7 @@ blast_client(network_address_t** * target, string_t* files) {
 		reader = blast_reader_open(files[ifile]);
 		if (!reader) {
 			log_warnf(HASH_BLAST, WARNING_SUSPICIOUS, STRING_CONST("Unable to open reader for: %.*s"),
-			          STRING_ARGS(files[ifile]));
+			          STRING_FORMAT(files[ifile]));
 			return BLAST_ERROR_UNABLE_TO_OPEN_FILE;
 		}
 

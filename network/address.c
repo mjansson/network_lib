@@ -46,11 +46,11 @@ network_address_resolve(const char* address, size_t length) {
 		int port = string_to_int(address, length);
 		if ((port > 0) && (port <= 65535)) {
 			network_address_t* any = network_address_ipv4_any();
-			network_address_ip_set_port(any, port);
+			network_address_ip_set_port(any, (unsigned int)port);
 			array_push(addresses, any);
 
 			any = network_address_ipv6_any();
-			network_address_ip_set_port(any, port);
+			network_address_ip_set_port(any, (unsigned int)port);
 			array_push(addresses, any);
 
 			error_context_pop();
@@ -119,7 +119,7 @@ network_address_resolve(const char* address, size_t length) {
 		string_const_t errmsg = system_error_message(err);
 		log_warnf(HASH_NETWORK, WARNING_INVALID_VALUE,
 		          STRING_CONST("Unable to resolve network address '%.*s' (%s): %.*s (%d)"),
-		          address, length, final_address, STRING_FORMAT(errmsg), err);
+		          (int)length, address, final_address, STRING_FORMAT(errmsg), err);
 	}
 
 	string_deallocate(localaddress.str);
@@ -394,8 +394,9 @@ network_address_local(void) {
 	struct ifaddrs* ifa = 0;
 
 	if (getifaddrs(&ifaddr) < 0) {
-		log_errorf(HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL, "Unable to get interface addresses: %s",
-		           system_error_message(NETWORK_RESOLV_ERROR));
+		const string_const_t errmsg = system_error_message(NETWORK_RESOLV_ERROR);
+		log_errorf(HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to get interface addresses: %.*s"),
+		           STRING_FORMAT(errmsg));
 		error_context_pop();
 		return 0;
 	}

@@ -34,9 +34,6 @@ _socket_stream_finalize(stream_t* stream);
 static size_t
 _socket_stream_available_nonblock_read(const socket_stream_t* stream);
 
-static size_t
-_socket_stream_buffered_in(const socket_stream_t* stream);
-
 static void
 _socket_stream_doflush(socket_stream_t* stream);
 
@@ -75,8 +72,9 @@ _socket_allocate_base(socket_t* sock) {
 		return sock->base;
 
 	//TODO: Better allocation scheme
+	int base = 0;
 	do {
-		int base = atomic_exchange_and_add32(&_socket_base_next, 1);
+		base = atomic_exchange_and_add32(&_socket_base_next, 1);
 		if (base > _socket_base_size) {
 			atomic_store32(&_socket_base_next, 0);
 			continue;
@@ -87,12 +85,12 @@ _socket_allocate_base(socket_t* sock) {
 			sockbase->fd = SOCKET_INVALID;
 			sockbase->flags = 0;
 			sockbase->state = SOCKETSTATE_NOTCONNECTED;
-			return base;
+			break;
 		}
 	}
 	while (true);
 
-	return -1;
+	return base;
 }
 
 int
@@ -101,7 +99,7 @@ _socket_create_fd(socket_t* sock, network_address_family_t family) {
 
 	if (_socket_allocate_base(sock) < 0) {
 		log_errorf(HASH_NETWORK, ERROR_OUT_OF_MEMORY,
-		           STRING_CONST("Unable to allocate base for socket 0x%" PRIfixPTR), sock);
+		           STRING_CONST("Unable to allocate base for socket 0x%" PRIfixPTR), (uintptr_t)sock);
 		return SOCKET_INVALID;
 	}
 
@@ -111,7 +109,7 @@ _socket_create_fd(socket_t* sock, network_address_family_t family) {
 		if (sock->family != family) {
 			FOUNDATION_ASSERT_FAILFORMAT_LOG(HASH_NETWORK,
 			                                 "Trying to switch family on existing socket (0x%" PRIfixPTR " : %d) from %u to %u",
-			                                 sock, sockbase->fd, sock->family, family);
+			                                 (uintptr_t)sock, sockbase->fd, sock->family, family);
 			return SOCKET_INVALID;
 		}
 	}
@@ -140,7 +138,7 @@ socket_deallocate(socket_t* sock) {
 		if (sock->base >= 0)
 			fd = _socket_base[ sock->base ].fd;
 		log_debugf(HASH_NETWORK, STRING_CONST("Deallocating socket (0x%" PRIfixPTR " : %d)"),
-		           sock, fd);
+		           (uintptr_t)sock, fd);
 	}
 #endif
 
@@ -171,7 +169,7 @@ socket_bind(socket_t* sock, const network_address_t* address) {
 
 	sockbase = _socket_base + sock->base;
 	address_ip = (const network_address_ip_t*)address;
-	if (bind(sockbase->fd, &address_ip->saddr, address_ip->address_size) == 0) {
+	if (bind(sockbase->fd, &address_ip->saddr, (socklen_t)address_ip->address_size) == 0) {
 		//Store local address
 		_socket_store_address_local(sock, address_ip->family);
 		success = true;
@@ -180,7 +178,7 @@ socket_bind(socket_t* sock, const network_address_t* address) {
 			char buffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
 			string_t address_str = network_address_to_string(buffer, sizeof(buffer), sock->address_local, true);
 			log_infof(HASH_NETWORK, STRING_CONST("Bound socket (0x%" PRIfixPTR " : %d) to local address %.*s"),
-			          sock, sockbase->fd, STRING_FORMAT(address_str));
+			          (uintptr_t)sock, sockbase->fd, STRING_FORMAT(address_str));
 		}
 #endif
 	}
@@ -192,7 +190,7 @@ socket_bind(socket_t* sock, const network_address_t* address) {
 		string_t address_str = network_address_to_string(buffer, sizeof(buffer), address, true);
 		log_warnf(HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL,
 		          STRING_CONST("Unable to bind socket (0x%" PRIfixPTR " : %d) to local address %.*s: %.*s (%d)"),
-		          sock, sockbase->fd, STRING_FORMAT(address_str), STRING_FORMAT(errmsg), sockerr);
+		          (uintptr_t)sock, sockbase->fd, STRING_FORMAT(address_str), STRING_FORMAT(errmsg), sockerr);
 #endif
 	}
 
@@ -220,7 +218,7 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 		socket_set_blocking(sock, false);
 
 	address_ip = (const network_address_ip_t*)address;
-	err = connect(sockbase->fd, &address_ip->saddr, address_ip->address_size);
+	err = connect(sockbase->fd, &address_ip->saddr, (socklen_t)address_ip->address_size);
 	if (!err) {
 		failed = false;
 		sockbase->state = SOCKETSTATE_CONNECTED;
@@ -307,7 +305,7 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 		string_t address_str = network_address_to_string(buffer, sizeof(buffer), address, true);
 		log_debugf(HASH_NETWORK,
 		           STRING_CONST("Failed to connect TCP/IP socket (0x%" PRIfixPTR " : %d) to remote host %.*s: %.*s"),
-		           sock, sockbase->fd, STRING_FORMAT(address_str), STRING_FORMAT(error_message));
+		           (uintptr_t)sock, sockbase->fd, STRING_FORMAT(address_str), STRING_FORMAT(error_message));
 #endif
 		return err;
 	}
@@ -325,7 +323,7 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 		log_debugf(HASH_NETWORK,
 		           STRING_CONST("%s socket (0x%" PRIfixPTR " : %d) to remote host %.*s"),
 		           (sockbase->state == SOCKETSTATE_CONNECTING) ? "Connecting" : "Connected",
-		           sock, sockbase->fd, STRING_FORMAT(address_str));
+		           (uintptr_t)sock, sockbase->fd, STRING_FORMAT(address_str));
 	}
 #endif
 
@@ -349,7 +347,8 @@ socket_connect(socket_t* sock, const network_address_t* address, unsigned int ti
 		string_t address_str = network_address_to_string(buffer, sizeof(buffer), address, true);
 		log_warnf(HASH_NETWORK, WARNING_SUSPICIOUS,
 		          STRING_CONST("Unable to connect already connected socket (0x%" PRIfixPTR
-		                       " : %d) to remote address %.*s"), sock, sockbase->fd, STRING_FORMAT(address_str));
+		                       " : %d) to remote address %.*s"),
+		          (uintptr_t)sock, sockbase->fd, STRING_FORMAT(address_str));
 #endif
 		return false;
 	}
@@ -362,7 +361,8 @@ socket_connect(socket_t* sock, const network_address_t* address, unsigned int ti
 		string_t address_str = network_address_to_string(buffer, sizeof(buffer), address, true);
 		log_warnf(HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL,
 		          STRING_CONST("Unable to connect socket (0x%" PRIfixPTR
-		                       " : %d) to remote address %.*s: %.*s (%d)"), sock, sockbase->fd, STRING_FORMAT(address_str),
+		                       " : %d) to remote address %.*s: %.*s (%d)"),
+		          (uintptr_t)sock, sockbase->fd, STRING_FORMAT(address_str),
 		          STRING_FORMAT(errmsg), err);
 #endif
 		return false;
@@ -431,7 +431,7 @@ socket_set_reuse_address(socket_t* sock, bool reuse) {
 			log_warnf(HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL,
 			          STRING_CONST("Unable to set reuse address option on socket (0x%" PRIfixPTR
 			                       " : %d): %.*s (%d)"),
-			          sock, sockbase->fd, STRING_FORMAT(errmsg), sockerr);
+			          (uintptr_t)sock, sockbase->fd, STRING_FORMAT(errmsg), sockerr);
 			FOUNDATION_UNUSED(sockerr);
 		}
 	}
@@ -473,7 +473,7 @@ socket_set_reuse_port(socket_t* sock, bool reuse) {
 			const string_const_t errmsg = system_error_message(sockerr);
 			log_warnf(HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL,
 			          STRING_CONST("Unable to set reuse port option on socket (0x%" PRIfixPTR " : %d): %.*s (%d)"),
-			          sock, sockbase->fd, STRING_FORMAT(errmsg), sockerr);
+			          (uintptr_t)sock, sockbase->fd, STRING_FORMAT(errmsg), sockerr);
 			FOUNDATION_UNUSED(sockerr);
 		}
 #endif
@@ -509,7 +509,7 @@ socket_set_multicast_group(socket_t* sock, network_address_t* address, bool allo
 		const string_const_t errmsg = system_error_message(sockerr);
 		log_errorf(HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL,
 		           STRING_CONST("Add multicast group failed on socket (0x%" PRIfixPTR " : %d): %.*s (%d)"),
-		           sock, fd, STRING_FORMAT(errmsg), sockerr);
+		           (uintptr_t)sock, fd, STRING_FORMAT(errmsg), sockerr);
 		FOUNDATION_UNUSED(sockerr);
 		return false;
 	}
@@ -538,7 +538,7 @@ socket_state(const socket_t* sock) {
 size_t
 socket_available_read(const socket_t* sock) {
 	if (sock->base >= 0)
-		return _socket_available_fd(_socket_base[ sock->base ].fd);
+		return (unsigned int)_socket_available_fd(_socket_base[sock->base].fd);
 	return 0;
 }
 
@@ -552,7 +552,7 @@ socket_read(socket_t* sock, void* buffer, size_t size) {
 		return 0;
 
 	sockbase = _socket_base + sock->base;
-	ret = recv(sockbase->fd, (char*)buffer, (int)size, 0);
+	ret = recv(sockbase->fd, (char*)buffer, size, 0);
 	if (ret > 0) {
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 		const unsigned char* src = (const unsigned char*)buffer;
@@ -561,7 +561,7 @@ socket_read(socket_t* sock, void* buffer, size_t size) {
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
 		log_debugf(HASH_NETWORK,
 		           STRING_CONST("Socket (0x%" PRIfixPTR " : %d) read %d of %" PRIsize " bytes"),
-		           sock, sockbase->fd, ret, size);
+		           (uintptr_t)sock, sockbase->fd, ret, size);
 #endif
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 		for (long row = 0; row <= (ret / 8); ++row) {
@@ -588,12 +588,12 @@ socket_read(socket_t* sock, void* buffer, size_t size) {
 
 	if (ret == 0) {
 #if BUILD_ENABLE_DEBUG_LOG
-		char buffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
-		string_t address_str = network_address_to_string(buffer, sizeof(buffer), sock->address_remote,
-		                                                 true);
+		char addrbuffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
+		string_t address_str = network_address_to_string(addrbuffer, sizeof(addrbuffer),
+		                                                 sock->address_remote, true);
 		log_debugf(HASH_NETWORK,
 		           STRING_CONST("Socket closed gracefully on remote end (0x%" PRIfixPTR " : %d): %.*s"),
-		           sock, sockbase->fd, STRING_FORMAT(address_str));
+		           (uintptr_t)sock, sockbase->fd, STRING_FORMAT(address_str));
 #endif
 		socket_close(sock);
 	}
@@ -608,7 +608,7 @@ socket_read(socket_t* sock, void* buffer, size_t size) {
 			string_const_t errmsg = system_error_message(sockerr);
 			log_warnf(HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL,
 			          STRING_CONST("Socket recv() failed on socket (0x%" PRIfixPTR " : %d): %.*s (%d)"),
-			          sock, sockbase->fd, STRING_FORMAT(errmsg), sockerr);
+			          (uintptr_t)sock, sockbase->fd, STRING_FORMAT(errmsg), sockerr);
 		}
 
 #if FOUNDATION_PLATFORM_WINDOWS
@@ -638,7 +638,7 @@ socket_write(socket_t* sock, const void* buffer, size_t size) {
 	sockbase = _socket_base + sock->base;
 	while (total_write < size) {
 		const char* current = (const char*)pointer_offset_const(buffer, total_write);
-		int remain = (int)(size - total_write);
+		size_t remain = size - total_write;
 
 		long res = send(sockbase->fd, current, remain, 0);
 		if (res > 0) {
@@ -649,7 +649,7 @@ socket_write(socket_t* sock, const void* buffer, size_t size) {
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
 			log_debugf(HASH_NETWORK,
 			           STRING_CONST("Socket (0x%" PRIfixPTR " : %d) wrote %d of %d bytes (offset %" PRIsize ")"),
-			           sock, sockbase->fd, res, remain, total_write);
+			           (uintptr_t)sock, sockbase->fd, res, remain, total_write);
 #endif
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 			for (long row = 0; row <= (res / 8); ++row) {
@@ -666,7 +666,7 @@ socket_write(socket_t* sock, const void* buffer, size_t size) {
 				}
 			}
 #endif
-			total_write += res;
+			total_write += (unsigned long)res;
 		}
 		else if (res <= 0) {
 			int sockerr = NETWORK_SOCKET_ERROR;
@@ -690,12 +690,13 @@ socket_write(socket_t* sock, const void* buffer, size_t size) {
 				log_warnf(HASH_NETWORK, WARNING_SUSPICIOUS,
 				          STRING_CONST("Partial socket send() on (0x%" PRIfixPTR
 				                       " : %d): %" PRIsize" of %" PRIsize " bytes written to socket (SO_ERROR %d)"),
-				          sock, sockbase->fd, total_write, size, serr);
+				          (uintptr_t)sock, sockbase->fd, total_write, size, serr);
 			}
 			else {
+				const string_const_t errstr = system_error_message(sockerr);
 				log_warnf(HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL,
-				          STRING_CONST("Socket send() failed on socket (0x%" PRIfixPTR " : %d): %s (%d) (SO_ERROR %d)"),
-				          sock, sockbase->fd, system_error_message(sockerr), sockerr, serr);
+				          STRING_CONST("Socket send() failed on socket (0x%" PRIfixPTR " : %d): %.*s (%d) (SO_ERROR %d)"),
+				          (uintptr_t)sock, sockbase->fd, STRING_FORMAT(errstr), sockerr, serr);
 			}
 
 #if FOUNDATION_PLATFORM_WINDOWS
@@ -779,7 +780,7 @@ socket_close(socket_t* sock) {
 	}
 
 	log_debugf(HASH_NETWORK, STRING_CONST("Closing socket (0x%" PRIfixPTR " : %d)"),
-	           sock, fd);
+	           (uintptr_t)sock, fd);
 
 	sock->address_local  = nullptr;
 	sock->address_remote = nullptr;
@@ -846,14 +847,14 @@ _socket_poll_state(socket_base_t* sockbase) {
 		if (FD_ISSET(sockbase->fd, &fderr)) {
 			log_debugf(HASH_NETWORK,
 			           STRING_CONST("Socket (0x%" PRIfixPTR " : %d): error in state CONNECTING"),
-			           sock, sockbase->fd);
+			           (uintptr_t)sock, sockbase->fd);
 			socket_close(sock);
 		}
 		else if (FD_ISSET(sockbase->fd, &fdwrite)) {
 #if BUILD_ENABLE_DEBUG_LOG
 			log_debugf(HASH_NETWORK,
 			           STRING_CONST("Socket (0x%" PRIfixPTR " : %d): CONNECTING -> CONNECTED"),
-			           sock, sockbase->fd);
+			           (uintptr_t)sock, sockbase->fd);
 #endif
 			sockbase->state = SOCKETSTATE_CONNECTED;
 		}
@@ -866,7 +867,7 @@ _socket_poll_state(socket_base_t* sockbase) {
 #if BUILD_ENABLE_DEBUG_LOG
 			log_debugf(HASH_NETWORK,
 			           STRING_CONST("Socket (0x%" PRIfixPTR " : %d): hangup in CONNECTED"),
-			           sock, sockbase->fd);
+			           (uintptr_t)sock, sockbase->fd);
 #endif
 			sockbase->state = SOCKETSTATE_DISCONNECTED;
 			//Fall through to disconnected check for close
@@ -878,7 +879,7 @@ _socket_poll_state(socket_base_t* sockbase) {
 		if (!socket_available_read(sock)) {
 			log_debugf(HASH_NETWORK,
 			           STRING_CONST("Socket (0x%" PRIfixPTR " : %d): all data read in DISCONNECTED"),
-			           sock, sockbase->fd);
+			           (uintptr_t)sock, sockbase->fd);
 			socket_close(sock);
 		}
 		break;
@@ -915,7 +916,8 @@ _socket_store_address_local(socket_t* sock, int family) {
 	else {
 		FOUNDATION_ASSERT_FAILFORMAT_LOG(HASH_NETWORK,
 		                                 "Unable to get local address for socket (0x%" PRIfixPTR
-		                                 " : %d): Unsupported address family %u", sock, sockbase->fd, family);
+		                                 " : %d): Unsupported address family %u",
+		                                 (uintptr_t)sock, sockbase->fd, family);
 		return;
 	}
 	getsockname(sockbase->fd, &address_local->saddr, (socklen_t*)&address_local->address_size);
@@ -960,8 +962,9 @@ _socket_stream_finalize(stream_t* stream) {
 
 	FOUNDATION_ASSERT_MSGFORMAT(sock->stream == sockstream,
 	                            "Socket (0x%" PRIfixPTR " : %d): Deallocating stream mismatch, stream is 0x%" PRIfixPTR
-	                            ", socket stream is 0x%" PRIfixPTR, sock,
-	                            (sock->base >= 0) ? _socket_base[ sock->base ].fd : SOCKET_INVALID, sockstream, sock->stream);
+	                            ", socket stream is 0x%" PRIfixPTR,
+	                            (uintptr_t)sock, (sock->base >= 0) ? _socket_base[ sock->base ].fd : SOCKET_INVALID,
+	                            (uintptr_t)sockstream, (uintptr_t)sock->stream);
 	sock->stream = 0;
 	sockstream->socket = 0;
 }
@@ -1039,7 +1042,7 @@ _socket_stream_read(stream_t* stream, void* buffer, size_t size) {
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
 			log_debugf(HASH_NETWORK, STRING_CONST("Socket stream (0x%" PRIfixPTR
 			                                      " : %d) read %" PRIsize" of %" PRIsize " bytes from buffer position %" PRIsize),
-			           sock, sockbase->fd, copy, want_read, sockstream->read_in);
+			           (uintptr_t)sock, sockbase->fd, copy, want_read, sockstream->read_in);
 #endif
 
 			was_read += copy;
@@ -1065,8 +1068,8 @@ _socket_stream_read(stream_t* stream, void* buffer, size_t size) {
 	if (was_read < size) {
 		if (was_read)
 			log_warnf(HASH_NETWORK, WARNING_SUSPICIOUS,
-			          STRING_CONST("Socket stream (0x%" PRIfixPTR " : %d): partial read %d of %d bytes"),
-			          sock, sockbase->fd, was_read, size);
+			          STRING_CONST("Socket stream (0x%" PRIfixPTR " : %d): partial read %" PRIsize " of %" PRIsize " bytes"),
+			          (uintptr_t)sock, sockbase->fd, was_read, size);
 		_socket_poll_state(sockbase);
 	}
 
@@ -1121,8 +1124,8 @@ _socket_stream_write(stream_t* stream, const void* buffer, size_t size) {
 
 		if (sockbase->state != SOCKETSTATE_CONNECTED) {
 			log_warnf(HASH_NETWORK, WARNING_SUSPICIOUS,
-			          STRING_CONST("Socket stream (0x%" PRIfixPTR " : %d): partial write %d of %d bytes"),
-			          sock, sockbase->fd, was_written, (unsigned int)size);
+			          STRING_CONST("Socket stream (0x%" PRIfixPTR " : %d): partial write %" PRIsize " of %" PRIsize " bytes"),
+			          (uintptr_t)sock, sockbase->fd, was_written, size);
 			break;
 		}
 
@@ -1237,7 +1240,7 @@ _socket_stream_seek(stream_t* stream, ssize_t offset, stream_seek_mode_t directi
 		          STRING_CONST("Invalid call, only forward seeking allowed on sockets"));
 	}
 	else {
-		_socket_stream_read(stream, 0, offset);
+		_socket_stream_read(stream, 0, (size_t)offset);
 	}
 }
 

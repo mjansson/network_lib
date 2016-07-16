@@ -72,7 +72,7 @@ main_initialize(void) {
 
 int
 main_run(void* main_arg) {
-	int itarget, tsize = 0;
+	unsigned int itarget, tsize = 0;
 	int result = BLAST_RESULT_OK;
 
 	FOUNDATION_UNUSED(main_arg);
@@ -104,8 +104,8 @@ main_finalize(void) {
 blast_input_t
 blast_parse_command_line(const string_const_t* cmdline) {
 	blast_input_t input;
-	int arg, asize;
-	int addr, addrsize;
+	unsigned int arg, asize;
+	unsigned int addr, addrsize;
 
 	error_context_push(STRING_CONST("parsing command line"), STRING_CONST(""));
 	memset(&input, 0, sizeof(input));

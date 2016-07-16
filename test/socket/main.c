@@ -14,7 +14,7 @@
 #include <foundation/foundation.h>
 #include <test/test.h>
 
-application_t
+static application_t
 test_socket_application(void) {
 	application_t app;
 	memset(&app, 0, sizeof(app));
@@ -26,19 +26,19 @@ test_socket_application(void) {
 	return app;
 }
 
-memory_system_t
+static memory_system_t
 test_socket_memory_system(void) {
 	return memory_system_malloc();
 }
 
-foundation_config_t
+static foundation_config_t
 test_socket_foundation_config(void) {
 	foundation_config_t config;
 	memset(&config, 0, sizeof(config));
 	return config;
 }
 
-int
+static int
 test_socket_initialize(void) {
 	network_config_t config;
 	memset(&config, 0, sizeof(config));
@@ -46,7 +46,7 @@ test_socket_initialize(void) {
 	return network_module_initialize(config);
 }
 
-void
+static void
 test_socket_finalize(void) {
 	network_module_finalize();
 }
@@ -75,7 +75,7 @@ DECLARE_TEST(tcp, bind) {
 	bool has_ipv4 = network_supports_ipv4();
 	bool has_ipv6 = network_supports_ipv6();
 	bool was_bound = false;
-	int port;
+	unsigned int port;
 
 	if (has_ipv4) {
 		socket_t* sock = tcp_socket_allocate();
@@ -215,7 +215,7 @@ DECLARE_TEST(udp, bind) {
 	return 0;
 }
 
-void
+static void
 test_socket_declare(void) {
 	ADD_TEST(tcp, create);
 	ADD_TEST(tcp, blocking);
@@ -226,7 +226,7 @@ test_socket_declare(void) {
 	ADD_TEST(udp, bind);
 }
 
-test_suite_t test_socket_suite = {
+static test_suite_t test_socket_suite = {
 	test_socket_application,
 	test_socket_memory_system,
 	test_socket_foundation_config,
@@ -235,7 +235,10 @@ test_suite_t test_socket_suite = {
 	test_socket_finalize
 };
 
-#if FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_IOS
+#if BUILD_MONOLITHIC
+
+int
+test_socket_run(void);
 
 int
 test_socket_run(void) {
@@ -244,6 +247,9 @@ test_socket_run(void) {
 }
 
 #else
+
+test_suite_t
+test_suite_define(void);
 
 test_suite_t
 test_suite_define(void) {

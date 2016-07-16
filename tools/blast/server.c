@@ -49,7 +49,7 @@ blast_server_source_deallocate(blast_server_source_t* source) {
 	memory_deallocate(source);
 }
 
-static int
+static unsigned int
 blast_server_time_until_ack(blast_server_t* server) {
 	FOUNDATION_UNUSED(server);
 	return 10;
@@ -134,7 +134,7 @@ blast_server_process_handshake(blast_server_t* server, socket_t* sock,
                                void* data, size_t size, const network_address_t* address) {
 	packet_handshake_t* handshake = data;
 	blast_server_source_t* source = 0;
-	int isrc, ssize;
+	unsigned int isrc, ssize;
 	char addrbuf[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
 
 	string_t addr = network_address_to_string(addrbuf, sizeof(addrbuf), address, true);
@@ -196,7 +196,7 @@ blast_server_process_payload(blast_server_t* server, socket_t* sock,
                              void* data, size_t size, const network_address_t* address) {
 	packet_payload_t* packet = (packet_payload_t*)data;
 	blast_server_source_t* source = 0;
-	int isrc, ssize;
+	unsigned int isrc, ssize;
 	void* buffer;
 	uint64_t offset;
 
@@ -259,12 +259,15 @@ blast_server_process_payload(blast_server_t* server, socket_t* sock,
 static bool
 blast_server_read(blast_server_t* server, socket_t* sock) {
 	const network_address_t* address = 0;
-	char databuf[PACKET_DATABUF_SIZE];
-	size_t size = udp_socket_recvfrom(sock, databuf, sizeof(databuf), &address);
+	union {
+		char buffer[PACKET_DATABUF_SIZE];
+		packet_t packet;
+	} buffer;
+	size_t size = udp_socket_recvfrom(sock, databuf.buffer, sizeof(databuf.buffer), &address);
 	if (size == 0)
 		return false;
 	while (size > 0) {
-		packet_t* packet = (packet_t*)databuf;
+		packet_t* packet = &databuf.packet;
 		if (packet->type == PACKET_HANDSHAKE) {
 			blast_server_process_handshake(server, sock, databuf, size, address);
 		}
@@ -281,7 +284,7 @@ blast_server_read(blast_server_t* server, socket_t* sock) {
 
 static void
 blast_server_tick(blast_server_t* server) {
-	int isrc, ssize;
+	unsigned int isrc, ssize;
 	for (isrc = 0, ssize = array_size(server->sources); isrc < ssize;) {
 		if (time_elapsed(server->sources[isrc]->last_recv) > BLAST_SERVER_TIMEOUT) {
 			char addrbuf[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
@@ -324,6 +327,12 @@ blast_server_run(bool daemon, network_poll_t* poll, blast_server_t* server) {
 
 				}
 				break;
+			case NETWORKEVENT_CONNECTION:
+			case NETWORKEVENT_CONNECTED:
+			case NETWORKEVENT_ERROR:
+			case NETWORKEVENT_HANGUP:
+			default:
+				break;
 			}
 		}
 		blast_process_system_events();
@@ -342,7 +351,7 @@ blast_server_allocate(void) {
 
 static void
 blast_server_deallocate(blast_server_t* server) {
-	int isrc, ssize;
+	unsigned int isrc, ssize;
 	for (isrc = 0, ssize = array_size(server->sources); isrc < ssize; ++isrc)
 		blast_server_source_deallocate(server->sources[isrc]);
 	memory_deallocate(server);
@@ -350,7 +359,7 @@ blast_server_deallocate(blast_server_t* server) {
 
 int
 blast_server(network_address_t** bind, bool daemon) {
-	int isock, asize, added = 0;
+	unsigned int isock, asize, added = 0;
 	int result = BLAST_RESULT_OK;
 	unsigned int port = 0;
 	network_poll_t* poll = 0;

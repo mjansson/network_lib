@@ -139,8 +139,8 @@ DECLARE_TEST(udp, stream_ipv4) {
 	network_address_t** address_local = 0;
 	network_address_t* address = 0;
 
-	int server_port, client_port;
-	int state, iaddr, asize;
+	unsigned int server_port, client_port;
+	unsigned int state, iaddr, asize;
 	thread_t threads[2];
 
 	socket_t* sock_server;
