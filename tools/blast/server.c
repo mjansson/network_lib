@@ -73,11 +73,11 @@ blast_server_send_ack(blast_server_source_t* source) {
 
 	if (source->ack_offset < PACKET_ACK_COUNT) {
 		first_acks = (PACKET_ACK_COUNT - source->ack_offset);
-		memcpy(packet.ack, source->ack + (PACKET_ACK_HISTORY - first_acks), sizeof(uint32_t) * first_acks);
+		memcpy(packet.ack, source->ack + (PACKET_ACK_HISTORY - first_acks), sizeof(uint32_t) * (size_t)first_acks);
 	}
 	second_acks = PACKET_ACK_COUNT - first_acks;
 	memcpy(packet.ack + first_acks, source->ack + (source->ack_offset - second_acks),
-	       sizeof(uint32_t) * second_acks);
+	       sizeof(uint32_t) * (size_t)second_acks);
 
 	/*log_infof(HASH_BLAST,
 	          STRING_CONST("Send ACKs [%d:%d up to %d] (ack seq %d) for transfer of '%.*s' size %lld with token %d"),
@@ -92,7 +92,7 @@ blast_server_send_ack(blast_server_source_t* source) {
 
 static void
 blast_server_send_acks(blast_server_t* server) {
-	int isrc, ssize;
+	unsigned int isrc, ssize;
 	for (isrc = 0, ssize = array_size(server->sources); isrc < ssize; ++isrc) {
 		blast_server_source_t* source = server->sources[isrc];
 		//TODO: Base on round-trip time and back-off rate (back-off reset on recv packet)
@@ -181,8 +181,9 @@ blast_server_process_handshake(blast_server_t* server, socket_t* sock,
 		                                   handshake->datasize);
 		source->token = (++server->token_counter) & PACKET_TOKEN_MASK;
 		source->last_ack = time_current();
-		log_infof(HASH_BLAST, STRING_CONST("Prepare transfer of '%.*s' size %lld with token %d from %.*s"),
-		          (int)handshake->namesize, handshake->name, handshake->datasize, source->token, STRING_FORMAT(addr));
+		log_infof(HASH_BLAST, STRING_CONST("Prepare transfer of '%.*s' size %" PRIsize " with token %" PRIu64 " from %.*s"),
+		          (int)handshake->namesize, handshake->name, (size_t)handshake->datasize,
+		          source->token, STRING_FORMAT(addr));
 	}
 
 	handshake->token = source->token;
@@ -262,22 +263,22 @@ blast_server_read(blast_server_t* server, socket_t* sock) {
 	union {
 		char buffer[PACKET_DATABUF_SIZE];
 		packet_t packet;
-	} buffer;
+	} databuf;
 	size_t size = udp_socket_recvfrom(sock, databuf.buffer, sizeof(databuf.buffer), &address);
 	if (size == 0)
 		return false;
 	while (size > 0) {
 		packet_t* packet = &databuf.packet;
 		if (packet->type == PACKET_HANDSHAKE) {
-			blast_server_process_handshake(server, sock, databuf, size, address);
+			blast_server_process_handshake(server, sock, databuf.buffer, size, address);
 		}
 		else if (packet->type == PACKET_PAYLOAD) {
-			blast_server_process_payload(server, sock, databuf, size, address);
+			blast_server_process_payload(server, sock, databuf.buffer, size, address);
 		}
 		else {
 			log_warnf(HASH_BLAST, WARNING_SUSPICIOUS, STRING_CONST("Unknown datagram on socket"));
 		}
-		size = udp_socket_recvfrom(sock, databuf, sizeof(databuf), &address);
+		size = udp_socket_recvfrom(sock, databuf.buffer, sizeof(databuf.buffer), &address);
 	}
 	return true;
 }

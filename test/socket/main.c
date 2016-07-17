@@ -157,7 +157,7 @@ DECLARE_TEST(udp, bind) {
 	bool has_ipv4 = network_supports_ipv4();
 	bool has_ipv6 = network_supports_ipv6();
 	bool was_bound = false;
-	int port;
+	unsigned int port;
 
 	if (has_ipv4) {
 		socket_t* sock = udp_socket_allocate();
@@ -232,7 +232,8 @@ static test_suite_t test_socket_suite = {
 	test_socket_foundation_config,
 	test_socket_declare,
 	test_socket_initialize,
-	test_socket_finalize
+	test_socket_finalize,
+	0
 };
 
 #if BUILD_MONOLITHIC

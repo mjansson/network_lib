@@ -45,7 +45,7 @@ typedef struct blast_client_t {
 	int                       last_progress_percent;
 } blast_client_t;
 
-blast_client_t* clients = 0;
+static blast_client_t* clients = 0;
 
 static tick_t
 blast_time_elapsed_ms(const tick_t since) {
@@ -55,7 +55,7 @@ blast_time_elapsed_ms(const tick_t since) {
 
 static tick_t
 blast_timestamp(const tick_t begin_send) {
-	return blast_time_elapsed_ms(begin_send) & PACKET_TIMESTAMP_MASK;
+	return (tick_t)((uint64_t)blast_time_elapsed_ms(begin_send) & PACKET_TIMESTAMP_MASK);
 }
 
 static tick_t
@@ -63,7 +63,7 @@ blast_timestamp_elapsed_ms(const tick_t begin_send, const tick_t timestamp) {
 	const tick_t current = blast_timestamp(begin_send);
 	if (current >= timestamp)
 		return current - timestamp;
-	return (PACKET_TIMESTAMP_MASK - timestamp) + current;
+	return ((tick_t)PACKET_TIMESTAMP_MASK - timestamp) + current;
 }
 
 static uint64_t
@@ -81,7 +81,7 @@ blast_client_report_progress(blast_client_t* client, bool force) {
 			real resend_rate = (real)((float64_t)client->packets_resent / (float64_t)client->packets_sent) *
 			                   REAL_C(100.0);
 			log_infof(HASH_BLAST, STRING_CONST("Progress: %.*s %d%% (resend rate %.2" PRIreal "%% %lld/%lld))"),
-			          STRING_FORMAT(client->readers[client->current]->name), progress, resend_rate,
+			          STRING_FORMAT(client->readers[client->current]->name), progress, (double)resend_rate,
 			          client->packets_resent,
 			          client->packets_sent);
 		}
@@ -92,7 +92,7 @@ blast_client_report_progress(blast_client_t* client, bool force) {
 
 static void
 blast_client_deallocate(blast_client_t* client) {
-	int isock, ssize = 0;
+	unsigned int isock, ssize = 0;
 
 	if (client->sock)
 		socket_deallocate(client->sock);
@@ -106,44 +106,46 @@ blast_client_deallocate(blast_client_t* client) {
 
 static int
 blast_client_send_handshake(blast_client_t* client, blast_reader_t* reader) {
-	unsigned int iaddr, addrsize = 0;
-	socket_t** socks;
-	const network_address_t** addrarr;
 	packet_handshake_t packet;
 
 	packet.type = PACKET_HANDSHAKE;
 	packet.token = 0;
-	packet.timestamp = blast_timestamp(client->begin_send);
+	packet.timestamp = (uint64_t)blast_timestamp(client->begin_send);
 	packet.datasize = reader->size;
 	packet.seq = blast_seq(client->seq++);
 	packet.namesize = (uint32_t)string_copy(packet.name, sizeof(packet.name),
 	                                        STRING_ARGS(reader->name)).length;
 
 	if (client->target) {
-		addrarr = &client->target;
-		socks = &client->sock;
-		addrsize = 1;
-	}
-	else {
-		addrarr = (const network_address_t**)client->address;
-		socks = client->socks;
-		addrsize = array_size(addrarr);
-	}
-
-	for (iaddr = 0; iaddr < addrsize; ++iaddr) {
-		udp_socket_sendto(socks[iaddr],
+		udp_socket_sendto(client->sock,
 		                  &packet, sizeof(packet_handshake_t) - (PACKET_NAME_MAXSIZE - packet.namesize) + 1,
-		                  addrarr[iaddr]);
-
+		                  client->target);
 #if BUILD_ENABLE_LOG
 		{
 			char buffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
-			string_t addr = network_address_to_string(buffer, sizeof(buffer), addrarr[iaddr], true);
+			string_t addr = network_address_to_string(buffer, sizeof(buffer), client->target, true);
 			log_infof(HASH_BLAST, STRING_CONST("Sent handshake to %.*s (seq %lld, timestamp %lld)"),
 			          STRING_FORMAT(addr), packet.seq,
 			          (tick_t)packet.timestamp);
 		}
 #endif
+	}
+	else {
+		unsigned int iaddr, asize;
+		for (iaddr = 0, asize = array_size(client->address); iaddr < asize; ++iaddr) {
+			udp_socket_sendto(client->socks[iaddr],
+			                  &packet, sizeof(packet_handshake_t) - (PACKET_NAME_MAXSIZE - packet.namesize) + 1,
+			                  client->address[iaddr]);
+#if BUILD_ENABLE_LOG
+			{
+				char buffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
+				string_t addr = network_address_to_string(buffer, sizeof(buffer), client->address[iaddr], true);
+				log_infof(HASH_BLAST, STRING_CONST("Sent handshake to %.*s (seq %lld, timestamp %lld)"),
+				          STRING_FORMAT(addr), packet.seq,
+				          (tick_t)packet.timestamp);
+			}
+#endif
+		}
 	}
 
 	client->last_send = time_current();
@@ -378,8 +380,8 @@ blast_client_send_data(blast_client_t* client) {
 			blast_client_report_progress(client, true);
 			deltatime_t elapsed = time_elapsed(client->begin_send);
 			log_infof(HASH_BLAST, STRING_CONST("Transfer complete: %.2" PRIreal "s (%.2" PRIreal "MiB/s)"),
-				(real)elapsed,
-				(real)(client->readers[client->current]->size / (1024*1024)) / elapsed);
+				(double)elapsed,
+				(double)(client->readers[client->current]->size / (1024*1024)) / (double)elapsed);
 			if (client->current + 1 >= (int)array_size(client->readers)) {
 				log_infof(HASH_BLAST, STRING_CONST("All transfers complete"));
 				return 0;

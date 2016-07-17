@@ -19,7 +19,7 @@ typedef struct _test_datagram_arg {
 	network_address_t* target;
 } test_datagram_arg_t;
 
-application_t
+static application_t
 test_udp_application(void) {
 	application_t app;
 	memset(&app, 0, sizeof(app));
@@ -31,19 +31,19 @@ test_udp_application(void) {
 	return app;
 }
 
-memory_system_t
+static memory_system_t
 test_udp_memory_system(void) {
 	return memory_system_malloc();
 }
 
-foundation_config_t
+static foundation_config_t
 test_udp_foundation_config(void) {
 	foundation_config_t config;
 	memset(&config, 0, sizeof(config));
 	return config;
 }
 
-int
+static int
 test_udp_initialize(void) {
 	network_config_t config;
 	memset(&config, 0, sizeof(config));
@@ -51,7 +51,7 @@ test_udp_initialize(void) {
 	return network_module_initialize(config);
 }
 
-void
+static void
 test_udp_finalize(void) {
 	network_module_finalize();
 }
@@ -80,7 +80,7 @@ stream_blocking_thread(void* arg) {
 		thread_yield();
 	}
 
-	log_debugf(HASH_NETWORK, STRING_CONST("IO complete on socket 0x%llx"), sock);
+	log_debugf(HASH_NETWORK, STRING_CONST("IO complete on socket 0x%" PRIfixPTR), (uintptr_t)sock);
 	stream_deallocate(stream);
 
 	return 0;
@@ -101,7 +101,7 @@ datagram_server_blocking_thread(void* arg) {
 		thread_yield();
 	}
 
-	log_infof(HASH_NETWORK, STRING_CONST("IO complete on socket 0x%llx"), sock);
+	log_infof(HASH_NETWORK, STRING_CONST("IO complete on socket 0x%" PRIfixPTR), (uintptr_t)sock);
 
 	return 0;
 }
@@ -119,7 +119,7 @@ datagram_client_blocking_thread(void* arg) {
 	size_t send = 973;
 	size_t recv;
 
-	log_debugf(HASH_NETWORK, STRING_CONST("IO start on socket 0x%llx"), sock);
+	log_debugf(HASH_NETWORK, STRING_CONST("IO start on socket 0x%" PRIfixPTR), (uintptr_t)sock);
 
 	for (iloop = 0; iloop < 512; ++iloop) {
 		log_infof(HASH_NETWORK, STRING_CONST("UDP read/write pass %d"), iloop);
@@ -130,7 +130,7 @@ datagram_client_blocking_thread(void* arg) {
 		thread_yield();
 	}
 
-	log_infof(HASH_NETWORK, STRING_CONST("IO complete on socket 0x%llx"), sock);
+	log_infof(HASH_NETWORK, STRING_CONST("IO complete on socket 0x%" PRIfixPTR), (uintptr_t)sock);
 
 	return 0;
 }
@@ -220,8 +220,8 @@ DECLARE_TEST(udp, stream_ipv6) {
 	network_address_t** address_local = 0;
 	network_address_t* address = 0;
 
-	int server_port, client_port;
-	int state, iaddr, asize;
+	unsigned int server_port, client_port;
+	unsigned int state, iaddr, asize;
 	thread_t threads[2];
 
 	socket_t* sock_server;
@@ -303,8 +303,8 @@ DECLARE_TEST(udp, datagram_ipv4) {
 	network_address_t* address_server = 0;
 	test_datagram_arg_t client_arg[4];
 
-	int server_port;
-	int state, iaddr, asize;
+	unsigned int server_port;
+	unsigned int state, iaddr, asize;
 	thread_t threads[5];
 
 	socket_t* sock_server;
@@ -409,8 +409,8 @@ DECLARE_TEST(udp, datagram_ipv6) {
 	network_address_t* address_server = 0;
 	test_datagram_arg_t client_arg[4];
 
-	int server_port;
-	int state, iaddr, asize;
+	unsigned int server_port;
+	unsigned int state, iaddr, asize;
 	thread_t threads[5];
 
 	socket_t* sock_server;
@@ -509,7 +509,7 @@ DECLARE_TEST(udp, datagram_ipv6) {
 	return 0;
 }
 
-void
+static void
 test_udp_declare(void) {
 	ADD_TEST(udp, stream_ipv4);
 	ADD_TEST(udp, stream_ipv6);
@@ -517,16 +517,20 @@ test_udp_declare(void) {
 	ADD_TEST(udp, datagram_ipv6);
 }
 
-test_suite_t test_udp_suite = {
+static test_suite_t test_udp_suite = {
 	test_udp_application,
 	test_udp_memory_system,
 	test_udp_foundation_config,
 	test_udp_declare,
 	test_udp_initialize,
-	test_udp_finalize
+	test_udp_finalize,
+	0
 };
 
-#if FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_IOS
+#if BUILD_MONOLITHIC
+
+int
+test_udp_run(void);
 
 int
 test_udp_run(void) {
@@ -535,6 +539,9 @@ test_udp_run(void) {
 }
 
 #else
+
+test_suite_t
+test_suite_define(void);
 
 test_suite_t
 test_suite_define(void) {

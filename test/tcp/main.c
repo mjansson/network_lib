@@ -14,7 +14,7 @@
 #include <foundation/foundation.h>
 #include <test/test.h>
 
-application_t
+static application_t
 test_tcp_application(void) {
 	application_t app;
 	memset(&app, 0, sizeof(app));
@@ -26,19 +26,19 @@ test_tcp_application(void) {
 	return app;
 }
 
-memory_system_t
+static memory_system_t
 test_tcp_memory_system(void) {
 	return memory_system_malloc();
 }
 
-foundation_config_t
+static foundation_config_t
 test_tcp_foundation_config(void) {
 	foundation_config_t config;
 	memset(&config, 0, sizeof(config));
 	return config;
 }
 
-int
+static int
 test_tcp_initialize(void) {
 	network_config_t config;
 	memset(&config, 0, sizeof(config));
@@ -46,12 +46,12 @@ test_tcp_initialize(void) {
 	return network_module_initialize(config);
 }
 
-void
+static void
 test_tcp_finalize(void) {
 	network_module_finalize();
 }
 
-atomic32_t io_completed = {0};
+static atomic32_t io_completed = {0};
 
 static void*
 io_blocking_thread(void* arg) {
@@ -70,7 +70,7 @@ io_blocking_thread(void* arg) {
 		thread_yield();
 	}
 
-	log_debugf(HASH_NETWORK, STRING_CONST("IO complete on socket 0x%llx"), sock);
+	log_debugf(HASH_NETWORK, STRING_CONST("IO complete on socket 0x%" PRIfixPTR), (uintptr_t)sock);
 
 	atomic_incr32(&io_completed);
 
@@ -106,7 +106,7 @@ stream_blocking_thread(void* arg) {
 		thread_yield();
 	}
 
-	log_debugf(HASH_NETWORK, STRING_CONST("Stream complete on socket 0x%llx"), sock);
+	log_debugf(HASH_NETWORK, STRING_CONST("Stream complete on socket 0x%" PRIfixPTR), (uintptr_t)sock);
 
 	stream_deallocate(stream);
 
@@ -325,7 +325,7 @@ DECLARE_TEST(tcp, io_ipv4) {
 	network_address_t** address_local = 0;
 	network_address_t* address_connect = 0;
 
-	int state, iaddr, asize;
+	unsigned int state, iaddr, asize;
 	thread_t threads[2];
 
 	socket_t* sock_listen = 0;
@@ -401,7 +401,7 @@ DECLARE_TEST(tcp, io_ipv6) {
 	network_address_t** address_local = 0;
 	network_address_t* address_connect = 0;
 
-	int state, iaddr, asize;
+	unsigned int state, iaddr, asize;
 	thread_t threads[2];
 
 	socket_t* sock_listen = 0;
@@ -477,7 +477,7 @@ DECLARE_TEST(tcp, stream_ipv4) {
 	network_address_t** address_local = 0;
 	network_address_t* address_connect = 0;
 
-	int state, iaddr, asize;
+	unsigned int state, iaddr, asize;
 	thread_t threads[2];
 
 	socket_t* sock_listen = 0;
@@ -553,7 +553,7 @@ DECLARE_TEST(tcp, stream_ipv6) {
 	network_address_t** address_local = 0;
 	network_address_t* address_connect = 0;
 
-	int state, iaddr, asize;
+	unsigned int state, iaddr, asize;
 	thread_t threads[2];
 
 	socket_t* sock_listen = 0;
@@ -624,7 +624,7 @@ DECLARE_TEST(tcp, stream_ipv6) {
 	return 0;
 }
 
-void
+static void
 test_tcp_declare(void) {
 	ADD_TEST(tcp, connect_ipv4);
 	ADD_TEST(tcp, connect_ipv6);
@@ -634,16 +634,20 @@ test_tcp_declare(void) {
 	ADD_TEST(tcp, stream_ipv6);
 }
 
-test_suite_t test_tcp_suite = {
+static test_suite_t test_tcp_suite = {
 	test_tcp_application,
 	test_tcp_memory_system,
 	test_tcp_foundation_config,
 	test_tcp_declare,
 	test_tcp_initialize,
-	test_tcp_finalize
+	test_tcp_finalize,
+	0
 };
 
-#if FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_IOS
+#if BUILD_MONOLITHIC
+
+int
+test_tcp_run(void);
 
 int
 test_tcp_run(void) {
@@ -652,6 +656,9 @@ test_tcp_run(void) {
 }
 
 #else
+
+test_suite_t
+test_suite_define(void);
 
 test_suite_t
 test_suite_define(void) {
