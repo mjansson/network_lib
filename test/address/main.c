@@ -166,7 +166,7 @@ DECLARE_TEST(address, resolve) {
 		for (iaddr = 0, addrsize = array_size(addresses); iaddr < addrsize; ++iaddr) {
 			string_t address_str = network_address_to_string(buffer, sizeof(buffer), addresses[iaddr], true);
 			log_debugf(HASH_NETWORK, STRING_CONST("  %.*s"), STRING_FORMAT(address_str));
-			EXPECT_TRUE(string_equal(STRING_ARGS(address_str), STRING_CONST("[::1]:512")));
+			EXPECT_CONSTSTRINGEQ(string_to_const(address_str), string_const(STRING_CONST("[::1]:512")));
 		}
 		network_address_array_deallocate(addresses);
 	}

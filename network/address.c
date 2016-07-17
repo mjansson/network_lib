@@ -61,12 +61,12 @@ network_address_resolve(const char* address, size_t length) {
 
 	portdelim = string_rfind(address, length, ':', STRING_NPOS);
 
-	if (string_find_first_not_of(address, length, STRING_CONST("[abcdefABCDEF0123456789.:]"),
-	                             0) == STRING_NPOS) {
+	if (string_find_first_not_of(address, length,
+	                             STRING_CONST("[abcdefABCDEF0123456789.:]"), 0) == STRING_NPOS) {
 		//ipv6 hex format has more than one :
 		if ((portdelim != STRING_NPOS) && (string_find(address, length, ':', 0) != portdelim)) {
 			//ipv6 hex format with port is of format [addr]:port
-			if ((address[0] != '[') || (address[ portdelim - 1 ] != ']'))
+			if ((address[0] != '[') || (address[portdelim - 1] != ']'))
 				portdelim = STRING_NPOS;
 		}
 	}
@@ -76,8 +76,8 @@ network_address_resolve(const char* address, size_t length) {
 		localaddress.str[portdelim] = 0;
 		final_address = localaddress.str;
 
-		if ((localaddress.str[0] == '[') && (localaddress.str[localaddress.length - 1] == ']')) {
-			localaddress.str[localaddress.length - 1] = 0;
+		if ((localaddress.str[0] == '[') && (localaddress.str[portdelim - 1] == ']')) {
+			localaddress.str[portdelim - 1] = 0;
 			final_address++;
 			--portdelim;
 		}
