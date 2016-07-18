@@ -27,10 +27,6 @@ static void
 network_initialize_config(const network_config_t config) {
 	_network_config.max_sockets              = config.max_sockets      ?
 	                                           config.max_sockets      : 32;
-	_network_config.max_tcp_packet_size      = config.max_tcp_packet_size      ?
-	                                           config.max_tcp_packet_size      : 1024;
-	_network_config.max_udp_packet_size      = config.max_udp_packet_size      ?
-	                                           config.max_udp_packet_size      : 1024;
 }
 
 int

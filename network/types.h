@@ -84,8 +84,6 @@ typedef void (*socket_stream_initialize_fn)(socket_t*, stream_t*);
 
 struct network_config_t {
 	size_t max_sockets;
-	size_t max_tcp_packet_size;
-	size_t max_udp_packet_size;
 };
 
 #define NETWORK_DECLARE_NETWORK_ADDRESS    \
