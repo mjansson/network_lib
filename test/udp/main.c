@@ -65,7 +65,7 @@ stream_blocking_thread(void* arg) {
 	char buffer_out[317] = {0};
 	char buffer_in[317] = {0};
 
-	stream_t* stream = socket_stream(sock);
+	stream_t* stream = socket_stream_allocate(sock, 27, 13);
 
 	for (iloop = 0; !thread_try_wait(0) && iloop < 512; ++iloop) {
 		log_infof(HASH_NETWORK, STRING_CONST("UDP write pass %d"), iloop);

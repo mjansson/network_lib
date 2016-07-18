@@ -88,7 +88,7 @@ stream_blocking_thread(void* arg) {
 	char buffer_out[317] = {0};
 	char buffer_in[317] = {0};
 
-	stream_t* stream = socket_stream(sock);
+	stream_t* stream = socket_stream_allocate(sock, 17, 31);
 
 	for (iloop = 0; iloop < 512; ++iloop) {
 		EXPECT_EQ(stream_write(stream, buffer_out, 97), 97);

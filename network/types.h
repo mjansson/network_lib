@@ -86,8 +86,6 @@ struct network_config_t {
 	size_t max_sockets;
 	size_t max_tcp_packet_size;
 	size_t max_udp_packet_size;
-	size_t stream_write_buffer_size;
-	size_t stream_read_buffer_size;
 };
 
 #define NETWORK_DECLARE_NETWORK_ADDRESS    \
@@ -112,9 +110,11 @@ FOUNDATION_ALIGNED_STRUCT(socket_stream_t, 8) {
 	size_t write_in;
 	size_t write_out;
 
+	size_t buffer_in_size;
+	size_t buffer_out_size;
+
 	uint8_t* buffer_in;
 	uint8_t* buffer_out;
-	uint8_t  buffers[FOUNDATION_FLEXIBLE_ARRAY];
 };
 
 struct socket_t {
@@ -130,7 +130,6 @@ struct socket_t {
 	socket_open_fn open_fn;
 	socket_stream_initialize_fn stream_initialize_fn;
 
-	socket_stream_t* stream;
 	void* client;
 };
 

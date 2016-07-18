@@ -17,7 +17,7 @@ writer = generator.writer
 toolchain = generator.toolchain
 
 network_lib = generator.lib( module = 'network', sources = [
-  'address.c', 'network.c', 'poll.c', 'socket.c', 'tcp.c', 'udp.c', 'version.c' ] )
+  'address.c', 'network.c', 'poll.c', 'socket.c', 'stream.c', 'tcp.c', 'udp.c', 'version.c' ] )
 
 includepaths = generator.test_includepaths()
 

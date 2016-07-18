@@ -117,6 +117,9 @@ NETWORK_API socket_state_t
 _socket_poll_state(socket_base_t* sockbase);
 
 NETWORK_API int
+socket_streams_initialize(void);
+
+NETWORK_API int
 socket_module_initialize(size_t max_sockets);
 
 NETWORK_API void

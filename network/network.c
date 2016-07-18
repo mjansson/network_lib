@@ -31,10 +31,6 @@ network_initialize_config(const network_config_t config) {
 	                                           config.max_tcp_packet_size      : 1024;
 	_network_config.max_udp_packet_size      = config.max_udp_packet_size      ?
 	                                           config.max_udp_packet_size      : 1024;
-	_network_config.stream_write_buffer_size = config.stream_write_buffer_size ?
-	                                           config.stream_write_buffer_size : 1024;
-	_network_config.stream_read_buffer_size  = config.stream_read_buffer_size  ?
-	                                           config.stream_read_buffer_size  : 1024;
 }
 
 int
@@ -62,6 +58,9 @@ network_module_initialize(const network_config_t config) {
 #endif
 
 	if (socket_module_initialize(_network_config.max_sockets) < 0)
+		return -1;
+
+	if (socket_streams_initialize() < 0)
 		return -1;
 
 	//Check support

@@ -71,6 +71,3 @@ socket_read(socket_t* sock, void* buffer, size_t size);
 
 NETWORK_API size_t
 socket_write(socket_t* sock, const void* buffer, size_t size);
-
-NETWORK_API stream_t*
-socket_stream(socket_t* sock);

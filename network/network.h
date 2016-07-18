@@ -21,6 +21,7 @@
 #include <network/address.h>
 #include <network/poll.h>
 #include <network/socket.h>
+#include <network/stream.h>
 #include <network/tcp.h>
 #include <network/udp.h>
 
