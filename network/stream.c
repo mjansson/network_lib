@@ -25,17 +25,14 @@ _socket_stream_available_nonblock_read(const socket_stream_t* stream) {
 static void
 _socket_stream_doflush(socket_stream_t* stream) {
 	socket_t* sock;
-	socket_base_t* sockbase;
 	size_t written;
 
 	if (!stream->write_out)
 		return;
+	
 	sock = stream->socket;
-	if (sock->base < 0)
-		return;
-
-	sockbase = _socket_base + sock->base;
-	if (sockbase->state != SOCKETSTATE_CONNECTED)
+	if ((sock->fd == SOCKET_INVALID) ||
+	    (sock->state != SOCKETSTATE_CONNECTED))
 		return;
 
 	written = socket_write(sock, stream->buffer_out, stream->write_out);
@@ -55,7 +52,6 @@ _socket_stream_read(stream_t* stream, void* buffer, size_t size) {
 	socket_stream_t* sockstream;
 	socket_t* sock;
 
-	socket_base_t* sockbase;
 	size_t was_read = 0;
 	size_t copy;
 	bool try_again;
@@ -63,15 +59,10 @@ _socket_stream_read(stream_t* stream, void* buffer, size_t size) {
 
 	sockstream = (socket_stream_t*)stream;
 	sock = sockstream->socket;
-	if (sock->base < 0)
-		return 0;
 
-	sockbase = _socket_base + sock->base;
-
-	if ((sockbase->state != SOCKETSTATE_CONNECTED) && (sockbase->state != SOCKETSTATE_DISCONNECTED))
-		goto exit;
-
-	if (!size)
+	if ((sock->fd == SOCKET_INVALID) ||
+	    ((sock->state != SOCKETSTATE_CONNECTED) && (sock->state != SOCKETSTATE_DISCONNECTED)) ||
+	    !size)
 		goto exit;
 
 	do {
@@ -90,7 +81,7 @@ _socket_stream_read(stream_t* stream, void* buffer, size_t size) {
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
 			log_debugf(HASH_NETWORK, STRING_CONST("Socket stream (0x%" PRIfixPTR
 			                                      " : %d) read %" PRIsize" of %" PRIsize " bytes from buffer position %" PRIsize),
-			           (uintptr_t)sock, sockbase->fd, copy, want_read, sockstream->read_in);
+			           (uintptr_t)sock, sock->fd, copy, want_read, sockstream->read_in);
 #endif
 
 			was_read += copy;
@@ -117,8 +108,8 @@ _socket_stream_read(stream_t* stream, void* buffer, size_t size) {
 		if (was_read)
 			log_warnf(HASH_NETWORK, WARNING_SUSPICIOUS,
 			          STRING_CONST("Socket stream (0x%" PRIfixPTR " : %d): partial read %" PRIsize " of %" PRIsize " bytes"),
-			          (uintptr_t)sock, sockbase->fd, was_read, size);
-		_socket_poll_state(sockbase);
+			          (uintptr_t)sock, sock->fd, was_read, size);
+		socket_poll_state(sock);
 	}
 
 exit:
@@ -130,23 +121,18 @@ static size_t
 _socket_stream_write(stream_t* stream, const void* buffer, size_t size) {
 	socket_stream_t* sockstream;
 	socket_t* sock;
-	socket_base_t* sockbase;
 	size_t was_written = 0;
 	size_t remain;
 
 	sockstream = (socket_stream_t*)stream;
 	sock = sockstream->socket;
-	if (sock->base < 0)
-		return 0;
+	
+	if ((sock->fd == SOCKET_INVALID) ||
+	    (sock->state != SOCKETSTATE_CONNECTED) ||
+	    !size || !buffer)
+		goto exit;
 
-	sockbase = _socket_base + sock->base;
 	remain = sockstream->buffer_out_size - sockstream->write_out;
-
-	if (sockbase->state != SOCKETSTATE_CONNECTED)
-		goto exit;
-
-	if (!size || !buffer)
-		goto exit;
 
 	do {
 		if (size <= remain) {
@@ -170,10 +156,10 @@ _socket_stream_write(stream_t* stream, const void* buffer, size_t size) {
 
 		_socket_stream_doflush(sockstream);
 
-		if (sockbase->state != SOCKETSTATE_CONNECTED) {
+		if (sock->state != SOCKETSTATE_CONNECTED) {
 			log_warnf(HASH_NETWORK, WARNING_SUSPICIOUS,
 			          STRING_CONST("Socket stream (0x%" PRIfixPTR " : %d): partial write %" PRIsize " of %" PRIsize " bytes"),
-			          (uintptr_t)sock, sockbase->fd, was_written, size);
+			          (uintptr_t)sock, sock->fd, was_written, size);
 			break;
 		}
 
@@ -191,7 +177,6 @@ static bool
 _socket_stream_eos(stream_t* stream) {
 	socket_stream_t* sockstream;
 	socket_t* sock;
-	socket_base_t* sockbase;
 	bool eos = false;
 	socket_state_t state;
 
@@ -200,12 +185,11 @@ _socket_stream_eos(stream_t* stream) {
 
 	sockstream = (socket_stream_t*)stream;
 	sock = sockstream->socket;
-	if (sock->base < 0)
+	if (sock->fd == SOCKET_INVALID)
 		return true;
 
-	sockbase = _socket_base + sock->base;
-	state = _socket_poll_state(sockbase);
-	if (((state != SOCKETSTATE_CONNECTED) || (sockbase->fd == SOCKET_INVALID)) &&
+	state = socket_poll_state(sock);
+	if (((state != SOCKETSTATE_CONNECTED) || (sock->fd == SOCKET_INVALID)) &&
 	        !_socket_stream_available_nonblock_read(sockstream))
 		eos = true;
 
@@ -223,7 +207,6 @@ static void
 _socket_stream_buffer_read(stream_t* stream) {
 	socket_stream_t* sockstream;
 	socket_t* sock;
-	socket_base_t* sockbase;
 	int available;
 
 	FOUNDATION_ASSERT(stream);
@@ -231,16 +214,12 @@ _socket_stream_buffer_read(stream_t* stream) {
 
 	sockstream = (socket_stream_t*)stream;
 	sock = sockstream->socket;
-	if (sock->base < 0)
+	if ((sock->fd == SOCKET_INVALID) ||
+	    (sock->state != SOCKETSTATE_CONNECTED) ||
+	    sockstream->write_in)
 		return;
 
-	sockbase = _socket_base + sock->base;
-	if ((sockbase->state != SOCKETSTATE_CONNECTED) || (sockbase->fd == SOCKET_INVALID))
-		return;
-	if (sockstream->write_in)
-		return;
-
-	available = _socket_available_fd(sockbase->fd);
+	available = _socket_available_fd(sock->fd);
 	if (available > 0) {
 		size_t was_read = socket_read(sock, sockstream->buffer_in, sockstream->buffer_in_size);
 		if (was_read > 0)

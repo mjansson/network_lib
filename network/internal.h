@@ -80,29 +80,13 @@ typedef struct network_address_ipv6_t {
 #  define SOCKET_INVALID -1
 #endif
 
-typedef struct socket_base_t socket_base_t;
-
-struct socket_base_t {
-	int      fd;
-	uint32_t flags: 10;
-	uint32_t state: 6;
-	uint32_t _unused: 16;
-	atomicptr_t sock;
-};
-
 NETWORK_EXTERN network_config_t  _network_config;
-NETWORK_EXTERN socket_base_t*    _socket_base;
-NETWORK_EXTERN int32_t           _socket_base_size;
-NETWORK_EXTERN atomic32_t        _socket_base_next;
 
 NETWORK_API int
 _socket_create_fd(socket_t* sock, network_address_family_t family);
 
 NETWORK_API void
 _socket_initialize(socket_t* sock);
-
-NETWORK_API int
-_socket_allocate_base(socket_t* sock);
 
 NETWORK_API void
 _socket_close_fd(int fd);
@@ -113,14 +97,5 @@ _socket_store_address_local(socket_t* sock, int family);
 NETWORK_API int
 _socket_available_fd(int fd);
 
-NETWORK_API socket_state_t
-_socket_poll_state(socket_base_t* sockbase);
-
 NETWORK_API int
 socket_streams_initialize(void);
-
-NETWORK_API int
-socket_module_initialize(size_t max_sockets);
-
-NETWORK_API void
-socket_module_finalize(void);

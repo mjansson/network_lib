@@ -25,8 +25,7 @@ static bool _network_supports_ipv6;
 
 static void
 network_initialize_config(const network_config_t config) {
-	_network_config.max_sockets              = config.max_sockets      ?
-	                                           config.max_sockets      : 32;
+	FOUNDATION_UNUSED(config);
 }
 
 int
@@ -52,9 +51,6 @@ network_module_initialize(const network_config_t config) {
 		}
 	}
 #endif
-
-	if (socket_module_initialize(_network_config.max_sockets) < 0)
-		return -1;
 
 	if (socket_streams_initialize() < 0)
 		return -1;
@@ -84,8 +80,6 @@ network_module_finalize(void) {
 		return;
 
 	log_debug(HASH_NETWORK, STRING_CONST("Terminating network services"));
-
-	socket_module_finalize();
 
 #if FOUNDATION_PLATFORM_WINDOWS
 	WSACleanup();

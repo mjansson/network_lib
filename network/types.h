@@ -83,7 +83,7 @@ typedef void (*socket_open_fn)(socket_t*, unsigned int);
 typedef void (*socket_stream_initialize_fn)(socket_t*, stream_t*);
 
 struct network_config_t {
-	size_t max_sockets;
+	size_t _unused;
 };
 
 #define NETWORK_DECLARE_NETWORK_ADDRESS    \
@@ -96,7 +96,6 @@ struct network_address_t {
 
 struct network_poll_slot_t {
 	socket_t*  sock;
-	int        base;
 	int        fd;
 };
 
@@ -116,7 +115,12 @@ FOUNDATION_ALIGNED_STRUCT(socket_stream_t, 8) {
 };
 
 struct socket_t {
-	int base;
+	int fd;
+
+	uint32_t flags: 10;
+	uint32_t state: 6;
+	uint32_t _unused: 16;
+
 	network_address_family_t family;
 
 	network_address_t* address_local;

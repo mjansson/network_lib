@@ -39,28 +39,21 @@ udp_socket_initialize(socket_t* sock) {
 
 static void
 _udp_socket_open(socket_t* sock, unsigned int family) {
-	socket_base_t* sockbase;
-
-	if (sock->base < 0)
+	if (sock->fd != SOCKET_INVALID)
 		return;
 
-	sockbase = _socket_base + sock->base;
-	if (family == NETWORK_ADDRESSFAMILY_IPV6)
-		sockbase->fd = (int)socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
-	else
-		sockbase->fd = (int)socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
-	if (sockbase->fd < 0) {
+	sock->fd = (int)socket((family == NETWORK_ADDRESSFAMILY_IPV6) ? AF_INET6 : AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (sock->fd < 0) {
 		int err = NETWORK_SOCKET_ERROR;
 		string_const_t errmsg = system_error_message(err);
 		log_errorf(HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL,
 		           STRING_CONST("Unable to open UDP socket (0x%" PRIfixPTR " : %d): %.*s (%d)"),
-		           (uintptr_t)sock, sockbase->fd, STRING_FORMAT(errmsg), err);
-		sockbase->fd = SOCKET_INVALID;
+		           (uintptr_t)sock, sock->fd, STRING_FORMAT(errmsg), err);
+		sock->fd = SOCKET_INVALID;
 	}
 	else {
 		log_debugf(HASH_NETWORK, STRING_CONST("Opened UDP socket (0x%" PRIfixPTR " : %d)"),
-		           (uintptr_t)sock, sockbase->fd);
+		           (uintptr_t)sock, sock->fd);
 	}
 }
 
@@ -73,23 +66,19 @@ _udp_stream_initialize(socket_t* sock, stream_t* stream) {
 
 size_t
 udp_socket_recvfrom(socket_t* sock, void* buffer, size_t capacity, network_address_t const** address) {
-	socket_base_t* sockbase;
 	network_address_ip_t* addr_ip;
 	long ret;
 
 	if (address)
 		*address = 0;
 
-	if (sock->base < 0)
+	if ((sock->fd == SOCKET_INVALID) || !sock->address_local)
 		return 0;
 
-	sockbase = _socket_base + sock->base;
-	if ((sockbase->fd == SOCKET_INVALID) || !sock->address_local)
-		return 0;
-	if (sockbase->state != SOCKETSTATE_NOTCONNECTED) {
+	if (sock->state != SOCKETSTATE_NOTCONNECTED) {
 		FOUNDATION_ASSERT_FAILFORMAT_LOG(HASH_NETWORK,
 		                                 "Trying to datagram read from a connected UDP socket (0x%" PRIfixPTR " : %d) in state %u",
-		                                 (uintptr_t)sock, sockbase->fd, sockbase->state);
+		                                 (uintptr_t)sock, sock->fd, sock->state);
 		return 0;
 	}
 
@@ -100,7 +89,7 @@ udp_socket_recvfrom(socket_t* sock, void* buffer, size_t capacity, network_addre
 	}
 	addr_ip = (network_address_ip_t*)sock->address_remote;
 
-	ret = recvfrom(sockbase->fd, (char*)buffer, capacity, 0, &addr_ip->saddr,
+	ret = recvfrom(sock->fd, (char*)buffer, capacity, 0, &addr_ip->saddr,
 	               &addr_ip->address_size);
 	if (ret > 0) {
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
@@ -113,7 +102,7 @@ udp_socket_recvfrom(socket_t* sock, void* buffer, size_t capacity, network_addre
 			string_t address_str = network_address_to_string(addr_buffer, sizeof(addr_buffer), *address, true);
 			log_debugf(HASH_NETWORK, STRING_CONST("Socket (0x%" PRIfixPTR
 			                                      " : %d) read %d of %" PRIsize " bytes from %.*s"),
-			           (uintptr_t)sock, sockbase->fd, ret, capacity, STRING_FORMAT(address_str));
+			           (uintptr_t)sock, sock->fd, ret, capacity, STRING_FORMAT(address_str));
 		}
 #endif
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
@@ -143,11 +132,11 @@ udp_socket_recvfrom(socket_t* sock, void* buffer, size_t capacity, network_addre
 #if FOUNDATION_PLATFORM_WINDOWS
 	int serr = 0;
 	int slen = sizeof(int);
-	getsockopt(sockbase->fd, SOL_SOCKET, SO_ERROR, (char*)&serr, &slen);
+	getsockopt(sock->fd, SOL_SOCKET, SO_ERROR, (char*)&serr, &slen);
 #else
 	int serr = 0;
 	socklen_t slen = sizeof(int);
-	getsockopt(sockbase->fd, SOL_SOCKET, SO_ERROR, (void*)&serr, &slen);
+	getsockopt(sock->fd, SOL_SOCKET, SO_ERROR, (void*)&serr, &slen);
 #endif
 
 #if FOUNDATION_PLATFORM_WINDOWS
@@ -160,7 +149,7 @@ udp_socket_recvfrom(socket_t* sock, void* buffer, size_t capacity, network_addre
 		log_warnf(HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL,
 		          STRING_CONST("Socket recvfrom() failed on UDP socket (0x%" PRIfixPTR
 		                       " : %d): %.*s (%d) (SO_ERROR %d)"),
-		          (uintptr_t)sock, sockbase->fd, STRING_FORMAT(errmsg), sockerr, serr);
+		          (uintptr_t)sock, sock->fd, STRING_FORMAT(errmsg), sockerr, serr);
 	}
 
 	return 0;
@@ -169,7 +158,6 @@ udp_socket_recvfrom(socket_t* sock, void* buffer, size_t capacity, network_addre
 size_t
 udp_socket_sendto(socket_t* sock, const void* buffer, size_t size,
                   const network_address_t* address) {
-	socket_base_t* sockbase;
 	const network_address_ip_t* addr_ip;
 	long ret = 0;
 
@@ -178,22 +166,21 @@ udp_socket_sendto(socket_t* sock, const void* buffer, size_t size,
 	if (_socket_create_fd(sock, address->family) == SOCKET_INVALID)
 		return 0;
 
-	sockbase = _socket_base + sock->base;
-	if (sockbase->state != SOCKETSTATE_NOTCONNECTED) {
+	if (sock->state != SOCKETSTATE_NOTCONNECTED) {
 		FOUNDATION_ASSERT_FAILFORMAT_LOG(HASH_NETWORK,
 		                                 "Trying to datagram send from a connected UDP socket (0x%" PRIfixPTR " : %d) in state %u",
-		                                 (uintptr_t)sock, sockbase->fd, sockbase->state);
+		                                 (uintptr_t)sock, sock->fd, sock->state);
 		return 0;
 	}
 	if (_socket_create_fd(sock, address->family) == SOCKET_INVALID) {
 		FOUNDATION_ASSERT_FAILFORMAT_LOG(HASH_NETWORK,
 		                                 "Trying to datagram send from an invalid UDP socket (0x%" PRIfixPTR " : %d) in state %u",
-		                                 (uintptr_t)sock, sockbase->fd, sockbase->state);
+		                                 (uintptr_t)sock, sock->fd, sock->state);
 		return 0;
 	}
 	addr_ip = (const network_address_ip_t*)address;
 
-	ret = sendto(sockbase->fd, buffer, size, 0, &addr_ip->saddr,
+	ret = sendto(sock->fd, buffer, size, 0, &addr_ip->saddr,
 	             addr_ip->address_size);
 	if (ret > 0) {
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
@@ -206,13 +193,13 @@ udp_socket_sendto(socket_t* sock, const void* buffer, size_t size,
 		if ((size_t)ret != size) {
 			log_warnf(HASH_NETWORK, WARNING_SUSPICIOUS,
 			          STRING_CONST("Socket (0x%" PRIfixPTR " : %d): partial UDP datagram write %d of %" PRIsize " bytes to %.*s"),
-			          (uintptr_t)sock, sockbase->fd, (int)ret, size, STRING_FORMAT(address_str));
+			          (uintptr_t)sock, sock->fd, (int)ret, size, STRING_FORMAT(address_str));
 		}
 		else {
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
 			log_debugf(HASH_NETWORK, STRING_CONST("Socket (0x%" PRIfixPTR
 			                                      " : %d) wrote %d of %" PRIsize " bytes to %.*s"),
-			           (uintptr_t)sock, sockbase->fd, ret, size, STRING_FORMAT(address_str));
+			           (uintptr_t)sock, sock->fd, ret, size, STRING_FORMAT(address_str));
 #endif
 		}
 #endif
@@ -243,11 +230,11 @@ udp_socket_sendto(socket_t* sock, const void* buffer, size_t size,
 #if FOUNDATION_PLATFORM_WINDOWS
 	int serr = 0;
 	int slen = sizeof(int);
-	getsockopt(sockbase->fd, SOL_SOCKET, SO_ERROR, (char*)&serr, &slen);
+	getsockopt(sock->fd, SOL_SOCKET, SO_ERROR, (char*)&serr, &slen);
 #else
 	int serr = 0;
 	socklen_t slen = sizeof(int);
-	getsockopt(sockbase->fd, SOL_SOCKET, SO_ERROR, (void*)&serr, &slen);
+	getsockopt(sock->fd, SOL_SOCKET, SO_ERROR, (void*)&serr, &slen);
 #endif
 
 #if FOUNDATION_PLATFORM_WINDOWS
@@ -260,7 +247,7 @@ udp_socket_sendto(socket_t* sock, const void* buffer, size_t size,
 		log_warnf(HASH_NETWORK, WARNING_SYSTEM_CALL_FAIL,
 		          STRING_CONST("Socket sendto() failed on UDP socket (0x%" PRIfixPTR
 		                       " : %d): %.*s (%d) (SO_ERROR %d)"),
-		          (uintptr_t)sock, sockbase->fd, STRING_FORMAT(errmsg), sockerr, serr);
+		          (uintptr_t)sock, sock->fd, STRING_FORMAT(errmsg), sockerr, serr);
 	}
 
 	return 0;

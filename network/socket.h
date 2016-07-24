@@ -63,6 +63,12 @@ socket_address_remote(const socket_t* sock);
 NETWORK_API socket_state_t
 socket_state(const socket_t* sock);
 
+NETWORK_API socket_state_t
+socket_poll_state(socket_t* sock);
+
+NETWORK_API int
+socket_fd(socket_t* sock);
+
 NETWORK_API size_t
 socket_available_read(const socket_t* sock);
 

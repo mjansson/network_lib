@@ -365,8 +365,11 @@ DECLARE_TEST(tcp, io_ipv4) {
 	thread_sleep(100);
 
 	sock_server = tcp_socket_accept(sock_listen, 0);
-	EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_CONNECTED);
-	EXPECT_EQ(socket_state(sock_server), SOCKETSTATE_CONNECTED);
+
+	int client_state = socket_poll_state(sock_client);
+	int server_state = socket_poll_state(sock_server);
+	EXPECT_INTEQ(client_state, SOCKETSTATE_CONNECTED);
+	EXPECT_INTEQ(server_state, SOCKETSTATE_CONNECTED);
 
 	socket_deallocate(sock_listen);
 
@@ -441,8 +444,8 @@ DECLARE_TEST(tcp, io_ipv6) {
 	thread_sleep(100);
 
 	sock_server = tcp_socket_accept(sock_listen, 0);
-	EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_CONNECTED);
-	EXPECT_EQ(socket_state(sock_server), SOCKETSTATE_CONNECTED);
+	EXPECT_EQ(socket_poll_state(sock_client), SOCKETSTATE_CONNECTED);
+	EXPECT_EQ(socket_poll_state(sock_server), SOCKETSTATE_CONNECTED);
 
 	socket_deallocate(sock_listen);
 
@@ -517,8 +520,8 @@ DECLARE_TEST(tcp, stream_ipv4) {
 	thread_sleep(100);
 
 	sock_server = tcp_socket_accept(sock_listen, 0);
-	EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_CONNECTED);
-	EXPECT_EQ(socket_state(sock_server), SOCKETSTATE_CONNECTED);
+	EXPECT_EQ(socket_poll_state(sock_client), SOCKETSTATE_CONNECTED);
+	EXPECT_EQ(socket_poll_state(sock_server), SOCKETSTATE_CONNECTED);
 
 	socket_deallocate(sock_listen);
 
@@ -593,8 +596,8 @@ DECLARE_TEST(tcp, stream_ipv6) {
 	thread_sleep(100);
 
 	sock_server = tcp_socket_accept(sock_listen, 0);
-	EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_CONNECTED);
-	EXPECT_EQ(socket_state(sock_server), SOCKETSTATE_CONNECTED);
+	EXPECT_EQ(socket_poll_state(sock_client), SOCKETSTATE_CONNECTED);
+	EXPECT_EQ(socket_poll_state(sock_server), SOCKETSTATE_CONNECTED);
 
 	socket_deallocate(sock_listen);
 

@@ -81,29 +81,26 @@ network_poll_sockets(network_poll_t* pollobj, socket_t** sockets, size_t max_soc
 bool
 network_poll_add_socket(network_poll_t* pollobj, socket_t* sock) {
 	size_t num_sockets = pollobj->num_sockets;
-	if ((sock->base >= 0) && (num_sockets < pollobj->max_sockets)) {
-		socket_base_t* sockbase = _socket_base + sock->base;
-
+	if ((sock->fd != SOCKET_INVALID) && (num_sockets < pollobj->max_sockets)) {
 		log_debugf(HASH_NETWORK, STRING_CONST("Network poll: Adding socket (0x%" PRIfixPTR " : %d)"),
-		           (uintptr_t)sock, sockbase->fd);
+		           (uintptr_t)sock, sock->fd);
 
 		pollobj->slots[ num_sockets ].sock = sock;
-		pollobj->slots[ num_sockets ].base = sock->base;
-		pollobj->slots[ num_sockets ].fd = sockbase->fd;
+		pollobj->slots[ num_sockets ].fd = sock->fd;
 
-		if (sockbase->state == SOCKETSTATE_CONNECTING)
-			_socket_poll_state(sockbase);
+		if (sock->state == SOCKETSTATE_CONNECTING)
+			socket_poll_state(sock);
 
 #if FOUNDATION_PLATFORM_APPLE
-		pollobj->pollfds[ num_sockets ].fd = sockbase->fd;
-		pollobj->pollfds[ num_sockets ].events = ((sockbase->state == SOCKETSTATE_CONNECTING) ? POLLOUT :
+		pollobj->pollfds[ num_sockets ].fd = sock->fd;
+		pollobj->pollfds[ num_sockets ].events = ((sock->state == SOCKETSTATE_CONNECTING) ? POLLOUT :
 		                                          POLLIN) | POLLERR | POLLHUP;
 #elif FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
 		struct epoll_event event;
-		event.events = ((sockbase->state == SOCKETSTATE_CONNECTING) ? EPOLLOUT : EPOLLIN) | EPOLLERR |
+		event.events = ((sock->state == SOCKETSTATE_CONNECTING) ? EPOLLOUT : EPOLLIN) | EPOLLERR |
 		               EPOLLHUP;
 		event.data.fd = (int)pollobj->num_sockets;
-		epoll_ctl(pollobj->fd_poll, EPOLL_CTL_ADD, sockbase->fd, &event);
+		epoll_ctl(pollobj->fd_poll, EPOLL_CTL_ADD, sock->fd, &event);
 #endif
 		++pollobj->num_sockets;
 
@@ -196,10 +193,10 @@ network_poll(network_poll_t* pollobj, network_poll_event_t* events, size_t capac
 
 	for (islot = 0; islot < pollobj->num_sockets; ++islot) {
 		int fd = pollobj->slots[islot].fd;
-		socket_base_t* sockbase = _socket_base + pollobj->slots[islot].base;
+		socket_t* sock = pollobj->slots[islot].sock;
 
 		FD_SET(fd, &fdread);
-		if (sockbase->state == SOCKETSTATE_CONNECTING)
+		if (sock->state == SOCKETSTATE_CONNECTING)
 			FD_SET(fd, &fdwrite);
 		FD_SET(fd, &fderr);
 
@@ -241,17 +238,16 @@ network_poll(network_poll_t* pollobj, network_poll_event_t* events, size_t capac
 	network_poll_slot_t* slot = pollobj->slots;
 	for (size_t i = 0; i < pollobj->num_sockets; ++i, ++pfd, ++slot) {
 		socket_t* sock = slot->sock;
-		socket_base_t* sockbase = _socket_base + slot->base;
 		if (pfd->revents & POLLIN) {
-			if (sockbase->state == SOCKETSTATE_LISTENING) {
+			if (sock->state == SOCKETSTATE_LISTENING) {
 				network_poll_push_event(events, capacity, num_events, NETWORKEVENT_CONNECTION, sock);
 			}
 			else {
 				network_poll_push_event(events, capacity, num_events, NETWORKEVENT_DATAIN, sock);
 			}
 		}
-		if ((sockbase->state == SOCKETSTATE_CONNECTING) && (pfd->revents & POLLOUT)) {
-			sockbase->state = SOCKETSTATE_CONNECTED;
+		if ((sock->state == SOCKETSTATE_CONNECTING) && (pfd->revents & POLLOUT)) {
+			sock->state = SOCKETSTATE_CONNECTED;
 			pfd->events = POLLIN | POLLERR | POLLHUP;
 			network_poll_push_event(events, capacity, num_events, NETWORKEVENT_CONNECTED, sock);
 		}
@@ -274,35 +270,40 @@ network_poll(network_poll_t* pollobj, network_poll_event_t* events, size_t capac
 		FOUNDATION_ASSERT(pollobj->slots[ event->data.fd ].base >= 0);
 
 		socket_t* sock = pollobj->slots[ event->data.fd ].sock;
-		socket_base_t* sockbase = _socket_base + pollobj->slots[ event->data.fd ].base;
 		int fd = pollobj->slots[ event->data.fd ].fd;
-		if (event->events & EPOLLIN) {
-			if (sockbase->state == SOCKETSTATE_LISTENING) {
+		if ((sock->fd == fd) && (event->events & EPOLLIN)) {
+			if (sock->state == SOCKETSTATE_LISTENING) {
 				network_poll_push_event(events, capacity, num_events, NETWORKEVENT_CONNECTION, sock);
 			}
 			else {
 				network_poll_push_event(events, capacity, num_events, NETWORKEVENT_DATAIN, sock);
 			}
 		}
-		if ((sockbase->state == SOCKETSTATE_CONNECTING) && (event->events & EPOLLOUT)) {
-			sockbase->state = SOCKETSTATE_CONNECTED;
+		if ((sock->state == SOCKETSTATE_CONNECTING) && (event->events & EPOLLOUT)) {
 			struct epoll_event mod_event;
 			mod_event.events = EPOLLIN | EPOLLERR | EPOLLHUP;
 			mod_event.data.fd = event->data.fd;
 			epoll_ctl(pollobj->fd_poll, EPOLL_CTL_MOD, fd, &mod_event);
-			network_poll_push_event(events, capacity, num_events, NETWORKEVENT_CONNECTED, sock);
+			if (sock->fd == fd) {
+				sock->state = SOCKETSTATE_CONNECTED;
+				network_poll_push_event(events, capacity, num_events, NETWORKEVENT_CONNECTED, sock);
+			}
 		}
 		if (event->events & EPOLLERR) {
 			struct epoll_event del_event;
 			epoll_ctl(pollobj->fd_poll, EPOLL_CTL_DEL, fd, &del_event);
-			network_poll_push_event(events, capacity, num_events, NETWORKEVENT_ERROR, sock);
-			socket_close(sock);
+			if (sock->fd == fd) {
+				network_poll_push_event(events, capacity, num_events, NETWORKEVENT_ERROR, sock);
+				socket_close(sock);
+			}
 		}
 		if (event->events & EPOLLHUP) {
 			struct epoll_event del_event;
 			epoll_ctl(pollobj->fd_poll, EPOLL_CTL_DEL, fd, &del_event);
-			network_poll_push_event(events, capacity, num_events, NETWORKEVENT_HANGUP, sock);
-			socket_close(sock);
+			if (sock->fd == fd) {
+				network_poll_push_event(events, capacity, num_events, NETWORKEVENT_HANGUP, sock);
+				socket_close(sock);
+			}
 		}
 	}
 
@@ -311,21 +312,19 @@ network_poll(network_poll_t* pollobj, network_poll_event_t* events, size_t capac
 	for (islot = 0; islot < pollobj->num_sockets; ++islot) {
 		int fd = pollobj->slots[islot].fd;
 		socket_t* sock = pollobj->slots[islot].sock;
-		socket_base_t* sockbase = _socket_base + pollobj->slots[islot].base;
-
-		if (sockbase->fd != fd)
+		if (sock->fd != fd)
 			continue;
 
 		if (FD_ISSET(fd, &fdread)) {
-			if (sockbase->state == SOCKETSTATE_LISTENING) {
+			if (sock->state == SOCKETSTATE_LISTENING) {
 				network_poll_push_event(events, capacity, num_events, NETWORKEVENT_CONNECTION, sock);
 			}
 			else { //SOCKETSTATE_CONNECTED
 				network_poll_push_event(events, capacity, num_events, NETWORKEVENT_DATAIN, sock);
 			}
 		}
-		if ((sockbase->state == SOCKETSTATE_CONNECTING) && FD_ISSET(fd, &fdwrite)) {
-			sockbase->state = SOCKETSTATE_CONNECTED;
+		if ((sock->state == SOCKETSTATE_CONNECTING) && FD_ISSET(fd, &fdwrite)) {
+			sock->state = SOCKETSTATE_CONNECTED;
 			network_poll_push_event(events, capacity, num_events, NETWORKEVENT_CONNECTED, sock);
 		}
 		if (FD_ISSET(fd, &fderr)) {
