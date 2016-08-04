@@ -89,8 +89,8 @@ udp_socket_recvfrom(socket_t* sock, void* buffer, size_t capacity, network_addre
 	}
 	addr_ip = (network_address_ip_t*)sock->address_remote;
 
-	ret = recvfrom(sock->fd, (char*)buffer, capacity, 0, &addr_ip->saddr,
-	               &addr_ip->address_size);
+	ret = recvfrom(sock->fd, (char*)buffer, (network_send_size_t)capacity, 0,
+	               &addr_ip->saddr, &addr_ip->address_size);
 	if (ret > 0) {
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 		const unsigned char* src = (const unsigned char*)buffer;
@@ -180,8 +180,8 @@ udp_socket_sendto(socket_t* sock, const void* buffer, size_t size,
 	}
 	addr_ip = (const network_address_ip_t*)address;
 
-	ret = sendto(sock->fd, buffer, size, 0, &addr_ip->saddr,
-	             addr_ip->address_size);
+	ret = sendto(sock->fd, buffer, (network_send_size_t)size, 0,
+	             &addr_ip->saddr, addr_ip->address_size);
 	if (ret > 0) {
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 		const unsigned char* src = (const unsigned char*)buffer;

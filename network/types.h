@@ -67,8 +67,10 @@ typedef enum {
 
 #if FOUNDATION_PLATFORM_POSIX
 typedef socklen_t network_address_size_t;
+typedef size_t    network_send_size_t;
 #else
 typedef int       network_address_size_t;
+typedef int       network_send_size_t;
 #endif
 
 typedef struct network_config_t      network_config_t;

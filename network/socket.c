@@ -479,7 +479,7 @@ socket_read(socket_t* sock, void* buffer, size_t size) {
 	if (sock->fd == SOCKET_INVALID)
 		return 0;
 
-	ret = recv(sock->fd, (char*)buffer, size, 0);
+	ret = recv(sock->fd, (char*)buffer, (network_send_size_t)size, 0);
 	if (ret > 0) {
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 		const unsigned char* src = (const unsigned char*)buffer;
@@ -565,7 +565,7 @@ socket_write(socket_t* sock, const void* buffer, size_t size) {
 		const char* current = (const char*)pointer_offset_const(buffer, total_write);
 		size_t remain = size - total_write;
 
-		long res = send(sock->fd, current, remain, 0);
+		long res = send(sock->fd, current, (network_send_size_t)remain, 0);
 		if (res > 0) {
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 			const unsigned char* src = (const unsigned char*)current;
