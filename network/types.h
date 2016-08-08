@@ -134,7 +134,12 @@ struct socket_t {
 	socket_open_fn open_fn;
 	socket_stream_initialize_fn stream_initialize_fn;
 
+	beacon_t* beacon;
 	void* client;
+
+#if FOUNDATION_PLATFORM_WINDOWS
+	void* event;
+#endif
 };
 
 struct network_poll_t {

@@ -77,3 +77,10 @@ socket_read(socket_t* sock, void* buffer, size_t size);
 
 NETWORK_API size_t
 socket_write(socket_t* sock, const void* buffer, size_t size);
+
+/*! Set beacon to fire when data is available on socket. For listening
+sockets the beacon is fired when a connection is available.
+\param sock Socket
+\param beacon Beacon to fire */
+NETWORK_API void
+socket_set_beacon(socket_t* sock, beacon_t* beacon);

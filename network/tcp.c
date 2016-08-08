@@ -54,29 +54,30 @@ tcp_socket_listen(socket_t* sock) {
 		return false;
 	}
 
-	if (listen(sock->fd, SOMAXCONN) == 0) {
+	if (listen(sock->fd, SOMAXCONN) != 0) {
 #if BUILD_ENABLE_LOG
-		string_t address = network_address_to_string(buffer, sizeof(buffer), sock->address_local, true);
-		log_infof(HASH_NETWORK,
-		          STRING_CONST("Listening on TCP/IP socket (0x%" PRIfixPTR " : %d) %.*s"),
-		          (uintptr_t)sock, sock->fd, STRING_FORMAT(address));
-#endif
-		sock->state = SOCKETSTATE_LISTENING;
-		return true;
-	}
-
-#if BUILD_ENABLE_LOG
-	{
 		string_t address = network_address_to_string(buffer, sizeof(buffer), sock->address_local, true);
 		int sockerr = NETWORK_SOCKET_ERROR;
 		string_const_t errmsg = system_error_message(sockerr);
 		log_errorf(HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL,
 		           STRING_CONST("Unable to listen on TCP/IP socket (0x%" PRIfixPTR " : %d) %.*s: %.*s (%d)"),
 		           (uintptr_t)sock, sock->fd, STRING_FORMAT(address), STRING_FORMAT(errmsg), sockerr);
-	}
 #endif
+		return false;
+	}
 
-	return false;
+#if BUILD_ENABLE_LOG
+	string_t address = network_address_to_string(buffer, sizeof(buffer), sock->address_local, true);
+	log_infof(HASH_NETWORK,
+	          STRING_CONST("Listening on TCP/IP socket (0x%" PRIfixPTR " : %d) %.*s"),
+	          (uintptr_t)sock, sock->fd, STRING_FORMAT(address));
+#endif
+	sock->state = SOCKETSTATE_LISTENING;
+
+	if (sock->beacon)
+		socket_set_beacon(sock, sock->beacon);
+
+	return true;
 }
 
 socket_t*

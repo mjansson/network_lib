@@ -21,6 +21,7 @@ _socket_set_blocking_fd(int fd, bool block);
 
 void
 _socket_initialize(socket_t* sock) {
+	memset(sock, 0, sizeof(socket_t));
 	sock->fd = SOCKET_INVALID;
 	sock->flags = 0;
 	sock->state = SOCKETSTATE_NOTCONNECTED;
@@ -54,6 +55,10 @@ socket_finalize(socket_t* sock) {
 	log_debugf(HASH_NETWORK, STRING_CONST("Finalizing socket (0x%" PRIfixPTR " : %d)"),
 	           (uintptr_t)sock, sock->fd);
 	socket_close(sock);	
+#if FOUNDATION_PLATFORM_WINDOWS
+	if (sock->event)
+		CloseHandle(sock->event);
+#endif
 }
 
 void
@@ -230,6 +235,9 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 		           (uintptr_t)sock, sock->fd, STRING_FORMAT(address_str));
 	}
 #endif
+
+	if ((sock->state == SOCKETSTATE_CONNECTED) && sock->beacon)
+		socket_set_beacon(sock, sock->beacon);
 
 	return 0;
 }
@@ -426,6 +434,8 @@ socket_poll_state(socket_t* sock) {
 			           (uintptr_t)sock, sock->fd);
 #endif
 			sock->state = SOCKETSTATE_CONNECTED;
+			if (sock->beacon)
+				socket_set_beacon(sock, sock->beacon);
 		}
 		break;
 
@@ -757,4 +767,30 @@ _socket_store_address_local(socket_t* sock, int family) {
 	getsockname(sock->fd, &address_local->saddr, (socklen_t*)&address_local->address_size);
 	memory_deallocate(sock->address_local);
 	sock->address_local = (network_address_t*)address_local;
+}
+
+void
+socket_set_beacon(socket_t* sock, beacon_t* beacon) {
+#if FOUNDATION_PLATFORM_WINDOWS
+	if (sock->event && sock->beacon)
+		beacon_remove_handle(sock->beacon, sock->event);
+	if (!sock->event)
+		sock->event = CreateEventA(nullptr, FALSE, FALSE, nullptr);
+	sock->beacon = beacon;
+	if (sock->beacon && (sock->state == SOCKETSTATE_LISTENING)) {
+		WSAEventSelect(sock->fd, sock->event, FD_ACCEPT);
+		beacon_add_handle(beacon, sock->event);
+	}
+	if (sock->beacon && (sock->state == SOCKETSTATE_CONNECTED)) {
+		WSAEventSelect(sock->fd, sock->event, FD_READ | FD_CLOSE);
+		beacon_add_handle(beacon, sock->event);
+	}
+#else
+	if (sock->beacon != beacon) {
+		if (sock->beacon)
+			beacon_remove_fd(sock->beacon, sock->fd);
+		sock->beacon = beacon;
+		if (sock->beacon)
+			beacon_add_fd(sock->beacon, sock->fd);
+#endif
 }
