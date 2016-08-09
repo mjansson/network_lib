@@ -792,5 +792,6 @@ socket_set_beacon(socket_t* sock, beacon_t* beacon) {
 		sock->beacon = beacon;
 		if (sock->beacon)
 			beacon_add_fd(sock->beacon, sock->fd);
+	}
 #endif
 }
