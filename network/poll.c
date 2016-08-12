@@ -213,7 +213,7 @@ network_poll(network_poll_t* pollobj, network_poll_event_t* events, size_t capac
 		tv.tv_sec  = timeoutms / 1000;
 		tv.tv_usec = (timeoutms % 1000) * 1000;
 
-		ret = select(num_fd, &fdread, &fdwrite, &fderr, &tv);
+		ret = select(num_fd, &fdread, &fdwrite, &fderr, (timeoutms != NETWORK_TIMEOUT_INFINITE) ? &tv : nullptr);
 	}
 
 #else

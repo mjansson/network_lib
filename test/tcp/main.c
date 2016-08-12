@@ -146,7 +146,7 @@ DECLARE_TEST(tcp, connect_ipv4) {
 	network_address_array_deallocate(addresses);
 	socket_deallocate(sock_client);
 
-	//Blocking without timeout
+	//Blocking with zero timeout
 	success = false;
 	sock_client = tcp_socket_allocate();
 
@@ -159,6 +159,33 @@ DECLARE_TEST(tcp, connect_ipv4) {
 			continue;
 
 		success = socket_connect(sock_client, addresses[iaddr], 0);
+		break;
+	}
+	network_address_array_deallocate(addresses);
+
+	if (success) {
+		EXPECT_TRUE((socket_state(sock_client) == SOCKETSTATE_CONNECTING) ||
+		            (socket_state(sock_client) == SOCKETSTATE_CONNECTED));
+	}
+	else {
+		EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_NOTCONNECTED);
+	}
+
+	socket_deallocate(sock_client);
+
+	//Blocking without timeout
+	success = false;
+	sock_client = tcp_socket_allocate();
+
+	socket_set_blocking(sock_client, true);
+
+	success = false;
+	addresses = network_address_resolve(STRING_CONST("www.rampantpixels.com:80"));
+	for (iaddr = 0; iaddr < array_size(addresses); ++iaddr) {
+		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV4)
+			continue;
+
+		success = socket_connect(sock_client, addresses[iaddr], NETWORK_TIMEOUT_INFINITE);
 		break;
 	}
 	network_address_array_deallocate(addresses);
@@ -188,7 +215,7 @@ DECLARE_TEST(tcp, connect_ipv4) {
 	network_address_array_deallocate(addresses);
 	socket_deallocate(sock_client);
 
-	//Unblocking without timeout
+	//Unblocking with zero timeout
 	success = false;
 	sock_client = tcp_socket_allocate();
 
@@ -212,6 +239,27 @@ DECLARE_TEST(tcp, connect_ipv4) {
 	else {
 		EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_NOTCONNECTED);
 	}
+
+	socket_deallocate(sock_client);
+
+	//Unblocking without timeout
+	success = false;
+	sock_client = tcp_socket_allocate();
+
+	socket_set_blocking(sock_client, false);
+
+	success = false;
+	addresses = network_address_resolve(STRING_CONST("www.rampantpixels.com:80"));
+	for (iaddr = 0; iaddr < array_size(addresses); ++iaddr) {
+		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV4)
+			continue;
+
+		success = socket_connect(sock_client, addresses[iaddr], NETWORK_TIMEOUT_INFINITE);
+		break;
+	}
+	network_address_array_deallocate(addresses);
+
+	EXPECT_EQ(socket_state(sock_client), success ? SOCKETSTATE_CONNECTED : SOCKETSTATE_NOTCONNECTED);
 
 	socket_deallocate(sock_client);
 

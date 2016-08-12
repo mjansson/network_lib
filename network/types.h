@@ -44,6 +44,9 @@
 /*! Maximum length of a numeric network address string, including zero terminator */
 #define NETWORK_ADDRESS_NUMERIC_MAX_LENGTH 46
 
+/*! Infinite timeout */
+#define NETWORK_TIMEOUT_INFINITE 0xFFFFFFFF
+
 typedef enum {
 	NETWORK_ADDRESSFAMILY_IPV4     = 0,
 	NETWORK_ADDRESSFAMILY_IPV6

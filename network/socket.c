@@ -123,7 +123,7 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 
 	blocking = ((sock->flags & SOCKETFLAG_BLOCKING) != 0);
 
-	if ((timeoutms > 0) && blocking)
+	if ((timeoutms != NETWORK_TIMEOUT_INFINITE) && blocking)
 		socket_set_blocking(sock, false);
 
 	address_ip = (const network_address_ip_t*)address;
@@ -158,7 +158,7 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 				tv.tv_sec  = timeoutms / 1000;
 				tv.tv_usec = (timeoutms % 1000) * 1000;
 
-				ret = select((int)(sock->fd + 1), 0, &fdwrite, &fderr, &tv);
+				ret = select((int)(sock->fd + 1), 0, &fdwrite, &fderr, (timeoutms != NETWORK_TIMEOUT_INFINITE) ? &tv : nullptr);
 				if (ret > 0) {
 #if FOUNDATION_PLATFORM_WINDOWS
 					int serr = 0;
@@ -205,7 +205,7 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 #endif
 	}
 
-	if ((timeoutms > 0) && blocking)
+	if ((timeoutms != NETWORK_TIMEOUT_INFINITE) && blocking)
 		socket_set_blocking(sock, true);
 
 	if (failed) {
@@ -243,7 +243,7 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 }
 
 bool
-socket_connect(socket_t* sock, const network_address_t* address, unsigned int timeout) {
+socket_connect(socket_t* sock, const network_address_t* address, unsigned int timeoutms) {
 	int err;
 
 	FOUNDATION_ASSERT(address);
@@ -263,7 +263,7 @@ socket_connect(socket_t* sock, const network_address_t* address, unsigned int ti
 		return false;
 	}
 
-	err = _socket_connect(sock, address, timeout);
+	err = _socket_connect(sock, address, timeoutms);
 	if (err) {
 #if BUILD_ENABLE_LOG
 		char buffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];

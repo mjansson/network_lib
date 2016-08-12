@@ -105,7 +105,7 @@ tcp_socket_accept(socket_t* sock, unsigned int timeoutms) {
 
 	blocking = ((sock->flags & SOCKETFLAG_BLOCKING) != 0);
 
-	if ((timeoutms > 0) && blocking)
+	if ((timeoutms != NETWORK_TIMEOUT_INFINITE) && blocking)
 		socket_set_blocking(sock, false);
 
 	address_remote = network_address_clone(sock->address_local);
@@ -134,7 +134,7 @@ tcp_socket_accept(socket_t* sock, unsigned int timeoutms) {
 				tval.tv_sec  = timeoutms / 1000;
 				tval.tv_usec = (timeoutms % 1000) * 1000;
 
-				ret = select(sock->fd + 1, &fdread, 0, &fderr, &tval);
+				ret = select(sock->fd + 1, &fdread, 0, &fderr, (timeoutms != NETWORK_TIMEOUT_INFINITE) ? &tval : nullptr);
 				if (ret > 0) {
 					address_len = address_remote->address_size;
 					fd = (int)accept(sock->fd, &address_ip->saddr, &address_len);
@@ -143,7 +143,7 @@ tcp_socket_accept(socket_t* sock, unsigned int timeoutms) {
 		}
 	}
 
-	if ((timeoutms > 0) && blocking)
+	if ((timeoutms != NETWORK_TIMEOUT_INFINITE) && blocking)
 		socket_set_blocking(sock, true);
 
 	if (fd < 0) {
