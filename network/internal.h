@@ -73,11 +73,9 @@ typedef struct network_address_ipv6_t {
 #if FOUNDATION_PLATFORM_WINDOWS
 #  define NETWORK_SOCKET_ERROR ((int)WSAGetLastError())
 #  define NETWORK_RESOLV_ERROR NETWORK_SOCKET_ERROR
-#  define SOCKET_INVALID -1
 #else //elif FOUNDATION_PLATFORM_POSIX
 #  define NETWORK_SOCKET_ERROR errno
 #  define NETWORK_RESOLV_ERROR NETWORK_SOCKET_ERROR
-#  define SOCKET_INVALID -1
 #endif
 
 NETWORK_EXTERN network_config_t  _network_config;

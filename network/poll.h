@@ -22,10 +22,19 @@ NETWORK_API network_poll_t*
 network_poll_allocate(unsigned int num_sockets);
 
 NETWORK_API void
+network_poll_initialize(network_poll_t* poll, unsigned int num_sockets);
+
+NETWORK_API void
+network_poll_finalize(network_poll_t* poll);
+
+NETWORK_API void
 network_poll_deallocate(network_poll_t* poll);
 
 NETWORK_API bool
 network_poll_add_socket(network_poll_t* poll, socket_t* sock);
+
+NETWORK_API void
+network_poll_update_socket(network_poll_t* poll, socket_t* sock);
 
 NETWORK_API void
 network_poll_remove_socket(network_poll_t* poll, socket_t* sock);

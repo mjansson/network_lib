@@ -22,25 +22,25 @@ _socket_set_blocking_fd(int fd, bool block);
 void
 _socket_initialize(socket_t* sock) {
 	memset(sock, 0, sizeof(socket_t));
-	sock->fd = SOCKET_INVALID;
+	sock->fd = NETWORK_SOCKET_INVALID;
 	sock->flags = 0;
 	sock->state = SOCKETSTATE_NOTCONNECTED;
 }
 
 int
 _socket_create_fd(socket_t* sock, network_address_family_t family) {
-	if (sock->fd != SOCKET_INVALID) {
+	if (sock->fd != NETWORK_SOCKET_INVALID) {
 		if (sock->family != family) {
 			FOUNDATION_ASSERT_FAILFORMAT_LOG(HASH_NETWORK,
 			                                 "Trying to switch family on existing socket (0x%" PRIfixPTR " : %d) from %u to %u",
 			                                 (uintptr_t)sock, sock->fd, sock->family, family);
-			return SOCKET_INVALID;
+			return NETWORK_SOCKET_INVALID;
 		}
 		return sock->fd;
 	}
 
 	sock->open_fn(sock, family);
-	if (sock->fd != SOCKET_INVALID) {
+	if (sock->fd != NETWORK_SOCKET_INVALID) {
 		sock->family = family;
 		socket_set_blocking(sock, sock->flags & SOCKETFLAG_BLOCKING);
 		socket_set_reuse_address(sock, sock->flags & SOCKETFLAG_REUSE_ADDR);
@@ -76,7 +76,7 @@ socket_bind(socket_t* sock, const network_address_t* address) {
 
 	FOUNDATION_ASSERT(address);
 
-	if (_socket_create_fd(sock, address->family) == SOCKET_INVALID)
+	if (_socket_create_fd(sock, address->family) == NETWORK_SOCKET_INVALID)
 		return false;
 
 	address_ip = (const network_address_ip_t*)address;
@@ -118,7 +118,7 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 	string_const_t error_message = string_null();
 #endif
 
-	if (sock->fd == SOCKET_INVALID)
+	if (sock->fd == NETWORK_SOCKET_INVALID)
 		return 0;
 
 	blocking = ((sock->flags & SOCKETFLAG_BLOCKING) != 0);
@@ -248,7 +248,7 @@ socket_connect(socket_t* sock, const network_address_t* address, unsigned int ti
 
 	FOUNDATION_ASSERT(address);
 
-	if (_socket_create_fd(sock, address->family) == SOCKET_INVALID)
+	if (_socket_create_fd(sock, address->family) == NETWORK_SOCKET_INVALID)
 		return false;
 
 	if (sock->state != SOCKETSTATE_NOTCONNECTED) {
@@ -294,7 +294,7 @@ socket_set_blocking(socket_t* sock, bool block) {
 	sock->flags = (block ? 
 	               sock->flags | SOCKETFLAG_BLOCKING :
 	               sock->flags & ~SOCKETFLAG_BLOCKING);
-	if (sock->fd != SOCKET_INVALID)
+	if (sock->fd != NETWORK_SOCKET_INVALID)
 		_socket_set_blocking_fd(sock->fd, block);
 }
 
@@ -308,7 +308,7 @@ socket_set_reuse_address(socket_t* sock, bool reuse) {
 	sock->flags = (reuse ?
 	               sock->flags | SOCKETFLAG_REUSE_ADDR :
 	               sock->flags & ~SOCKETFLAG_REUSE_ADDR);
-	if (sock->fd != SOCKET_INVALID) {
+	if (sock->fd != NETWORK_SOCKET_INVALID) {
 #if FOUNDATION_PLATFORM_WINDOWS
 		BOOL optval = reuse ? 1 : 0;
 		int ret = setsockopt(sock->fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&optval, sizeof(optval));
@@ -339,7 +339,7 @@ socket_set_reuse_port(socket_t* sock, bool reuse) {
 	               sock->flags | SOCKETFLAG_REUSE_PORT :
 	               sock->flags & ~SOCKETFLAG_REUSE_PORT);
 #ifdef SO_REUSEPORT
-	if (sock->fd != SOCKET_INVALID) {
+	if (sock->fd != NETWORK_SOCKET_INVALID) {
 #if !FOUNDATION_PLATFORM_WINDOWS
 		int optval = reuse ? 1 : 0;
 		int ret = setsockopt(sock->fd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
@@ -362,7 +362,7 @@ socket_set_multicast_group(socket_t* sock, network_address_t* address, bool allo
 	unsigned char loopback = (allow_loopback ? 1 : 0);
 	struct ip_mreq req;
 
-	if (sock->fd == SOCKET_INVALID)
+	if (sock->fd == NETWORK_SOCKET_INVALID)
 		return false;
 
 	//TODO: TTL 1 means local network, should be split out to separate control function
@@ -397,7 +397,7 @@ socket_address_remote(const socket_t* sock) {
 
 socket_state_t
 socket_state(const socket_t* sock) {
-	return (sock->fd != SOCKET_INVALID) ? sock->state : SOCKETSTATE_NOTCONNECTED;
+	return (sock->fd != NETWORK_SOCKET_INVALID) ? sock->state : SOCKETSTATE_NOTCONNECTED;
 }
 
 socket_state_t
@@ -476,7 +476,7 @@ socket_fd(socket_t* sock) {
 
 size_t
 socket_available_read(const socket_t* sock) {
-	return (sock->fd != SOCKET_INVALID) ?
+	return (sock->fd != NETWORK_SOCKET_INVALID) ?
 		(unsigned int)_socket_available_fd(sock->fd) :
 		0;
 }
@@ -486,7 +486,7 @@ socket_read(socket_t* sock, void* buffer, size_t size) {
 	size_t read;
 	long ret;
 
-	if (sock->fd == SOCKET_INVALID)
+	if (sock->fd == NETWORK_SOCKET_INVALID)
 		return 0;
 
 	ret = recv(sock->fd, (char*)buffer, (network_send_size_t)size, 0);
@@ -568,7 +568,7 @@ size_t
 socket_write(socket_t* sock, const void* buffer, size_t size) {
 	size_t total_write = 0;
 
-	if (sock->fd == SOCKET_INVALID)
+	if (sock->fd == NETWORK_SOCKET_INVALID)
 		return 0;
 
 	while (total_write < size) {
@@ -662,7 +662,7 @@ _socket_available_fd(int fd) {
 	bool closed = false;
 	int available = 0;
 
-	if (fd == SOCKET_INVALID)
+	if (fd == NETWORK_SOCKET_INVALID)
 		return -1;
 
 #if FOUNDATION_PLATFORM_WINDOWS
@@ -684,23 +684,22 @@ _socket_available_fd(int fd) {
 
 void
 socket_close(socket_t* sock) {
-	int fd = SOCKET_INVALID;
+	int fd = NETWORK_SOCKET_INVALID;
 	network_address_t* local_address = sock->address_local;
 	network_address_t* remote_address = sock->address_remote;
 
-	if (sock->fd != SOCKET_INVALID) {
+	if (sock->fd != NETWORK_SOCKET_INVALID) {
 		fd = sock->fd;
-		sock->fd    = SOCKET_INVALID;
+		sock->fd    = NETWORK_SOCKET_INVALID;
 		sock->state = SOCKETSTATE_NOTCONNECTED;
 	}
-
-	log_debugf(HASH_NETWORK, STRING_CONST("Closing socket (0x%" PRIfixPTR " : %d)"),
-	           (uintptr_t)sock, fd);
 
 	sock->address_local  = nullptr;
 	sock->address_remote = nullptr;
 
-	if (fd != SOCKET_INVALID) {
+	if (fd != NETWORK_SOCKET_INVALID) {
+		log_debugf(HASH_NETWORK, STRING_CONST("Closing socket (0x%" PRIfixPTR " : %d)"),
+		           (uintptr_t)sock, fd);
 		_socket_set_blocking_fd(fd, false);
 		_socket_close_fd(fd);
 	}
@@ -742,7 +741,7 @@ _socket_store_address_local(socket_t* sock, int family) {
 	network_address_ip_t* address_local = 0;
 
 	FOUNDATION_ASSERT(sock);
-	if (sock->fd == SOCKET_INVALID)
+	if (sock->fd == NETWORK_SOCKET_INVALID)
 		return;
 
 	if (family == NETWORK_ADDRESSFAMILY_IPV4) {

@@ -31,7 +31,7 @@ _socket_stream_doflush(socket_stream_t* stream) {
 		return;
 	
 	sock = stream->socket;
-	if ((sock->fd == SOCKET_INVALID) ||
+	if ((sock->fd == NETWORK_SOCKET_INVALID) ||
 	    (sock->state != SOCKETSTATE_CONNECTED))
 		return;
 
@@ -60,7 +60,7 @@ _socket_stream_read(stream_t* stream, void* buffer, size_t size) {
 	sockstream = (socket_stream_t*)stream;
 	sock = sockstream->socket;
 
-	if ((sock->fd == SOCKET_INVALID) ||
+	if ((sock->fd == NETWORK_SOCKET_INVALID) ||
 	    ((sock->state != SOCKETSTATE_CONNECTED) && (sock->state != SOCKETSTATE_DISCONNECTED)) ||
 	    !size)
 		goto exit;
@@ -127,7 +127,7 @@ _socket_stream_write(stream_t* stream, const void* buffer, size_t size) {
 	sockstream = (socket_stream_t*)stream;
 	sock = sockstream->socket;
 	
-	if ((sock->fd == SOCKET_INVALID) ||
+	if ((sock->fd == NETWORK_SOCKET_INVALID) ||
 	    (sock->state != SOCKETSTATE_CONNECTED) ||
 	    !size || !buffer)
 		goto exit;
@@ -185,11 +185,11 @@ _socket_stream_eos(stream_t* stream) {
 
 	sockstream = (socket_stream_t*)stream;
 	sock = sockstream->socket;
-	if (sock->fd == SOCKET_INVALID)
+	if (sock->fd == NETWORK_SOCKET_INVALID)
 		return true;
 
 	state = socket_poll_state(sock);
-	if (((state != SOCKETSTATE_CONNECTED) || (sock->fd == SOCKET_INVALID)) &&
+	if (((state != SOCKETSTATE_CONNECTED) || (sock->fd == NETWORK_SOCKET_INVALID)) &&
 	        !_socket_stream_available_nonblock_read(sockstream))
 		eos = true;
 
@@ -214,7 +214,7 @@ _socket_stream_buffer_read(stream_t* stream) {
 
 	sockstream = (socket_stream_t*)stream;
 	sock = sockstream->socket;
-	if ((sock->fd == SOCKET_INVALID) ||
+	if ((sock->fd == NETWORK_SOCKET_INVALID) ||
 	    (sock->state != SOCKETSTATE_CONNECTED) ||
 	    sockstream->write_in)
 		return;

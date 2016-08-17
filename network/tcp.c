@@ -47,7 +47,7 @@ tcp_socket_listen(socket_t* sock) {
 #if BUILD_ENABLE_LOG
 	char buffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
 #endif
-	if ((sock->fd == SOCKET_INVALID) ||
+	if ((sock->fd == NETWORK_SOCKET_INVALID) ||
 	    (sock->state != SOCKETSTATE_NOTCONNECTED) ||
 	    !sock->address_local) {
 		//Must be locally bound
@@ -90,11 +90,11 @@ tcp_socket_accept(socket_t* sock, unsigned int timeoutms) {
 	int fd;
 	bool blocking;
 
-	if (sock->fd == SOCKET_INVALID)
+	if (sock->fd == NETWORK_SOCKET_INVALID)
 		return 0;
 
 	if ((sock->state != SOCKETSTATE_LISTENING) ||
-	        (sock->fd == SOCKET_INVALID) ||
+	        (sock->fd == NETWORK_SOCKET_INVALID) ||
 	        !sock->address_local) { //Must be locally bound
 		log_errorf(HASH_NETWORK, ERROR_INVALID_VALUE,
 		           STRING_CONST("Unable to accept on a non-listening/unbound TCP/IP socket (%" PRIfixPTR
@@ -199,13 +199,13 @@ tcp_socket_set_delay(socket_t* sock, bool delay) {
 	               sock->flags | SOCKETFLAG_TCPDELAY :
 	               sock->flags & ~SOCKETFLAG_TCPDELAY);
 	flag = (delay ? 0 : 1);
-	if (sock->fd != SOCKET_INVALID)
+	if (sock->fd != NETWORK_SOCKET_INVALID)
 		setsockopt(sock->fd, IPPROTO_TCP, TCP_NODELAY, (const char*)&flag, sizeof(int));
 }
 
 static void
 _tcp_socket_open(socket_t* sock, unsigned int family) {
-	if (sock->fd != SOCKET_INVALID)
+	if (sock->fd != NETWORK_SOCKET_INVALID)
 		return;
 
 	sock->fd = (int)socket((family == NETWORK_ADDRESSFAMILY_IPV6) ? AF_INET6 : AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -215,7 +215,7 @@ _tcp_socket_open(socket_t* sock, unsigned int family) {
 		log_errorf(HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL,
 		           STRING_CONST("Unable to open TCP/IP socket (0x%" PRIfixPTR " : %d): %.*s (%d)"),
 		           (uintptr_t)sock, sock->fd, STRING_FORMAT(errmsg), err);
-		sock->fd = SOCKET_INVALID;
+		sock->fd = NETWORK_SOCKET_INVALID;
 	}
 	else {
 		log_debugf(HASH_NETWORK, STRING_CONST("Opened TCP/IP socket (0x%" PRIfixPTR " : %d)"),

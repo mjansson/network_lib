@@ -39,7 +39,7 @@ udp_socket_initialize(socket_t* sock) {
 
 static void
 _udp_socket_open(socket_t* sock, unsigned int family) {
-	if (sock->fd != SOCKET_INVALID)
+	if (sock->fd != NETWORK_SOCKET_INVALID)
 		return;
 
 	sock->fd = (int)socket((family == NETWORK_ADDRESSFAMILY_IPV6) ? AF_INET6 : AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -49,7 +49,7 @@ _udp_socket_open(socket_t* sock, unsigned int family) {
 		log_errorf(HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL,
 		           STRING_CONST("Unable to open UDP socket (0x%" PRIfixPTR " : %d): %.*s (%d)"),
 		           (uintptr_t)sock, sock->fd, STRING_FORMAT(errmsg), err);
-		sock->fd = SOCKET_INVALID;
+		sock->fd = NETWORK_SOCKET_INVALID;
 	}
 	else {
 		log_debugf(HASH_NETWORK, STRING_CONST("Opened UDP socket (0x%" PRIfixPTR " : %d)"),
@@ -72,7 +72,7 @@ udp_socket_recvfrom(socket_t* sock, void* buffer, size_t capacity, network_addre
 	if (address)
 		*address = 0;
 
-	if ((sock->fd == SOCKET_INVALID) || !sock->address_local)
+	if ((sock->fd == NETWORK_SOCKET_INVALID) || !sock->address_local)
 		return 0;
 
 	if (sock->state != SOCKETSTATE_NOTCONNECTED) {
@@ -163,8 +163,6 @@ udp_socket_sendto(socket_t* sock, const void* buffer, size_t size,
 
 	if (!address)
 		return 0;
-	if (_socket_create_fd(sock, address->family) == SOCKET_INVALID)
-		return 0;
 
 	if (sock->state != SOCKETSTATE_NOTCONNECTED) {
 		FOUNDATION_ASSERT_FAILFORMAT_LOG(HASH_NETWORK,
@@ -172,7 +170,7 @@ udp_socket_sendto(socket_t* sock, const void* buffer, size_t size,
 		                                 (uintptr_t)sock, sock->fd, sock->state);
 		return 0;
 	}
-	if (_socket_create_fd(sock, address->family) == SOCKET_INVALID) {
+	if (_socket_create_fd(sock, address->family) == NETWORK_SOCKET_INVALID) {
 		FOUNDATION_ASSERT_FAILFORMAT_LOG(HASH_NETWORK,
 		                                 "Trying to datagram send from an invalid UDP socket (0x%" PRIfixPTR " : %d) in state %u",
 		                                 (uintptr_t)sock, sock->fd, sock->state);

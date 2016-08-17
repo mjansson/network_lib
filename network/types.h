@@ -47,6 +47,9 @@
 /*! Infinite timeout */
 #define NETWORK_TIMEOUT_INFINITE 0xFFFFFFFF
 
+/*! Invalid socket fd */
+#define NETWORK_SOCKET_INVALID -1
+
 typedef enum {
 	NETWORK_ADDRESSFAMILY_IPV4     = 0,
 	NETWORK_ADDRESSFAMILY_IPV6
@@ -83,6 +86,8 @@ typedef struct network_poll_event_t  network_poll_event_t;
 typedef struct network_poll_t        network_poll_t;
 typedef struct socket_t              socket_t;
 typedef struct socket_stream_t       socket_stream_t;
+typedef struct socket_header_t       socket_header_t;
+typedef union  socket_data_t         socket_data_t;
 
 typedef void (*socket_open_fn)(socket_t*, unsigned int);
 typedef void (*socket_stream_initialize_fn)(socket_t*, stream_t*);
@@ -119,6 +124,16 @@ FOUNDATION_ALIGNED_STRUCT(socket_stream_t, 8) {
 	uint8_t* buffer_out;
 };
 
+struct socket_header_t {
+	size_t id;
+	size_t size;
+};
+
+union socket_data_t {
+	void* client;
+	socket_header_t header;
+};
+
 struct socket_t {
 	int fd;
 
@@ -138,24 +153,38 @@ struct socket_t {
 	socket_stream_initialize_fn stream_initialize_fn;
 
 	beacon_t* beacon;
-	void* client;
+	socket_data_t data;
 
 #if FOUNDATION_PLATFORM_WINDOWS
 	void* event;
 #endif
 };
 
-struct network_poll_t {
-	unsigned int timeout;
-	size_t max_sockets;
-	size_t num_sockets;
+#define NETWORK_DECLARE_POLL_BASE \
+	unsigned int timeout; \
+	size_t max_sockets; \
+	size_t num_sockets
+
 #if FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
-	int fd_poll;
-	struct epoll_event* events;
+#define NETWORK_DECLARE_POLL_PLATFORM \
+	NETWORK_DECLARE_POLL_BASE; \
+	int fd_poll; \
+	struct epoll_event* events
 #elif FOUNDATION_PLATFORM_APPLE
-	struct pollfd* pollfds;
+#define NETWORK_DECLARE_POLL_PLATFORM \
+	NETWORK_DECLARE_POLL_BASE; \
+	struct pollfd* pollfds
+#else
+#define NETWORK_DECLARE_POLL_PLATFORM \
+	NETWORK_DECLARE_POLL_BASE
 #endif
-	network_poll_slot_t slots[FOUNDATION_FLEXIBLE_ARRAY];
+
+#define NETWORK_DECLARE_POLL(size) \
+	NETWORK_DECLARE_POLL_PLATFORM; \
+	network_poll_slot_t slots[size]
+
+struct network_poll_t {
+	NETWORK_DECLARE_POLL(FOUNDATION_FLEXIBLE_ARRAY);
 };
 
 struct network_poll_event_t {
