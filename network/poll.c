@@ -45,13 +45,14 @@ network_poll_allocate(unsigned int num_sockets) {
 #elif FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
 	memsize += sizeof(struct epoll_event) * num_sockets;
 #endif
-	poll = memory_allocate(HASH_NETWORK, memsize, 8, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	poll = memory_allocate(HASH_NETWORK, memsize, 8, MEMORY_PERSISTENT);
 	network_poll_initialize(poll, num_sockets);
 	return poll;
 }
 
 void
 network_poll_initialize(network_poll_t* pollobj, unsigned int num_sockets) {
+	pollobj->num_sockets = 0;
 	pollobj->max_sockets = num_sockets;
 #if FOUNDATION_PLATFORM_APPLE
 	pollobj->pollfds = pointer_offset(pollobj->slots, sizeof(network_poll_slot_t) * num_sockets);
