@@ -486,7 +486,7 @@ socket_read(socket_t* sock, void* buffer, size_t size) {
 	size_t read;
 	long ret;
 
-	if (sock->fd == NETWORK_SOCKET_INVALID)
+	if ((sock->fd == NETWORK_SOCKET_INVALID) || !size)
 		return 0;
 
 	ret = recv(sock->fd, (char*)buffer, (network_send_size_t)size, 0);
@@ -568,7 +568,7 @@ size_t
 socket_write(socket_t* sock, const void* buffer, size_t size) {
 	size_t total_write = 0;
 
-	if (sock->fd == NETWORK_SOCKET_INVALID)
+	if ((sock->fd == NETWORK_SOCKET_INVALID) || !size)
 		return 0;
 
 	while (total_write < size) {
