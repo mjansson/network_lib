@@ -192,7 +192,7 @@
 					../../../../foundation_lib/lib/macosx/debug,
 					"$(inherited)",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_LDFLAGS = (
 					"-ltest",
 					"-lfoundation",
@@ -231,7 +231,7 @@
 					"$(inherited)",
 				);
 				LLVM_LTO = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_LDFLAGS = (
 					"-ltest",
 					"-lfoundation",

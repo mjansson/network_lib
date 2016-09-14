@@ -10,8 +10,6 @@
 		45138743193A80F700BA2092 /* address.c in Sources */ = {isa = PBXBuildFile; fileRef = 45138731193A80F700BA2092 /* address.c */; };
 		45138744193A80F700BA2092 /* address.h in Headers */ = {isa = PBXBuildFile; fileRef = 45138732193A80F700BA2092 /* address.h */; };
 		45138745193A80F700BA2092 /* build.h in Headers */ = {isa = PBXBuildFile; fileRef = 45138733193A80F700BA2092 /* build.h */; };
-		45138746193A80F700BA2092 /* event.c in Sources */ = {isa = PBXBuildFile; fileRef = 45138734193A80F700BA2092 /* event.c */; };
-		45138747193A80F700BA2092 /* event.h in Headers */ = {isa = PBXBuildFile; fileRef = 45138735193A80F700BA2092 /* event.h */; };
 		45138748193A80F700BA2092 /* hashstrings.h in Headers */ = {isa = PBXBuildFile; fileRef = 45138736193A80F700BA2092 /* hashstrings.h */; };
 		45138749193A80F700BA2092 /* internal.h in Headers */ = {isa = PBXBuildFile; fileRef = 45138737193A80F700BA2092 /* internal.h */; };
 		4513874A193A80F700BA2092 /* network.c in Sources */ = {isa = PBXBuildFile; fileRef = 45138738193A80F700BA2092 /* network.c */; };
@@ -26,6 +24,8 @@
 		45138753193A80F700BA2092 /* udp.c in Sources */ = {isa = PBXBuildFile; fileRef = 45138741193A80F700BA2092 /* udp.c */; };
 		45138754193A80F700BA2092 /* udp.h in Headers */ = {isa = PBXBuildFile; fileRef = 45138742193A80F700BA2092 /* udp.h */; };
 		459BDCE01AC0421600B649E6 /* version.c in Sources */ = {isa = PBXBuildFile; fileRef = 459BDCDF1AC0421600B649E6 /* version.c */; };
+		CD5BC2691D83FB7F00899D05 /* stream.c in Sources */ = {isa = PBXBuildFile; fileRef = CD5BC2671D83FB7F00899D05 /* stream.c */; };
+		CD5BC26A1D83FB7F00899D05 /* stream.h in Headers */ = {isa = PBXBuildFile; fileRef = CD5BC2681D83FB7F00899D05 /* stream.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -33,8 +33,6 @@
 		45138731193A80F700BA2092 /* address.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = address.c; path = ../../../network/address.c; sourceTree = "<group>"; };
 		45138732193A80F700BA2092 /* address.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = address.h; path = ../../../network/address.h; sourceTree = "<group>"; };
 		45138733193A80F700BA2092 /* build.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = build.h; path = ../../../network/build.h; sourceTree = "<group>"; };
-		45138734193A80F700BA2092 /* event.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = event.c; path = ../../../network/event.c; sourceTree = "<group>"; };
-		45138735193A80F700BA2092 /* event.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = event.h; path = ../../../network/event.h; sourceTree = "<group>"; };
 		45138736193A80F700BA2092 /* hashstrings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = hashstrings.h; path = ../../../network/hashstrings.h; sourceTree = "<group>"; };
 		45138737193A80F700BA2092 /* internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = internal.h; path = ../../../network/internal.h; sourceTree = "<group>"; };
 		45138738193A80F700BA2092 /* network.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = network.c; path = ../../../network/network.c; sourceTree = "<group>"; };
@@ -49,6 +47,8 @@
 		45138741193A80F700BA2092 /* udp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = udp.c; path = ../../../network/udp.c; sourceTree = "<group>"; };
 		45138742193A80F700BA2092 /* udp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = udp.h; path = ../../../network/udp.h; sourceTree = "<group>"; };
 		459BDCDF1AC0421600B649E6 /* version.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = version.c; path = ../../../network/version.c; sourceTree = "<group>"; };
+		CD5BC2671D83FB7F00899D05 /* stream.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = stream.c; path = ../../../network/stream.c; sourceTree = "<group>"; };
+		CD5BC2681D83FB7F00899D05 /* stream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stream.h; path = ../../../network/stream.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -85,8 +85,6 @@
 				45138731193A80F700BA2092 /* address.c */,
 				45138732193A80F700BA2092 /* address.h */,
 				45138733193A80F700BA2092 /* build.h */,
-				45138734193A80F700BA2092 /* event.c */,
-				45138735193A80F700BA2092 /* event.h */,
 				45138736193A80F700BA2092 /* hashstrings.h */,
 				45138737193A80F700BA2092 /* internal.h */,
 				45138738193A80F700BA2092 /* network.c */,
@@ -95,6 +93,8 @@
 				4513873B193A80F700BA2092 /* poll.h */,
 				4513873C193A80F700BA2092 /* socket.c */,
 				4513873D193A80F700BA2092 /* socket.h */,
+				CD5BC2671D83FB7F00899D05 /* stream.c */,
+				CD5BC2681D83FB7F00899D05 /* stream.h */,
 				4513873E193A80F700BA2092 /* tcp.c */,
 				4513873F193A80F700BA2092 /* tcp.h */,
 				45138740193A80F700BA2092 /* types.h */,
@@ -113,12 +113,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				45138754193A80F700BA2092 /* udp.h in Headers */,
-				45138747193A80F700BA2092 /* event.h in Headers */,
 				45138748193A80F700BA2092 /* hashstrings.h in Headers */,
 				45138744193A80F700BA2092 /* address.h in Headers */,
 				4513874B193A80F700BA2092 /* network.h in Headers */,
 				45138745193A80F700BA2092 /* build.h in Headers */,
 				4513874D193A80F700BA2092 /* poll.h in Headers */,
+				CD5BC26A1D83FB7F00899D05 /* stream.h in Headers */,
 				45138751193A80F700BA2092 /* tcp.h in Headers */,
 				45138749193A80F700BA2092 /* internal.h in Headers */,
 				45138752193A80F700BA2092 /* types.h in Headers */,
@@ -198,9 +198,9 @@
 				459BDCE01AC0421600B649E6 /* version.c in Sources */,
 				45138753193A80F700BA2092 /* udp.c in Sources */,
 				4513874A193A80F700BA2092 /* network.c in Sources */,
-				45138746193A80F700BA2092 /* event.c in Sources */,
 				4513874C193A80F700BA2092 /* poll.c in Sources */,
 				45138750193A80F700BA2092 /* tcp.c in Sources */,
+				CD5BC2691D83FB7F00899D05 /* stream.c in Sources */,
 				45138743193A80F700BA2092 /* address.c in Sources */,
 				4513874E193A80F700BA2092 /* socket.c in Sources */,
 			);
@@ -214,21 +214,11 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CONFIGURATION_BUILD_DIR = ../../../lib/macosx/debug;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_CPP_EXCEPTIONS = NO;
-				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_FAST_MATH = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -237,12 +227,8 @@
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_THREADSAFE_STATICS = NO;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_WARN_PEDANTIC = YES;
 				HEADER_SEARCH_PATHS = (
 					../../..,
 					../../../../foundation_lib,
@@ -253,7 +239,7 @@
 					../../../../foundation_lib/lib/macosx/debug,
 					"$(inherited)",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
 				SDKROOT = macosx;
 			};
@@ -264,20 +250,10 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CONFIGURATION_BUILD_DIR = ../../../lib/macosx/release;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = c11;
-				GCC_ENABLE_CPP_EXCEPTIONS = NO;
-				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_FAST_MATH = YES;
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -285,13 +261,9 @@
 					"$(inherited)",
 				);
 				GCC_THREADSAFE_STATICS = NO;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				GCC_UNROLL_LOOPS = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
+				GCC_WARN_PEDANTIC = YES;
 				HEADER_SEARCH_PATHS = (
 					../../..,
 					../../../../foundation_lib,
@@ -303,7 +275,7 @@
 					"$(inherited)",
 				);
 				LLVM_LTO = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
 				SDKROOT = macosx;
 			};
@@ -332,20 +304,10 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CONFIGURATION_BUILD_DIR = ../../../lib/macosx/profile;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = c11;
-				GCC_ENABLE_CPP_EXCEPTIONS = NO;
-				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_FAST_MATH = YES;
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -353,13 +315,9 @@
 					"$(inherited)",
 				);
 				GCC_THREADSAFE_STATICS = NO;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				GCC_UNROLL_LOOPS = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
+				GCC_WARN_PEDANTIC = YES;
 				HEADER_SEARCH_PATHS = (
 					../../..,
 					../../../../foundation_lib,
@@ -371,7 +329,7 @@
 					"$(inherited)",
 				);
 				LLVM_LTO = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
 				SDKROOT = macosx;
 			};
@@ -391,20 +349,10 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CONFIGURATION_BUILD_DIR = ../../../lib/macosx/deploy;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = c11;
-				GCC_ENABLE_CPP_EXCEPTIONS = NO;
-				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_FAST_MATH = YES;
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -412,13 +360,9 @@
 					"$(inherited)",
 				);
 				GCC_THREADSAFE_STATICS = NO;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				GCC_UNROLL_LOOPS = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
+				GCC_WARN_PEDANTIC = YES;
 				HEADER_SEARCH_PATHS = (
 					../../..,
 					../../../../foundation_lib,
@@ -430,7 +374,7 @@
 					"$(inherited)",
 				);
 				LLVM_LTO = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
 				SDKROOT = macosx;
 			};

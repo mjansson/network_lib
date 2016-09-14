@@ -276,7 +276,7 @@ network_poll(network_poll_t* pollobj, network_poll_event_t* events, size_t capac
 
 	struct pollfd* pfd = pollobj->pollfds;
 	network_poll_slot_t* slot = pollobj->slots;
-	for (size_t i = 0; i < pollobj->num_sockets; ++i, ++pfd, ++slot) {
+	for (size_t islot = 0; islot < pollobj->num_sockets; ++islot, ++pfd, ++slot) {
 		socket_t* sock = slot->sock;
 		bool update_slot = false;
 		if (pfd->revents & POLLIN) {
@@ -303,7 +303,7 @@ network_poll(network_poll_t* pollobj, network_poll_event_t* events, size_t capac
 			socket_close(sock);
 		}
 		if (update_slot)
-			network_poll_update_slot(pollobj, event->data.fd, sock);
+			network_poll_update_slot(pollobj, islot, sock);
 	}
 
 #elif FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
