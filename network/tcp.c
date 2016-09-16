@@ -161,6 +161,7 @@ tcp_socket_accept(socket_t* sock, unsigned int timeoutms) {
 
 	accepted->fd = fd;
 	accepted->state = SOCKETSTATE_CONNECTED;
+	accepted->family = address_ip->family;
 	accepted->address_remote = (network_address_t*)address_remote;
 
 	_socket_store_address_local(accepted, address_ip->family);

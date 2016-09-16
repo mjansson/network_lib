@@ -141,6 +141,8 @@ struct socket_t {
 	uint32_t state: 6;
 	uint32_t _unused: 16;
 
+	uint32_t id;
+
 	network_address_family_t family;
 
 	network_address_t* address_local;
