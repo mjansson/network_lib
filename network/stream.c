@@ -321,9 +321,14 @@ socket_stream_initialize(socket_stream_t* stream, socket_t* sock) {
 		sock->stream_initialize_fn(sock, (stream_t*)stream);
 }
 
+void
+socket_stream_finalize(socket_stream_t* stream) {
+	FOUNDATION_UNUSED(stream);
+}
+
 static void
 _socket_stream_finalize(stream_t* stream) {
-	FOUNDATION_UNUSED(stream);
+	socket_stream_finalize((socket_stream_t*)stream);
 }
 
 int
