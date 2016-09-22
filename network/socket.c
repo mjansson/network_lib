@@ -126,6 +126,8 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 	if ((timeoutms != NETWORK_TIMEOUT_INFINITE) && blocking)
 		socket_set_blocking(sock, false);
 
+	sock->state = SOCKETSTATE_CONNECTING;
+	
 	address_ip = (const network_address_ip_t*)address;
 	err = connect(sock->fd, &address_ip->saddr, (socklen_t)address_ip->address_size);
 	if (!err) {
@@ -137,13 +139,12 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 		err = NETWORK_SOCKET_ERROR;
 #if FOUNDATION_PLATFORM_WINDOWS
 		in_progress = (err == WSAEWOULDBLOCK);
-#else //elif FOUDATION_PLATFORM_POSIX
+#else //elif FOUNDATION_PLATFORM_POSIX
 		in_progress = (err == EINPROGRESS);
 #endif
 		if (in_progress) {
 			if (!timeoutms) {
 				failed = false;
-				sock->state = SOCKETSTATE_CONNECTING;
 			}
 			else {
 				struct timeval tv;
@@ -169,9 +170,10 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 					socklen_t slen = sizeof(int);
 					getsockopt(sock->fd, SOL_SOCKET, SO_ERROR, (void*)&serr, &slen);
 #endif
-					if (!serr) {
+					if (!serr && !FD_ISSET(sock->fd, &fderr)) {
 						failed = false;
-						sock->state = SOCKETSTATE_CONNECTED;
+						if (FD_ISSET(sock->fd, &fdwrite))
+							sock->state = SOCKETSTATE_CONNECTED;
 					}
 					else {
 						err = serr;
@@ -216,6 +218,7 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 		           STRING_CONST("Failed to connect TCP/IP socket (0x%" PRIfixPTR " : %d) to remote host %.*s: %.*s"),
 		           (uintptr_t)sock, sock->fd, STRING_FORMAT(address_str), STRING_FORMAT(error_message));
 #endif
+		sock->state = SOCKETSTATE_NOTCONNECTED;
 		return err;
 	}
 
@@ -231,7 +234,7 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 		string_t address_str = network_address_to_string(buffer, sizeof(buffer), address, true);
 		log_debugf(HASH_NETWORK,
 		           STRING_CONST("%s socket (0x%" PRIfixPTR " : %d) to remote host %.*s"),
-		           (sock->state == SOCKETSTATE_CONNECTING) ? "Connecting" : "Connected",
+		           (sock->state == SOCKETSTATE_CONNECTING) ? "Connection pending for" : "Connected",
 		           (uintptr_t)sock, sock->fd, STRING_FORMAT(address_str));
 	}
 #endif
@@ -692,6 +695,7 @@ socket_close(socket_t* sock) {
 		fd = sock->fd;
 		sock->fd    = NETWORK_SOCKET_INVALID;
 		sock->state = SOCKETSTATE_NOTCONNECTED;
+		sock->family = 0;
 	}
 
 	sock->address_local  = nullptr;
@@ -785,12 +789,10 @@ socket_set_beacon(socket_t* sock, beacon_t* beacon) {
 		beacon_add_handle(beacon, sock->event);
 	}
 #else
-	if (sock->beacon != beacon) {
-		if (sock->beacon)
-			beacon_remove_fd(sock->beacon, sock->fd);
-		sock->beacon = beacon;
-		if (sock->beacon)
-			beacon_add_fd(sock->beacon, sock->fd);
-	}
+	if (sock->beacon && (sock->fd != NETWORK_SOCKET_INVALID))
+		beacon_remove_fd(sock->beacon, sock->fd);
+	sock->beacon = beacon;
+	if (sock->beacon && (sock->fd != NETWORK_SOCKET_INVALID))
+		beacon_add_fd(sock->beacon, sock->fd);
 #endif
 }

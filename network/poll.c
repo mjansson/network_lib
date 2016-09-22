@@ -279,7 +279,20 @@ network_poll(network_poll_t* pollobj, network_poll_event_t* events, size_t capac
 	for (size_t islot = 0; islot < pollobj->num_sockets; ++islot, ++pfd, ++slot) {
 		socket_t* sock = slot->sock;
 		bool update_slot = false;
-		if (pfd->revents & POLLIN) {
+		bool had_error = false;
+		if (pfd->revents & POLLERR) {
+			update_slot = true;
+			had_error = true;
+			network_poll_push_event(events, capacity, num_events, NETWORKEVENT_ERROR, sock);
+			socket_close(sock);
+		}
+		if (pfd->revents & POLLHUP) {
+			update_slot = true;
+			had_error = true;
+			network_poll_push_event(events, capacity, num_events, NETWORKEVENT_HANGUP, sock);
+			socket_close(sock);
+		}
+		if (!had_error && (pfd->revents & POLLIN)) {
 			if (sock->state == SOCKETSTATE_LISTENING) {
 				network_poll_push_event(events, capacity, num_events, NETWORKEVENT_CONNECTION, sock);
 			}
@@ -287,20 +300,20 @@ network_poll(network_poll_t* pollobj, network_poll_event_t* events, size_t capac
 				network_poll_push_event(events, capacity, num_events, NETWORKEVENT_DATAIN, sock);
 			}
 		}
-		if ((sock->state == SOCKETSTATE_CONNECTING) && (pfd->revents & POLLOUT)) {
+		if (!had_error && (sock->state == SOCKETSTATE_CONNECTING) && (pfd->revents & POLLOUT)) {
+			int serr = 0;
+			socklen_t slen = sizeof(int);
+			getsockopt(sock->fd, SOL_SOCKET, SO_ERROR, (void*)&serr, &slen);
+			if (!serr) {
+				sock->state = SOCKETSTATE_CONNECTED;
+				network_poll_push_event(events, capacity, num_events, NETWORKEVENT_CONNECTED, sock);
+			}
+			else {
+				had_error = true;
+				network_poll_push_event(events, capacity, num_events, NETWORKEVENT_ERROR, sock);
+				socket_close(sock);
+			}
 			update_slot = true;
-			sock->state = SOCKETSTATE_CONNECTED;
-			network_poll_push_event(events, capacity, num_events, NETWORKEVENT_CONNECTED, sock);
-		}
-		if (pfd->revents & POLLERR) {
-			update_slot = true;
-			network_poll_push_event(events, capacity, num_events, NETWORKEVENT_ERROR, sock);
-			socket_close(sock);
-		}
-		if (pfd->revents & POLLHUP) {
-			update_slot = true;
-			network_poll_push_event(events, capacity, num_events, NETWORKEVENT_HANGUP, sock);
-			socket_close(sock);
 		}
 		if (update_slot)
 			network_poll_update_slot(pollobj, islot, sock);
@@ -314,7 +327,20 @@ network_poll(network_poll_t* pollobj, network_poll_event_t* events, size_t capac
 
 		socket_t* sock = pollobj->slots[ event->data.fd ].sock;
 		bool update_slot = false;
-		if (event->events & EPOLLIN) {
+		bool had_error = false;
+		if (event->events & EPOLLERR) {
+			update_slot = true;
+			had_error = true;
+			network_poll_push_event(events, capacity, num_events, NETWORKEVENT_ERROR, sock);
+			socket_close(sock);
+		}
+		if (event->events & EPOLLHUP) {
+			update_slot = true;
+			had_error = true;
+			network_poll_push_event(events, capacity, num_events, NETWORKEVENT_HANGUP, sock);
+			socket_close(sock);
+		}
+		if (!had_error && (event->events & EPOLLIN)) {
 			if (sock->state == SOCKETSTATE_LISTENING) {
 				network_poll_push_event(events, capacity, num_events, NETWORKEVENT_CONNECTION, sock);
 			}
@@ -322,20 +348,20 @@ network_poll(network_poll_t* pollobj, network_poll_event_t* events, size_t capac
 				network_poll_push_event(events, capacity, num_events, NETWORKEVENT_DATAIN, sock);
 			}
 		}
-		if ((sock->state == SOCKETSTATE_CONNECTING) && (event->events & EPOLLOUT)) {
+		if (!had_error && (sock->state == SOCKETSTATE_CONNECTING) && (event->events & EPOLLOUT)) {
+			int serr = 0;
+			socklen_t slen = sizeof(int);
+			getsockopt(sock->fd, SOL_SOCKET, SO_ERROR, (void*)&serr, &slen);
+			if (!serr) {
+				sock->state = SOCKETSTATE_CONNECTED;
+				network_poll_push_event(events, capacity, num_events, NETWORKEVENT_CONNECTED, sock);
+			}
+			else {
+				had_error = true;
+				network_poll_push_event(events, capacity, num_events, NETWORKEVENT_ERROR, sock);
+				socket_close(sock);
+			}
 			update_slot = true;
-			sock->state = SOCKETSTATE_CONNECTED;
-			network_poll_push_event(events, capacity, num_events, NETWORKEVENT_CONNECTED, sock);
-		}
-		if (event->events & EPOLLERR) {
-			update_slot = true;
-			network_poll_push_event(events, capacity, num_events, NETWORKEVENT_ERROR, sock);
-			socket_close(sock);
-		}
-		if (event->events & EPOLLHUP) {
-			update_slot = true;
-			network_poll_push_event(events, capacity, num_events, NETWORKEVENT_HANGUP, sock);
-			socket_close(sock);
 		}
 		if (update_slot)
 			network_poll_update_slot(pollobj, event->data.fd, sock);

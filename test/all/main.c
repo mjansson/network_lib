@@ -145,7 +145,7 @@ main_initialize(void) {
 	log_set_suppress(0, ERRORLEVEL_INFO);
 
 #if ( FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID ) && BUILD_ENABLE_LOG
-	log_set_callback(test_log_callback);
+	log_set_handler(test_log_handler);
 #endif
 
 #if !FOUNDATION_PLATFORM_IOS && !FOUNDATION_PLATFORM_ANDROID && !FOUNDATION_PLATFORM_PNACL

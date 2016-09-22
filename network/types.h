@@ -172,21 +172,31 @@ struct socket_t {
 	NETWORK_DECLARE_POLL_BASE; \
 	int fd_poll; \
 	struct epoll_event* events
+#define NETWORK_DECLARE_POLL_DATA(size) \
+	struct epoll_event eventarr[size]
 #elif FOUNDATION_PLATFORM_APPLE
 #define NETWORK_DECLARE_POLL_PLATFORM \
 	NETWORK_DECLARE_POLL_BASE; \
 	struct pollfd* pollfds
+#define NETWORK_DECLARE_POLL_DATA(size) \
+	struct pollfd pollarr[size]
 #else
 #define NETWORK_DECLARE_POLL_PLATFORM \
 	NETWORK_DECLARE_POLL_BASE
+#define NETWORK_DECLARE_POLL_DATA(size)
 #endif
 
-#define NETWORK_DECLARE_POLL(size) \
+#define NETWORK_DECLARE_POLL \
 	NETWORK_DECLARE_POLL_PLATFORM; \
-	network_poll_slot_t slots[size]
+	network_poll_slot_t slots[FOUNDATION_FLEXIBLE_ARRAY]
+
+#define NETWORK_DECLARE_FIXEDSIZE_POLL(size) \
+	NETWORK_DECLARE_POLL_PLATFORM; \
+	network_poll_slot_t slots[size]; \
+	NETWORK_DECLARE_POLL_DATA(size)
 
 struct network_poll_t {
-	NETWORK_DECLARE_POLL(FOUNDATION_FLEXIBLE_ARRAY);
+	NETWORK_DECLARE_POLL;
 };
 
 struct network_poll_event_t {
