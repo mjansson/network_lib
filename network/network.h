@@ -48,6 +48,11 @@ network_module_is_initialized(void);
 NETWORK_API network_config_t
 network_module_config(void);
 
+NETWORK_API void
+network_module_parse_config(const char* path, size_t path_size,
+                            const char* buffer, size_t size,
+                            const json_token_t* tokens, size_t num_tokens);
+
 /*! Query network module build version
 \return Version of network module */
 NETWORK_API version_t
