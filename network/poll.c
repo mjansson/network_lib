@@ -66,6 +66,8 @@ void
 network_poll_finalize(network_poll_t* pollobj) {
 #if FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
 	close(pollobj->fd_poll);
+#else
+	FOUNDATION_UNUSED(pollobj);
 #endif
 }
 
