@@ -58,7 +58,7 @@ network_poll_initialize(network_poll_t* pollobj, unsigned int num_sockets) {
 	pollobj->pollfds = pointer_offset(pollobj->slots, sizeof(network_poll_slot_t) * num_sockets);
 #elif FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
 	pollobj->events = pointer_offset(pollobj->slots, sizeof(network_poll_slot_t) * num_sockets);
-	pollobj->fd_poll = epoll_create(num_sockets);
+	pollobj->fd_poll = epoll_create((int)num_sockets);
 #endif
 }
 
@@ -104,18 +104,19 @@ network_poll_update_slot(network_poll_t* pollobj, size_t slot, socket_t* sock) {
 	}
 #elif FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
 	struct epoll_event event;
-	if (slot->fd != sock->fd) {
-		if (slot->fd != NETWORK_SOCKET_INVALID)
-			epoll_ctl(pollobj->fd_poll, EPOLL_CTL_DEL, slot->fd, &event);
+	bool add = false;
+	if (pollobj->slots[slot].fd != sock->fd) {
+		add = true;
+		if (pollobj->slots[slot].fd != NETWORK_SOCKET_INVALID) {
+			epoll_ctl(pollobj->fd_poll, EPOLL_CTL_DEL, pollobj->slots[slot].fd, &event);
+			pollobj->slots[slot].fd = NETWORK_SOCKET_INVALID;
+		}
 	}
 	if (sock->fd != NETWORK_SOCKET_INVALID) {
 		event.events = ((sock->state == SOCKETSTATE_CONNECTING) ? EPOLLOUT : EPOLLIN) |
 		               EPOLLERR | EPOLLHUP;
 		event.data.fd = (int)slot;
-		if (slot->fd != NETWORK_SOCKET_INVALID)
-			epoll_ctl(pollobj->fd_poll, EPOLL_CTL_ADD, sock->fd, &event);
-		else
-			epoll_ctl(pollobj->fd_poll, EPOLL_CTL_MOD, sock->fd, &event);
+		epoll_ctl(pollobj->fd_poll, add ? EPOLL_CTL_ADD : EPOLL_CTL_MOD, sock->fd, &event);
 	}
 #endif
 	pollobj->slots[slot].fd = sock->fd;
@@ -167,12 +168,11 @@ network_poll_remove_socket(network_poll_t* pollobj, socket_t* sock) {
 				memcpy(pollobj->pollfds + islot, pollobj->pollfds + (num_sockets - 1), sizeof(struct pollfd));
 #elif FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
 				//Mod the moved socket
-				FOUNDATION_ASSERT(pollobj->slots[islot].base >= 0);
 				struct epoll_event event;
-				event.events = ((_socket_base[ pollobj->slots[islot].base ].state == SOCKETSTATE_CONNECTING) ?
+				event.events = ((pollobj->slots[num_sockets - 1].sock->state == SOCKETSTATE_CONNECTING) ?
 				                EPOLLOUT : EPOLLIN) | EPOLLERR | EPOLLHUP;
 				event.data.fd = (int)islot;
-				epoll_ctl(pollobj->fd_poll, EPOLL_CTL_MOD, pollobj->slots[islot].fd, &event);
+				epoll_ctl(pollobj->fd_poll, EPOLL_CTL_MOD, pollobj->slots[num_sockets - 1].fd, &event);
 #endif
 			}
 			memset(pollobj->slots + (num_sockets - 1), 0, sizeof(network_poll_slot_t));
@@ -221,7 +221,8 @@ network_poll(network_poll_t* pollobj, network_poll_event_t* events, size_t capac
 
 #elif FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
 
-	int ret = epoll_wait(pollobj->fd_poll, pollobj->events, pollobj->num_sockets + 1, timeoutms);
+	int ret = epoll_wait(pollobj->fd_poll, pollobj->events,
+	                     (int)pollobj->num_sockets + 1, (int)timeoutms);
 	int num_polled = ret;
 
 #elif FOUNDATION_PLATFORM_WINDOWS
@@ -325,8 +326,6 @@ network_poll(network_poll_t* pollobj, network_poll_event_t* events, size_t capac
 
 	struct epoll_event* event = pollobj->events;
 	for (int i = 0; i < num_polled; ++i, ++event) {
-		FOUNDATION_ASSERT(pollobj->slots[ event->data.fd ].base >= 0);
-
 		socket_t* sock = pollobj->slots[ event->data.fd ].sock;
 		bool update_slot = false;
 		bool had_error = false;
@@ -366,7 +365,7 @@ network_poll(network_poll_t* pollobj, network_poll_event_t* events, size_t capac
 			update_slot = true;
 		}
 		if (update_slot)
-			network_poll_update_slot(pollobj, event->data.fd, sock);
+			network_poll_update_slot(pollobj, (size_t)event->data.fd, sock);
 	}
 
 #elif FOUNDATION_PLATFORM_WINDOWS
