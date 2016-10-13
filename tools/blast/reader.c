@@ -9,15 +9,25 @@
  *
  */
 
+#define _CRT_SECURE_NO_WARNINGS 1
+
 #include "blast.h"
 #include "reader.h"
 
+#include <foundation/windows.h>
 #include <foundation/posix.h>
 
 #include <fcntl.h>
 #include <stdio.h>
 
 //#include <sys/mman.h>
+
+#if FOUNDATION_PLATFORM_WINDOWS
+#  define open _open
+#  define lseek _lseek
+#  define close _close
+#  define read _read
+#endif
 
 static void
 blast_reader_cache(blast_reader_t* reader, uint64_t offset, int size) {
@@ -66,7 +76,11 @@ blast_reader_open(string_t source) {
     lseek(fd, 0, SEEK_SET);
 
     addr = memory_allocate(HASH_BLAST, (size_t)size, 0, MEMORY_PERSISTENT);
+#if FOUNDATION_PLATFORM_WINDOWS
+    read(fd, addr, (unsigned int)size);
+#else
     read(fd, addr, (size_t)size);
+#endif
     close(fd);
     /*addr = mmap( 0, size, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0 );
     if( addr == MAP_FAILED )
