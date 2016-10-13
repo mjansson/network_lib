@@ -140,8 +140,8 @@ blast_server_process_handshake(blast_server_t* server, socket_t* sock,
 	string_t addr = network_address_to_string(addrbuf, sizeof(addrbuf), address, true);
 
 	if (handshake->datasize > PACKET_DATA_MAXSIZE) {
-		log_warnf(HASH_BLAST, WARNING_INVALID_VALUE, STRING_CONST("Invalid data size %lld from %.*s"),
-		          handshake->datasize, STRING_FORMAT(addr));
+		log_warnf(HASH_BLAST, WARNING_INVALID_VALUE, STRING_CONST("Invalid data size %" PRIsize " from %.*s"),
+		          (size_t)handshake->datasize, STRING_FORMAT(addr));
 		return;
 	}
 
@@ -151,7 +151,7 @@ blast_server_process_handshake(blast_server_t* server, socket_t* sock,
 		return;
 	}
 
-	log_infof(HASH_BLAST, STRING_CONST("Got handshake packet from %.*s (seq %d, timestamp %lld)"),
+	log_infof(HASH_BLAST, STRING_CONST("Got handshake packet from %.*s (seq %d, timestamp %" PRItick ")"),
 	          STRING_FORMAT(addr), (int)handshake->seq, (tick_t)handshake->timestamp);
 
 	for (isrc = 0, ssize = array_size(server->sources); isrc < ssize; ++isrc) {
@@ -228,7 +228,7 @@ blast_server_process_payload(blast_server_t* server, socket_t* sock,
 	}
 
 	if (blast_server_has_ack(source, (uint32_t)packet->seq)) {
-		log_infof(HASH_BLAST, STRING_CONST("Had previous ACK of seq %lld, ignore write and re-ACK"),
+		log_infof(HASH_BLAST, STRING_CONST("Had previous ACK of seq %" PRIu64 ", ignore write and re-ACK"),
 		          packet->seq);
 		blast_server_queue_ack(source, (uint32_t)packet->seq);
 		return;
@@ -236,7 +236,7 @@ blast_server_process_payload(blast_server_t* server, socket_t* sock,
 
 	offset = packet->seq * PACKET_CHUNK_SIZE;
 	if (offset >= source->writer->size) {
-		log_warnf(HASH_BLAST, WARNING_SUSPICIOUS, STRING_CONST("Got invalid payload seq %lld out of range"),
+		log_warnf(HASH_BLAST, WARNING_SUSPICIOUS, STRING_CONST("Got invalid payload seq %" PRIu64 " out of range"),
 		          packet->seq);
 		return;
 	}
@@ -244,7 +244,7 @@ blast_server_process_payload(blast_server_t* server, socket_t* sock,
 	buffer = source->writer->map(source->writer, offset, PACKET_CHUNK_SIZE);
 	if (!buffer) {
 		log_warnf(HASH_BLAST, WARNING_SUSPICIOUS,
-		          STRING_CONST("Unable to map chunk for payload seq %lld out of range"),
+		          STRING_CONST("Unable to map chunk for payload seq %" PRIu64 " out of range"),
 		          packet->seq);
 		return;
 	}

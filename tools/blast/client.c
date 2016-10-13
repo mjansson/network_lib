@@ -80,10 +80,9 @@ blast_client_report_progress(blast_client_t* client, bool force) {
 		if (client->packets_sent > 0) {
 			real resend_rate = (real)((float64_t)client->packets_resent / (float64_t)client->packets_sent) *
 			                   REAL_C(100.0);
-			log_infof(HASH_BLAST, STRING_CONST("Progress: %.*s %d%% (resend rate %.2" PRIreal "%% %lld/%lld))"),
+			log_infof(HASH_BLAST, STRING_CONST("Progress: %.*s %d%% (resend rate %.2" PRIreal "%% %" PRIu64 "/%" PRIu64 "))"),
 			          STRING_FORMAT(client->readers[client->current]->name), progress, (double)resend_rate,
-			          client->packets_resent,
-			          client->packets_sent);
+			          client->packets_resent, client->packets_sent);
 		}
 		client->last_progress = time_current();
 		client->last_progress_percent = progress;
@@ -124,7 +123,7 @@ blast_client_send_handshake(blast_client_t* client, blast_reader_t* reader) {
 		{
 			char buffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
 			string_t addr = network_address_to_string(buffer, sizeof(buffer), client->target, true);
-			log_infof(HASH_BLAST, STRING_CONST("Sent handshake to %.*s (seq %lld, timestamp %lld)"),
+			log_infof(HASH_BLAST, STRING_CONST("Sent handshake to %.*s (seq %" PRIu64 ", timestamp %" PRItick ")"),
 			          STRING_FORMAT(addr), packet.seq,
 			          (tick_t)packet.timestamp);
 		}
@@ -140,7 +139,7 @@ blast_client_send_handshake(blast_client_t* client, blast_reader_t* reader) {
 			{
 				char buffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
 				string_t addr = network_address_to_string(buffer, sizeof(buffer), client->address[iaddr], true);
-				log_infof(HASH_BLAST, STRING_CONST("Sent handshake to %.*s (seq %lld, timestamp %lld)"),
+				log_infof(HASH_BLAST, STRING_CONST("Sent handshake to %.*s (seq %" PRIu64 ", timestamp %" PRItick ")"),
 				          STRING_FORMAT(addr), packet.seq,
 				          (tick_t)packet.timestamp);
 			}
@@ -204,7 +203,7 @@ blast_client_handshake(blast_client_t* client) {
 				packet_handshake_t* handshake = (packet_handshake_t*)packet;
 
 				log_infof(HASH_BLAST,
-				          STRING_CONST("Got handshake packet from %.*s (seq %d, timestamp %lld, latency %lld ms)"),
+				          STRING_CONST("Got handshake packet from %.*s (seq %d, timestamp %" PRItick ", latency %" PRIu64 "ms)"),
 				          STRING_FORMAT(addr), (int)packet->seq, (tick_t)packet->timestamp,
 				          blast_timestamp_elapsed_ms(client->begin_send, packet->timestamp));
 
@@ -215,7 +214,7 @@ blast_client_handshake(blast_client_t* client) {
 				}
 
 				if (client->state == BLAST_STATE_HANDSHAKE) {
-					log_infof(HASH_BLAST, STRING_CONST("Begin transfer of '%.*s' %lld bytes with token %d to %.*s"),
+					log_infof(HASH_BLAST, STRING_CONST("Begin transfer of '%.*s' %" PRIu64 " bytes with token %d to %.*s"),
 					          STRING_FORMAT(client->readers[client->current]->name), client->readers[client->current]->size,
 					          handshake->token, STRING_FORMAT(addr));
 					client->token = (unsigned int)handshake->token;
