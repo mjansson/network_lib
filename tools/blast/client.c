@@ -380,7 +380,7 @@ blast_client_send_data(blast_client_t* client) {
 			deltatime_t elapsed = time_elapsed(client->begin_send);
 			log_infof(HASH_BLAST, STRING_CONST("Transfer complete: %.2" PRIreal "s (%.2" PRIreal "MiB/s)"),
 				(double)elapsed,
-				(double)(client->readers[client->current]->size / (1024*1024)) / (double)elapsed);
+				((double)client->readers[client->current]->size / (1024.0*1024.0)) / (double)elapsed);
 			if (client->current + 1 >= (int)array_size(client->readers)) {
 				log_infof(HASH_BLAST, STRING_CONST("All transfers complete"));
 				return 0;
