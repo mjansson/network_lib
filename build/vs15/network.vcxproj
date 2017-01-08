@@ -482,6 +482,7 @@
     <ClCompile Include="..\..\network\network.c" />
     <ClCompile Include="..\..\network\poll.c" />
     <ClCompile Include="..\..\network\socket.c" />
+    <ClCompile Include="..\..\network\stream.c" />
     <ClCompile Include="..\..\network\tcp.c" />
     <ClCompile Include="..\..\network\udp.c" />
     <ClCompile Include="..\..\network\version.c" />
@@ -494,6 +495,7 @@
     <ClInclude Include="..\..\network\network.h" />
     <ClInclude Include="..\..\network\poll.h" />
     <ClInclude Include="..\..\network\socket.h" />
+    <ClInclude Include="..\..\network\stream.h" />
     <ClInclude Include="..\..\network\tcp.h" />
     <ClInclude Include="..\..\network\types.h" />
     <ClInclude Include="..\..\network\udp.h" />

@@ -8,6 +8,7 @@
     <ClCompile Include="..\..\network\tcp.c" />
     <ClCompile Include="..\..\network\udp.c" />
     <ClCompile Include="..\..\network\version.c" />
+    <ClCompile Include="..\..\network\stream.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\network\address.h" />
@@ -20,6 +21,7 @@
     <ClInclude Include="..\..\network\hashstrings.h" />
     <ClInclude Include="..\..\network\tcp.h" />
     <ClInclude Include="..\..\network\udp.h" />
+    <ClInclude Include="..\..\network\stream.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\network\hashstrings.txt" />
