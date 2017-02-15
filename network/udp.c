@@ -99,10 +99,10 @@ udp_socket_recvfrom(socket_t* sock, void* buffer, size_t capacity, network_addre
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
 		{
 			char addr_buffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
-			string_t address_str = network_address_to_string(addr_buffer, sizeof(addr_buffer), *address, true);
+			string_t address_str = network_address_to_string(addr_buffer, sizeof(addr_buffer), sock->address_remote, true);
 			log_debugf(HASH_NETWORK, STRING_CONST("Socket (0x%" PRIfixPTR
 			                                      " : %d) read %d of %" PRIsize " bytes from %.*s"),
-			           (uintptr_t)sock, sock->fd, ret, capacity, STRING_FORMAT(address_str));
+			           (uintptr_t)sock, sock->fd, (int)ret, capacity, STRING_FORMAT(address_str));
 		}
 #endif
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
@@ -111,12 +111,12 @@ udp_socket_recvfrom(socket_t* sock, void* buffer, size_t capacity, network_addre
 			if ((row + 1) * 8 > ret)
 				cols = ret - (row * 8);
 			for (; col < cols; ++col, ofs += 3) {
-				string_format(dump_buffer + ofs, 66 - (unsigned int)ofs, "%02x", *(src + (row * 8) + col));
+				string_format(dump_buffer + ofs, 66 - (unsigned int)ofs, STRING_CONST("%02x"), *(src + (row * 8) + col));
 				*(dump_buffer + ofs + 2) = ' ';
 			}
 			if (ofs) {
 				*(dump_buffer + ofs - 1) = 0;
-				log_debug(HASH_NETWORK, dump_buffer, ofs - 1);
+				log_debug(HASH_NETWORK, dump_buffer, (size_t)ofs - 1);
 			}
 		}
 #endif
@@ -183,7 +183,7 @@ udp_socket_sendto(socket_t* sock, const void* buffer, size_t size,
 	if (ret > 0) {
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 		const unsigned char* src = (const unsigned char*)buffer;
-		char buffer[34];
+		char dumpbuffer[34];
 #endif
 #if BUILD_ENABLE_LOG
 		char addr_buffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
@@ -197,7 +197,7 @@ udp_socket_sendto(socket_t* sock, const void* buffer, size_t size,
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
 			log_debugf(HASH_NETWORK, STRING_CONST("Socket (0x%" PRIfixPTR
 			                                      " : %d) wrote %d of %" PRIsize " bytes to %.*s"),
-			           (uintptr_t)sock, sock->fd, ret, size, STRING_FORMAT(address_str));
+			           (uintptr_t)sock, sock->fd, (int)ret, size, STRING_FORMAT(address_str));
 #endif
 		}
 #endif
@@ -207,12 +207,12 @@ udp_socket_sendto(socket_t* sock, const void* buffer, size_t size,
 			if ((row + 1) * 8 > ret)
 				cols = ret - (row * 8);
 			for (; col < cols; ++col, ofs += 3) {
-				string_format(buffer + ofs, 34 - (unsigned int)ofs, "%02x", *(src + (row * 8) + col));
-				*(buffer + ofs + 2) = ' ';
+				string_format(dumpbuffer + ofs, 34 - (unsigned int)ofs, STRING_CONST("%02x"), *(src + (row * 8) + col));
+				*(dumpbuffer + ofs + 2) = ' ';
 			}
 			if (ofs) {
-				*(buffer + ofs - 1) = 0;
-				log_debug(HASH_NETWORK, buffer, ofs - 1);
+				*(dumpbuffer + ofs - 1) = 0;
+				log_debug(HASH_NETWORK, dumpbuffer, (size_t)ofs - 1);
 			}
 		}
 #endif

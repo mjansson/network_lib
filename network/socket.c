@@ -501,7 +501,7 @@ socket_read(socket_t* sock, void* buffer, size_t size) {
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
 		log_debugf(HASH_NETWORK,
 		           STRING_CONST("Socket (0x%" PRIfixPTR " : %d) read %d of %" PRIsize " bytes"),
-		           (uintptr_t)sock, sock->fd, ret, size);
+		           (uintptr_t)sock, sock->fd, (int)ret, size);
 #endif
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 		for (long row = 0; row <= (ret / 8); ++row) {
@@ -515,7 +515,7 @@ socket_read(socket_t* sock, void* buffer, size_t size) {
 			}
 			if (ofs) {
 				*(dump_buffer + ofs - 1) = 0;
-				log_debug(HASH_NETWORK, dump_buffer, ofs - 1);
+				log_debug(HASH_NETWORK, dump_buffer, (size_t)ofs - 1);
 			}
 		}
 #endif
@@ -582,12 +582,12 @@ socket_write(socket_t* sock, const void* buffer, size_t size) {
 		if (res > 0) {
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 			const unsigned char* src = (const unsigned char*)current;
-			char buffer[34];
+			char dumpbuffer[34];
 #endif
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
 			log_debugf(HASH_NETWORK,
-			           STRING_CONST("Socket (0x%" PRIfixPTR " : %d) wrote %d of %d bytes (offset %" PRIsize ")"),
-			           (uintptr_t)sock, sock->fd, res, remain, total_write);
+			           STRING_CONST("Socket (0x%" PRIfixPTR " : %d) wrote %d of %" PRIsize " bytes (offset %" PRIsize ")"),
+			           (uintptr_t)sock, sock->fd, (int)res, remain, total_write);
 #endif
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 1
 			for (long row = 0; row <= (res / 8); ++row) {
@@ -595,12 +595,12 @@ socket_write(socket_t* sock, const void* buffer, size_t size) {
 				if ((row + 1) * 8 > res)
 					cols = res - (row * 8);
 				for (; col < cols; ++col, ofs += 3) {
-					string_format(buffer + ofs, 34 - (unsigned int)ofs, STRING_CONST("%02x"), *(src + (row * 8) + col));
-					*(buffer + ofs + 2) = ' ';
+					string_format(dumpbuffer + ofs, 34 - (unsigned int)ofs, STRING_CONST("%02x"), *(src + (row * 8) + col));
+					*(dumpbuffer + ofs + 2) = ' ';
 				}
 				if (ofs) {
-					*(buffer + ofs - 1) = 0;
-					log_debug(HASH_NETWORK, buffer, ofs - 1);
+					*(dumpbuffer + ofs - 1) = 0;
+					log_debug(HASH_NETWORK, dumpbuffer, (size_t)ofs - 1);
 				}
 			}
 #endif
