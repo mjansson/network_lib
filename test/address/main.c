@@ -97,11 +97,12 @@ DECLARE_TEST(address, resolve) {
 	char buffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
 	bool has_ipv4 = network_supports_ipv4();
 	bool has_ipv6 = network_supports_ipv6();
-	unsigned int expected_addresses = (has_ipv4 ? 1 : 0) + (has_ipv6 ? 1 : 0);
+	size_t expected_addresses;
 
 	network_address_t** addresses = network_address_resolve(STRING_CONST("localhost"));
 	log_debugf(HASH_NETWORK, STRING_CONST("localhost -> %u addresses"), array_size(addresses));
-	EXPECT_EQ(array_size(addresses), expected_addresses);
+	EXPECT_SIZEGE(array_size(addresses), 1);
+	expected_addresses = array_size(addresses);
 	for (iaddr = 0, addrsize = array_size(addresses); iaddr < addrsize; ++iaddr) {
 		string_t address_str = network_address_to_string(buffer, sizeof(buffer), addresses[iaddr], true);
 		log_debugf(HASH_NETWORK, STRING_CONST("  %.*s"), STRING_FORMAT(address_str));
@@ -113,7 +114,7 @@ DECLARE_TEST(address, resolve) {
 
 	addresses = network_address_resolve(STRING_CONST("localhost:80"));
 	log_debugf(HASH_NETWORK, STRING_CONST("localhost:80 -> %u addresses"), array_size(addresses));
-	EXPECT_EQ(array_size(addresses), expected_addresses);
+	EXPECT_SIZEEQ(array_size(addresses), expected_addresses);
 	for (iaddr = 0, addrsize = array_size(addresses); iaddr < addrsize; ++iaddr) {
 		string_t address_str = network_address_to_string(buffer, sizeof(buffer), addresses[iaddr], true);
 		log_debugf(HASH_NETWORK, STRING_CONST("  %.*s"), STRING_FORMAT(address_str));
