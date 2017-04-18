@@ -51,7 +51,7 @@ test_tcp_finalize(void) {
 	network_module_finalize();
 }
 
-static atomic32_t io_completed = {0};
+static atomic32_t io_completed;
 
 static void*
 io_blocking_thread(void* arg) {
