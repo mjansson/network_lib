@@ -205,33 +205,31 @@ DECLARE_TEST(address, any) {
 	network_address_t** any_resolve;
 
 	if (has_ipv4) {
-		network_address_t* any = network_address_ipv4_any();
-		EXPECT_NE(any, 0);
-		address_str = network_address_to_string(buffer, sizeof(buffer), any, true);
+		network_address_ipv4_t any;
+		network_address_ipv4_initialize(&any);
+		address_str = network_address_to_string(buffer, sizeof(buffer), (network_address_t*)&any, true);
 		log_debugf(HASH_NETWORK, STRING_CONST("IPv4 any: %.*s"), STRING_FORMAT(address_str));
 		EXPECT_STRINGEQ(address_str, string_const(STRING_CONST("0.0.0.0")));
 
 		any_resolve = network_address_resolve(STRING_ARGS(address_str));
 		EXPECT_EQ(array_size(any_resolve), 1);
-		EXPECT_TRUE(network_address_equal(any, any_resolve[0]));
+		EXPECT_TRUE(network_address_equal((network_address_t*)&any, any_resolve[0]));
 
 		network_address_array_deallocate(any_resolve);
-		memory_deallocate(any);
 	}
 
 	if (has_ipv6) {
-		network_address_t* any = network_address_ipv6_any();
-		EXPECT_NE(any, 0);
-		address_str = network_address_to_string(buffer, sizeof(buffer), any, true);
+		network_address_ipv6_t any;
+		network_address_ipv6_initialize(&any);
+		address_str = network_address_to_string(buffer, sizeof(buffer), (network_address_t*)&any, true);
 		log_debugf(HASH_NETWORK, STRING_CONST("IPv6 any: %.*s"), STRING_FORMAT(address_str));
 		EXPECT_STRINGEQ(address_str, string_const(STRING_CONST("::")));
 
 		any_resolve = network_address_resolve(STRING_ARGS(address_str));
 		EXPECT_EQ(array_size(any_resolve), 1);
-		EXPECT_TRUE(network_address_equal(any, any_resolve[0]));
+		EXPECT_TRUE(network_address_equal((network_address_t*)&any, any_resolve[0]));
 
 		network_address_array_deallocate(any_resolve);
-		memory_deallocate(any);
 	}
 
 	return 0;
@@ -245,41 +243,41 @@ DECLARE_TEST(address, port) {
 	string_t address_str;
 
 	if (has_ipv4) {
-		network_address_t* any = network_address_ipv4_any();
-		EXPECT_EQ(network_address_ip_port(any), 0);
+		network_address_ipv4_t any;
+		network_address_ipv4_initialize(&any);
+		EXPECT_EQ(network_address_ip_port((network_address_t*)&any), 0);
 
-		network_address_ip_set_port(any, 80);
-		EXPECT_EQ(network_address_ip_port(any), 80);
+		network_address_ip_set_port((network_address_t*)&any, 80);
+		EXPECT_EQ(network_address_ip_port((network_address_t*)&any), 80);
 
-		address_str = network_address_to_string(buffer, sizeof(buffer), any, true);
+		address_str = network_address_to_string(buffer, sizeof(buffer), (network_address_t*)&any, true);
 		log_debugf(HASH_NETWORK, STRING_CONST("IPv4 any: %.*s"), STRING_FORMAT(address_str));
 		EXPECT_STRINGEQ(address_str, string_const(STRING_CONST("0.0.0.0:80")));
 
 		any_resolve = network_address_resolve(STRING_ARGS(address_str));
 		EXPECT_EQ(array_size(any_resolve), 1);
-		EXPECT_TRUE(network_address_equal(any, any_resolve[0]));
+		EXPECT_TRUE(network_address_equal((network_address_t*)&any, any_resolve[0]));
 
 		network_address_array_deallocate(any_resolve);
-		memory_deallocate(any);
 	}
 
 	if (has_ipv6) {
-		network_address_t* any = network_address_ipv6_any();
-		EXPECT_EQ(network_address_ip_port(any), 0);
+		network_address_ipv6_t any;
+		network_address_ipv6_initialize(&any);
+		EXPECT_EQ(network_address_ip_port((network_address_t*)&any), 0);
 
-		network_address_ip_set_port(any, 80);
-		EXPECT_EQ(network_address_ip_port(any), 80);
+		network_address_ip_set_port((network_address_t*)&any, 80);
+		EXPECT_EQ(network_address_ip_port((network_address_t*)&any), 80);
 
-		address_str = network_address_to_string(buffer, sizeof(buffer), any, true);
+		address_str = network_address_to_string(buffer, sizeof(buffer), (network_address_t*)&any, true);
 		log_debugf(HASH_NETWORK, STRING_CONST("IPv6 any: %.*s"), STRING_FORMAT(address_str));
 		EXPECT_STRINGEQ(address_str, string_const(STRING_CONST("[::]:80")));
 
 		any_resolve = network_address_resolve(STRING_ARGS(address_str));
 		EXPECT_EQ(array_size(any_resolve), 1);
-		EXPECT_TRUE(network_address_equal(any, any_resolve[0]));
+		EXPECT_TRUE(network_address_equal((network_address_t*)&any, any_resolve[0]));
 
 		network_address_array_deallocate(any_resolve);
-		memory_deallocate(any);
 	}
 
 	return 0;
@@ -291,33 +289,33 @@ DECLARE_TEST(address, family) {
 	network_address_t** any_resolve;
 
 	if (has_ipv4) {
-		network_address_t* any = network_address_ipv4_any();
-		EXPECT_EQ(network_address_family(any), NETWORK_ADDRESSFAMILY_IPV4);
+		network_address_ipv4_t any;
+		network_address_ipv4_initialize(&any);
+		EXPECT_EQ(network_address_family((network_address_t*)&any), NETWORK_ADDRESSFAMILY_IPV4);
 
-		network_address_ip_set_port(any, 80);
-		EXPECT_EQ(network_address_family(any), NETWORK_ADDRESSFAMILY_IPV4);
+		network_address_ip_set_port((network_address_t*)&any, 80);
+		EXPECT_EQ(network_address_family((network_address_t*)&any), NETWORK_ADDRESSFAMILY_IPV4);
 
 		any_resolve = network_address_resolve(STRING_CONST("0.0.0.0:80"));
 		EXPECT_EQ(array_size(any_resolve), 1);
 		EXPECT_EQ(network_address_family(any_resolve[0]), NETWORK_ADDRESSFAMILY_IPV4);
 
 		network_address_array_deallocate(any_resolve);
-		memory_deallocate(any);
 	}
 
 	if (has_ipv6) {
-		network_address_t* any = network_address_ipv6_any();
-		EXPECT_EQ(network_address_family(any), NETWORK_ADDRESSFAMILY_IPV6);
+		network_address_ipv6_t any;
+		network_address_ipv6_initialize(&any);
+		EXPECT_EQ(network_address_family((network_address_t*)&any), NETWORK_ADDRESSFAMILY_IPV6);
 
-		network_address_ip_set_port(any, 80);
-		EXPECT_EQ(network_address_family(any), NETWORK_ADDRESSFAMILY_IPV6);
+		network_address_ip_set_port((network_address_t*)&any, 80);
+		EXPECT_EQ(network_address_family((network_address_t*)&any), NETWORK_ADDRESSFAMILY_IPV6);
 
 		any_resolve = network_address_resolve(STRING_CONST("[::]:80"));
 		EXPECT_EQ(array_size(any_resolve), 1);
 		EXPECT_EQ(network_address_family(any_resolve[0]), NETWORK_ADDRESSFAMILY_IPV6);
 
 		network_address_array_deallocate(any_resolve);
-		memory_deallocate(any);
 	}
 
 	return 0;

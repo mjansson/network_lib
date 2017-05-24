@@ -21,6 +21,7 @@
 
 #if FOUNDATION_PLATFORM_POSIX
 #  include <sys/socket.h>
+#  include <netinet/in.h>
 #endif
 
 #if defined( NETWORK_COMPILE ) && NETWORK_COMPILE
@@ -54,6 +55,11 @@ typedef enum {
 	NETWORK_ADDRESSFAMILY_IPV4     = 0,
 	NETWORK_ADDRESSFAMILY_IPV6
 } network_address_family_t;
+
+typedef enum {
+	NETWORK_SOCKETTYPE_TCP     = 0,
+	NETWORK_SOCKETTYPE_UDP
+} network_socket_type_t;
 
 typedef enum {
 	SOCKETSTATE_NOTCONNECTED       = 0,
@@ -104,6 +110,24 @@ struct network_address_t {
 	NETWORK_DECLARE_NETWORK_ADDRESS;
 };
 
+#define NETWORK_DECLARE_NETWORK_ADDRESS_IP   \
+	NETWORK_DECLARE_NETWORK_ADDRESS
+
+typedef struct network_address_ip_t {
+	NETWORK_DECLARE_NETWORK_ADDRESS_IP;
+	struct sockaddr        saddr; //Aliased to ipv4/ipv6 struct
+} network_address_ip_t;
+
+typedef struct network_address_ipv4_t {
+	NETWORK_DECLARE_NETWORK_ADDRESS_IP;
+	struct sockaddr_in     saddr;
+} network_address_ipv4_t;
+
+typedef struct network_address_ipv6_t {
+	NETWORK_DECLARE_NETWORK_ADDRESS_IP;
+	struct sockaddr_in6    saddr;
+} network_address_ipv6_t;
+
 struct network_poll_slot_t {
 	socket_t*  sock;
 	int        fd;
@@ -139,7 +163,8 @@ struct socket_t {
 
 	uint32_t flags: 10;
 	uint32_t state: 6;
-	uint32_t _unused: 16;
+	uint32_t type: 8;
+	uint32_t _unused: 8;
 
 	uint32_t id;
 

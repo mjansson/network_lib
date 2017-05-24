@@ -386,9 +386,10 @@ DECLARE_TEST(tcp, io_ipv4) {
 	sock_listen = tcp_socket_allocate();
 	sock_client = tcp_socket_allocate();
 
-	address_bind = network_address_ipv4_any();
+	network_address_ipv4_t any;
+	network_address_ipv4_initialize(&any);
+	address_bind = (network_address_t*)&any;
 	socket_bind(sock_listen, address_bind);
-	memory_deallocate(address_bind);
 
 	tcp_socket_listen(sock_listen);
 	EXPECT_EQ(socket_state(sock_listen), SOCKETSTATE_LISTENING);
@@ -465,9 +466,10 @@ DECLARE_TEST(tcp, io_ipv6) {
 	sock_listen = tcp_socket_allocate();
 	sock_client = tcp_socket_allocate();
 
-	address_bind = network_address_ipv6_any();
+	network_address_ipv6_t any;
+	network_address_ipv6_initialize(&any);
+	address_bind = (network_address_t*)&any;
 	socket_bind(sock_listen, address_bind);
-	memory_deallocate(address_bind);
 
 	tcp_socket_listen(sock_listen);
 	EXPECT_EQ(socket_state(sock_listen), SOCKETSTATE_LISTENING);
@@ -541,9 +543,10 @@ DECLARE_TEST(tcp, stream_ipv4) {
 	sock_listen = tcp_socket_allocate();
 	sock_client = tcp_socket_allocate();
 
-	address_bind = network_address_ipv4_any();
+	network_address_ipv4_t any;
+	network_address_ipv4_initialize(&any);
+	address_bind = (network_address_t*)&any;
 	socket_bind(sock_listen, address_bind);
-	memory_deallocate(address_bind);
 
 	tcp_socket_listen(sock_listen);
 	EXPECT_EQ(socket_state(sock_listen), SOCKETSTATE_LISTENING);
@@ -617,9 +620,10 @@ DECLARE_TEST(tcp, stream_ipv6) {
 	sock_listen = tcp_socket_allocate();
 	sock_client = tcp_socket_allocate();
 
-	address_bind = network_address_ipv6_any();
+	network_address_ipv6_t any;
+	network_address_ipv6_initialize(&any);
+	address_bind = (network_address_t*)&any;
 	socket_bind(sock_listen, address_bind);
-	memory_deallocate(address_bind);
 
 	tcp_socket_listen(sock_listen);
 	EXPECT_EQ(socket_state(sock_listen), SOCKETSTATE_LISTENING);

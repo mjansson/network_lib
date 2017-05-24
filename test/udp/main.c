@@ -14,7 +14,7 @@
 #include <foundation/foundation.h>
 #include <test/test.h>
 
-typedef struct _test_datagram_arg {
+typedef struct test_datagram_arg {
 	socket_t*          sock;
 	network_address_t* target;
 } test_datagram_arg_t;

@@ -33,6 +33,7 @@ void
 udp_socket_initialize(socket_t* sock) {
 	_socket_initialize(sock);
 
+	sock->type = NETWORK_SOCKETTYPE_UDP;
 	sock->open_fn = _udp_socket_open;
 	sock->stream_initialize_fn = _udp_stream_initialize;
 }

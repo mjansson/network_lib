@@ -69,6 +69,11 @@ socket_deallocate(socket_t* sock) {
 	memory_deallocate(sock);
 }
 
+network_socket_type_t
+socket_type(socket_t* sock) {
+	return sock->type;
+}
+
 bool
 socket_bind(socket_t* sock, const network_address_t* address) {
 	bool success = false;

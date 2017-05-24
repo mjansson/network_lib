@@ -33,6 +33,9 @@ socket_connect(socket_t* sock, const network_address_t* address, unsigned int ti
 NETWORK_API void
 socket_close(socket_t* sock);
 
+NETWORK_API network_socket_type_t
+socket_type(socket_t* sock);
+
 NETWORK_API bool
 socket_blocking(const socket_t* sock);
 

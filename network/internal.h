@@ -52,24 +52,6 @@ typedef enum {
 	SOCKETFLAG_REUSE_PORT           = 0x00000008
 } socket_flag_t;
 
-#define NETWORK_DECLARE_NETWORK_ADDRESS_IP   \
-	NETWORK_DECLARE_NETWORK_ADDRESS
-
-typedef struct network_address_ip_t {
-	NETWORK_DECLARE_NETWORK_ADDRESS_IP;
-	struct sockaddr        saddr; //Aliased to ipv4/ipv6 struct
-} network_address_ip_t;
-
-typedef struct network_address_ipv4_t {
-	NETWORK_DECLARE_NETWORK_ADDRESS_IP;
-	struct sockaddr_in     saddr;
-} network_address_ipv4_t;
-
-typedef struct network_address_ipv6_t {
-	NETWORK_DECLARE_NETWORK_ADDRESS_IP;
-	struct sockaddr_in6    saddr;
-} network_address_ipv6_t;
-
 #if FOUNDATION_PLATFORM_WINDOWS
 #  define NETWORK_SOCKET_ERROR ((int)WSAGetLastError())
 #  define NETWORK_RESOLV_ERROR NETWORK_SOCKET_ERROR

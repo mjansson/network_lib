@@ -38,6 +38,7 @@ void
 tcp_socket_initialize(socket_t* sock) {
 	_socket_initialize(sock);
 
+	sock->type = NETWORK_SOCKETTYPE_TCP;
 	sock->open_fn = _tcp_socket_open;
 	sock->stream_initialize_fn = _tcp_stream_initialize;
 }

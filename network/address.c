@@ -9,9 +9,8 @@
  *
  */
 
-#include <network/address.h>
+#include <network/network.h>
 #include <network/internal.h>
-#include <network/hashstrings.h>
 
 #include <foundation/foundation.h>
 
@@ -45,14 +44,18 @@ network_address_resolve(const char* address, size_t length) {
 	if (string_find_first_not_of(address, length, STRING_CONST("0123456789"), 0) == STRING_NPOS) {
 		int port = string_to_int(address, length);
 		if ((port > 0) && (port <= 65535)) {
-			network_address_t* any = network_address_ipv4_any();
-			network_address_ip_set_port(any, (unsigned int)port);
-			array_push(addresses, any);
-
-			any = network_address_ipv6_any();
-			network_address_ip_set_port(any, (unsigned int)port);
-			array_push(addresses, any);
-
+			if (network_supports_ipv4()) {
+				network_address_ipv4_t any;
+				network_address_ipv4_initialize(&any);
+				network_address_ip_set_port((network_address_t*)&any, (unsigned int)port);
+				array_push(addresses, network_address_clone((network_address_t*)&any));
+			}
+			if (network_supports_ipv6()) {
+				network_address_ipv6_t any;
+				network_address_ipv6_initialize(&any);
+				network_address_ip_set_port((network_address_t*)&any, (unsigned int)port);
+				array_push(addresses, network_address_clone((network_address_t*)&any));
+			}
 			error_context_pop();
 
 			return addresses;
@@ -169,38 +172,28 @@ network_address_to_string(char* buffer, size_t capacity, const network_address_t
 }
 
 network_address_t*
-network_address_ipv4_any(void) {
-	network_address_ipv4_t* address;
-	address = memory_allocate(HASH_NETWORK, sizeof(network_address_ipv4_t), 0,
-	                          MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+network_address_ipv4_initialize(network_address_ipv4_t* address) {
+	memset(address, 0, sizeof(network_address_ipv4_t));
+	address->saddr.sin_family = AF_INET;
 #if FOUNDATION_PLATFORM_WINDOWS
 	address->saddr.sin_addr.s_addr = INADDR_ANY;
-#else
-	address->saddr.sin_addr.s_addr = 0;//INADDR_ANY;
 #endif
 #if FOUNDATION_PLATFORM_APPLE
 	address->saddr.sin_len = sizeof(address->saddr);
 #endif
-	address->saddr.sin_family = AF_INET;
 	address->family = NETWORK_ADDRESSFAMILY_IPV4;
 	address->address_size = sizeof(struct sockaddr_in);
 	return (network_address_t*)address;
 }
 
 network_address_t*
-network_address_ipv6_any(void) {
-	network_address_ipv6_t* address;
-	address = memory_allocate(HASH_NETWORK, sizeof(network_address_ipv6_t), 0,
-	                          MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-#if FOUNDATION_PLATFORM_WINDOWS
+network_address_ipv6_initialize(network_address_ipv6_t* address) {
+	memset(address, 0, sizeof(network_address_ipv6_t));
+	address->saddr.sin6_family = AF_INET6;
 	address->saddr.sin6_addr = in6addr_any;
-#else
-	address->saddr.sin6_addr = in6addr_any;
-#endif
 #if FOUNDATION_PLATFORM_APPLE
 	address->saddr.sin6_len = sizeof(address->saddr);
 #endif
-	address->saddr.sin6_family = AF_INET6;
 	address->family = NETWORK_ADDRESSFAMILY_IPV6;
 	address->address_size = sizeof(struct sockaddr_in6);
 	return (network_address_t*)address;
@@ -231,36 +224,24 @@ network_address_ip_port(const network_address_t* address) {
 	return 0;
 }
 
-network_address_t*
-network_address_ipv4_from_ip(uint32_t ip) {
-	network_address_ipv4_t* address;
-	address = memory_allocate(HASH_NETWORK, sizeof(network_address_ipv4_t), 0,
-	                          MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-#if FOUNDATION_PLATFORM_APPLE
-	address->saddr.sin_len = sizeof(address->saddr);
-#endif
-	address->saddr.sin_family = AF_INET;
-	address->family = NETWORK_ADDRESSFAMILY_IPV4;
-	address->address_size = sizeof(struct sockaddr_in);
-	network_address_ipv4_set_ip((network_address_t*)address, ip);
-	return (network_address_t*)address;
-}
-
 void
 network_address_ipv4_set_ip(network_address_t* address, uint32_t ip) {
-	if (address && address->family == NETWORK_ADDRESSFAMILY_IPV4) {
-		network_address_ipv4_t* address_ipv4 = (network_address_ipv4_t*)address;
-		address_ipv4->saddr.sin_addr.s_addr = ip;
-	}
+	if (address && address->family == NETWORK_ADDRESSFAMILY_IPV4)
+		((network_address_ipv4_t*)address)->saddr.sin_addr.s_addr = byteorder_bigendian32(ip);
 }
 
 uint32_t
-network_address_ipv4_ip(network_address_t* address) {
+network_address_ipv4_ip(const network_address_t* address) {
 	if (address && address->family == NETWORK_ADDRESSFAMILY_IPV4) {
-		network_address_ipv4_t* address_ipv4 = (network_address_ipv4_t*)address;
-		return address_ipv4->saddr.sin_addr.s_addr;
+		const network_address_ipv4_t* address_ipv4 = (const network_address_ipv4_t*)address;
+		return byteorder_bigendian32(address_ipv4->saddr.sin_addr.s_addr);
 	}
 	return 0;
+}
+
+uint32_t
+network_address_ipv4_make_ip(unsigned char c0, unsigned char c1, unsigned char c2, unsigned char c3) {
+	return (((uint32_t)c0) << 24U) | (((uint32_t)c1) << 16U) | (((uint32_t)c2) << 8U) | ((uint32_t)c3);
 }
 
 network_address_family_t
@@ -275,7 +256,7 @@ network_address_local(void) {
 #if FOUNDATION_PLATFORM_WINDOWS
 	PIP_ADAPTER_ADDRESSES adapter;
 	IP_ADAPTER_ADDRESSES* adapter_address = 0;
-	unsigned long address_size = 16 * 1024 * 1024;
+	unsigned long address_size = 8000;
 	int num_retries = 4;
 	unsigned long ret = 0;
 #endif
@@ -449,9 +430,14 @@ network_address_equal(const network_address_t* first, const network_address_t* s
 }
 
 void
+network_address_deallocate(network_address_t* address) {
+	memory_deallocate(address);
+}
+
+void
 network_address_array_deallocate(network_address_t** addresses) {
 	unsigned int iaddr, asize;
 	for (iaddr = 0, asize = array_size(addresses); iaddr < asize; ++iaddr)
-		memory_deallocate(addresses[iaddr]);
+		network_address_deallocate(addresses[iaddr]);
 	array_deallocate(addresses);
 }
