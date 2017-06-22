@@ -250,7 +250,7 @@ network_address_ipv6_set_ip(network_address_t* address, struct in6_addr ip) {
 		((network_address_ipv6_t*)address)->saddr.sin6_addr = ip;
 }
 
-NETWORK_API struct in6_add
+struct in6_addr
 network_address_ipv6_ip(const network_address_t* address) {
 	if (address && address->family == NETWORK_ADDRESSFAMILY_IPV6) {
 		const network_address_ipv6_t* address_ipv6 = (const network_address_ipv6_t*)address;

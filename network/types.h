@@ -19,7 +19,9 @@
 
 #include <network/build.h>
 
-#if FOUNDATION_PLATFORM_POSIX
+#if FOUNDATION_PLATFORM_WINDOWS
+#  include <foundation/windows.h>
+#elif FOUNDATION_PLATFORM_POSIX
 #  include <sys/socket.h>
 #  include <netinet/in.h>
 #endif
