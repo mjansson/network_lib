@@ -70,5 +70,11 @@ network_address_ipv4_set_ip(network_address_t* address, uint32_t ip);
 NETWORK_API uint32_t
 network_address_ipv4_ip(const network_address_t* address);
 
+NETWORK_API void
+network_address_ipv6_set_ip(network_address_t* address, struct in6_addr ip);
+
+NETWORK_API struct in6_addr
+network_address_ipv6_ip(const network_address_t* address);
+
 NETWORK_API uint32_t
 network_address_ipv4_make_ip(unsigned char c0, unsigned char c1, unsigned char c2, unsigned char c3);

@@ -244,6 +244,23 @@ network_address_ipv4_make_ip(unsigned char c0, unsigned char c1, unsigned char c
 	return (((uint32_t)c0) << 24U) | (((uint32_t)c1) << 16U) | (((uint32_t)c2) << 8U) | ((uint32_t)c3);
 }
 
+void
+network_address_ipv6_set_ip(network_address_t* address, struct in6_addr ip) {
+	if (address && address->family == NETWORK_ADDRESSFAMILY_IPV6)
+		((network_address_ipv6_t*)address)->saddr.sin6_addr = ip;
+}
+
+NETWORK_API struct in6_add
+network_address_ipv6_ip(const network_address_t* address) {
+	if (address && address->family == NETWORK_ADDRESSFAMILY_IPV6) {
+		const network_address_ipv6_t* address_ipv6 = (const network_address_ipv6_t*)address;
+		return address_ipv6->saddr.sin6_addr;
+	}
+	struct in6_addr noaddr;
+	memset(&noaddr, 0, sizeof(noaddr));
+	return noaddr;
+}
+
 network_address_family_t
 network_address_type(const network_address_t* address) {
 	return address->family;
