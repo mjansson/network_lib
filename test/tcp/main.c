@@ -72,7 +72,7 @@ io_blocking_thread(void* arg) {
 
 	log_debugf(HASH_NETWORK, STRING_CONST("IO complete on socket 0x%" PRIfixPTR), (uintptr_t)sock);
 
-	atomic_incr32(&io_completed);
+	atomic_incr32(&io_completed, memory_order_release);
 
 	return 0;
 }
@@ -110,7 +110,7 @@ stream_blocking_thread(void* arg) {
 
 	stream_deallocate(stream);
 
-	atomic_incr32(&io_completed);
+	atomic_incr32(&io_completed, memory_order_release);
 
 	return 0;
 }
@@ -425,7 +425,7 @@ DECLARE_TEST(tcp, io_ipv4) {
 	socket_set_blocking(sock_client, true);
 	socket_set_blocking(sock_server, true);
 
-	atomic_store32(&io_completed, 0);
+	atomic_store32(&io_completed, 0, memory_order_release);
 
 	thread_initialize(&threads[0], io_blocking_thread, sock_server, STRING_CONST("io_thread"),
 	                  THREAD_PRIORITY_NORMAL, 0);
@@ -443,7 +443,7 @@ DECLARE_TEST(tcp, io_ipv4) {
 	socket_deallocate(sock_server);
 	socket_deallocate(sock_client);
 
-	EXPECT_EQ(atomic_load32(&io_completed), 2);
+	EXPECT_EQ(atomic_load32(&io_completed, memory_order_acquire), 2);
 
 	return 0;
 }
@@ -502,7 +502,7 @@ DECLARE_TEST(tcp, io_ipv6) {
 	socket_set_blocking(sock_client, true);
 	socket_set_blocking(sock_server, true);
 
-	atomic_store32(&io_completed, 0);
+	atomic_store32(&io_completed, 0, memory_order_release);
 
 	thread_initialize(&threads[0], io_blocking_thread, sock_server, STRING_CONST("io_thread"),
 	                  THREAD_PRIORITY_NORMAL, 0);
@@ -520,7 +520,7 @@ DECLARE_TEST(tcp, io_ipv6) {
 	socket_deallocate(sock_server);
 	socket_deallocate(sock_client);
 
-	EXPECT_EQ(atomic_load32(&io_completed), 2);
+	EXPECT_EQ(atomic_load32(&io_completed, memory_order_acquire), 2);
 
 	return 0;
 }
@@ -579,7 +579,7 @@ DECLARE_TEST(tcp, stream_ipv4) {
 	socket_set_blocking(sock_client, true);
 	socket_set_blocking(sock_server, true);
 
-	atomic_store32(&io_completed, 0);
+	atomic_store32(&io_completed, 0, memory_order_release);
 
 	thread_initialize(&threads[0], stream_blocking_thread, sock_server, STRING_CONST("stream_thread"),
 	                  THREAD_PRIORITY_NORMAL, 0);
@@ -597,7 +597,7 @@ DECLARE_TEST(tcp, stream_ipv4) {
 	socket_deallocate(sock_server);
 	socket_deallocate(sock_client);
 
-	EXPECT_EQ(atomic_load32(&io_completed), 2);
+	EXPECT_EQ(atomic_load32(&io_completed, memory_order_acquire), 2);
 
 	return 0;
 }
@@ -656,7 +656,7 @@ DECLARE_TEST(tcp, stream_ipv6) {
 	socket_set_blocking(sock_client, true);
 	socket_set_blocking(sock_server, true);
 
-	atomic_store32(&io_completed, 0);
+	atomic_store32(&io_completed, 0, memory_order_release);
 
 	thread_initialize(&threads[0], stream_blocking_thread, sock_server, STRING_CONST("stream_thread"),
 	                  THREAD_PRIORITY_NORMAL, 0);
@@ -674,7 +674,7 @@ DECLARE_TEST(tcp, stream_ipv6) {
 	socket_deallocate(sock_server);
 	socket_deallocate(sock_client);
 
-	EXPECT_EQ(atomic_load32(&io_completed), 2);
+	EXPECT_EQ(atomic_load32(&io_completed, memory_order_acquire), 2);
 
 	return 0;
 }
