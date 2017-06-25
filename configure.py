@@ -19,6 +19,10 @@ toolchain = generator.toolchain
 network_lib = generator.lib( module = 'network', sources = [
   'address.c', 'network.c', 'poll.c', 'socket.c', 'stream.c', 'tcp.c', 'udp.c', 'version.c' ] )
 
+#No test cases if we're a submodule
+if generator.is_subninja():
+  sys.exit()
+
 includepaths = generator.test_includepaths()
 
 extralibs = []
