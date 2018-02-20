@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.join('build', 'ninja'))
 
 import generator
 
-dependlibs = ['foundation']
+dependlibs = ['network', 'foundation']
 
 generator = generator.Generator(project = 'network', dependlibs = dependlibs, variables = [('bundleidentifier', 'com.rampantpixels.network.$(binname)')])
 target = generator.target
@@ -55,11 +55,11 @@ if target.is_ios() or target.is_android() or target.is_pnacl():
       'TestActivity.java'
     ]]
   if target.is_pnacl():
-    generator.bin(module = '', sources = [os.path.join(module, 'main.c') for module in test_cases] + test_extrasources, binname = 'test-all', basepath = 'test', implicit_deps = [network_lib], libs = ['network', 'test', 'foundation'], resources = test_resources, includepaths = includepaths)
+    generator.bin(module = '', sources = [os.path.join(module, 'main.c') for module in test_cases] + test_extrasources, binname = 'test-all', basepath = 'test', implicit_deps = [network_lib], libs = ['test'] + dependlibs, resources = test_resources, includepaths = includepaths)
   else:
-    generator.app(module = '', sources = [os.path.join(module, 'main.c') for module in test_cases] + test_extrasources, binname = 'test-all', basepath = 'test', implicit_deps = [network_lib], libs = ['network', 'test', 'foundation'], resources = test_resources, includepaths = includepaths)
+    generator.app(module = '', sources = [os.path.join(module, 'main.c') for module in test_cases] + test_extrasources, binname = 'test-all', basepath = 'test', implicit_deps = [network_lib], libs = ['test'] + dependlibs, resources = test_resources, includepaths = includepaths)
 else:
   #Build one binary per test case
-  generator.bin(module = 'all', sources = ['main.c'], binname = 'test-all', basepath = 'test', implicit_deps = [network_lib], libs = ['network', 'foundation'] + extralibs, includepaths = includepaths)
+  generator.bin(module = 'all', sources = ['main.c'], binname = 'test-all', basepath = 'test', implicit_deps = [network_lib], libs = dependlibs + extralibs, includepaths = includepaths)
   for test in test_cases:
-    generator.bin(module = test, sources = ['main.c'], binname = 'test-' + test, basepath = 'test', implicit_deps = [network_lib], libs = ['test', 'network', 'foundation'] + extralibs, includepaths = includepaths)
+    generator.bin(module = test, sources = ['main.c'], binname = 'test-' + test, basepath = 'test', implicit_deps = [network_lib], libs = ['test'] + dependlibs + extralibs, includepaths = includepaths)
