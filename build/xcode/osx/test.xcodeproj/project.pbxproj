@@ -116,7 +116,7 @@
 /* Begin PBXFileReference section */
 		45138764193A824900BA2092 /* test-all */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "test-all"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4513876F193A834700BA2092 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = ../../../test/all/main.c; sourceTree = "<group>"; };
-		45138771193A835500BA2092 /* libnetwork.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libnetwork.a; path = ../../lib/macosx/debug/libnetwork.a; sourceTree = "<group>"; };
+		45138771193A835500BA2092 /* libnetwork.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libnetwork.a; path = ../../lib/macos/debug/libnetwork.a; sourceTree = "<group>"; };
 		45138772193A835500BA2092 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
 		45138773193A835500BA2092 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		45138774193A835500BA2092 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
@@ -468,7 +468,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CONFIGURATION_BUILD_DIR = ../../../bin/macosx/debug;
+				CONFIGURATION_BUILD_DIR = ../../../bin/macos/debug;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = c11;
@@ -487,8 +487,8 @@
 					"$(inherited)",
 				);
 				LIBRARY_SEARCH_PATHS = (
-					../../../lib/macosx/debug,
-					../../../../foundation_lib/lib/macosx/debug,
+					../../../lib/macos/debug,
+					../../../../foundation_lib/lib/macos/debug,
 					"$(inherited)",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
@@ -506,7 +506,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CONFIGURATION_BUILD_DIR = ../../../bin/macosx/release;
+				CONFIGURATION_BUILD_DIR = ../../../bin/macos/release;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = c11;
@@ -526,8 +526,8 @@
 					"$(inherited)",
 				);
 				LIBRARY_SEARCH_PATHS = (
-					../../../lib/macosx/release,
-					../../../../foundation_lib/lib/macosx/release,
+					../../../lib/macos/release,
+					../../../../foundation_lib/lib/macos/release,
 					"$(inherited)",
 				);
 				LLVM_LTO = YES;
@@ -565,7 +565,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CONFIGURATION_BUILD_DIR = ../../../bin/macosx/profile;
+				CONFIGURATION_BUILD_DIR = ../../../bin/macos/profile;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = c11;
@@ -585,8 +585,8 @@
 					"$(inherited)",
 				);
 				LIBRARY_SEARCH_PATHS = (
-					../../../lib/macosx/profile,
-					../../../../foundation_lib/lib/macosx/profile,
+					../../../lib/macos/profile,
+					../../../../foundation_lib/lib/macos/profile,
 					"$(inherited)",
 				);
 				LLVM_LTO = YES;
@@ -615,7 +615,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CONFIGURATION_BUILD_DIR = ../../../bin/macosx/deploy;
+				CONFIGURATION_BUILD_DIR = ../../../bin/macos/deploy;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = c11;
@@ -635,8 +635,8 @@
 					"$(inherited)",
 				);
 				LIBRARY_SEARCH_PATHS = (
-					../../../lib/macosx/deploy,
-					../../../../foundation_lib/lib/macosx/deploy,
+					../../../lib/macos/deploy,
+					../../../../foundation_lib/lib/macos/deploy,
 					"$(inherited)",
 				);
 				LLVM_LTO = YES;
