@@ -87,7 +87,7 @@ socket_bind(socket_t* sock, const network_address_t* address) {
 	address_ip = (const network_address_ip_t*)address;
 	if (bind(sock->fd, &address_ip->saddr, (socklen_t)address_ip->address_size) == 0) {
 		//Store local address
-		_socket_store_address_local(sock, address_ip->family);
+		_socket_store_address_local(sock, (int)address_ip->family);
 		success = true;
 #if BUILD_ENABLE_LOG
 		{
@@ -231,7 +231,7 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 	sock->address_remote = network_address_clone(address);
 
 	if (!sock->address_local)
-		_socket_store_address_local(sock, address_ip->family);
+		_socket_store_address_local(sock, (int)address_ip->family);
 
 #if BUILD_ENABLE_DEBUG_LOG
 	{

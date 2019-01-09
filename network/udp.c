@@ -219,7 +219,7 @@ udp_socket_sendto(socket_t* sock, const void* buffer, size_t size,
 #endif
 
 		if (!sock->address_local)
-			_socket_store_address_local(sock, address->family);
+			_socket_store_address_local(sock, (int)address->family);
 
 		return (size_t)ret;
 	}

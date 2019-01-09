@@ -165,7 +165,7 @@ tcp_socket_accept(socket_t* sock, unsigned int timeoutms) {
 	accepted->family = address_ip->family;
 	accepted->address_remote = (network_address_t*)address_remote;
 
-	_socket_store_address_local(accepted, address_ip->family);
+	_socket_store_address_local(accepted, (int)address_ip->family);
 
 #if BUILD_ENABLE_LOG
 	{
