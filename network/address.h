@@ -1,9 +1,9 @@
-/* address.h  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
+/* address.h  -  Network library  -  Public Domain  -  2013 Mattias Jansson
  *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
  *
- * https://github.com/rampantpixels/network_lib
+ * https://github.com/mjansson/network_lib
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
@@ -25,8 +25,7 @@ NETWORK_API network_address_t**
 network_address_resolve(const char* address, size_t length);
 
 NETWORK_API string_t
-network_address_to_string(char* buffer, size_t capacity, const network_address_t* address,
-                          bool numeric);
+network_address_to_string(char* buffer, size_t capacity, const network_address_t* address, bool numeric);
 
 NETWORK_API network_address_family_t
 network_address_type(const network_address_t* address);

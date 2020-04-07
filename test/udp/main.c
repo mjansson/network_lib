@@ -1,9 +1,9 @@
-/* main.c  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
+/* main.c  -  Network library  -  Public Domain  -  2013 Mattias Jansson
  *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
  *
- * https://github.com/rampantpixels/network_lib
+ * https://github.com/mjansson/network_lib
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
@@ -15,7 +15,7 @@
 #include <test/test.h>
 
 typedef struct test_datagram_arg {
-	socket_t*          sock;
+	socket_t* sock;
 	network_address_t* target;
 } test_datagram_arg_t;
 
@@ -25,7 +25,7 @@ test_udp_application(void) {
 	memset(&app, 0, sizeof(app));
 	app.name = string_const(STRING_CONST("Network UDP tests"));
 	app.short_name = string_const(STRING_CONST("test_udp"));
-	app.company = string_const(STRING_CONST("Rampant Pixels"));
+	app.company = string_const(STRING_CONST(""));
 	app.flags = APPLICATION_UTILITY;
 	app.exception_handler = test_exception_handler;
 	return app;
@@ -166,16 +166,14 @@ DECLARE_TEST(udp, stream_ipv4) {
 		network_address_ip_set_port(address, server_port);
 		if (socket_bind(sock_server, address))
 			break;
-	}
-	while (true);
+	} while (true);
 
 	do {
 		client_port = random32_range(1024, 35535);
 		network_address_ip_set_port(address, client_port);
 		if (socket_bind(sock_client, address))
 			break;
-	}
-	while (true);
+	} while (true);
 
 	socket_set_blocking(sock_server, false);
 	socket_set_blocking(sock_client, false);
@@ -247,16 +245,14 @@ DECLARE_TEST(udp, stream_ipv6) {
 		network_address_ip_set_port(address, server_port);
 		if (socket_bind(sock_server, address))
 			break;
-	}
-	while (true);
+	} while (true);
 
 	do {
 		client_port = random32_range(1024, 35535);
 		network_address_ip_set_port(address, client_port);
 		if (socket_bind(sock_client, address))
 			break;
-	}
-	while (true);
+	} while (true);
 
 	socket_set_blocking(sock_server, false);
 	socket_set_blocking(sock_client, false);
@@ -333,8 +329,7 @@ DECLARE_TEST(udp, datagram_ipv4) {
 		network_address_ip_set_port(address, server_port);
 		if (socket_bind(sock_server, address))
 			break;
-	}
-	while (true);
+	} while (true);
 
 	address_server = network_address_clone(address);
 	network_address_ip_set_port(address_server, server_port);
@@ -362,21 +357,25 @@ DECLARE_TEST(udp, datagram_ipv4) {
 	socket_set_blocking(sock_client[2], true);
 	socket_set_blocking(sock_client[3], true);
 
-	client_arg[0].sock = sock_client[0]; client_arg[0].target = address_server;
-	client_arg[1].sock = sock_client[1]; client_arg[1].target = address_server;
-	client_arg[2].sock = sock_client[2]; client_arg[2].target = address_server;
-	client_arg[3].sock = sock_client[3]; client_arg[3].target = address_server;
+	client_arg[0].sock = sock_client[0];
+	client_arg[0].target = address_server;
+	client_arg[1].sock = sock_client[1];
+	client_arg[1].target = address_server;
+	client_arg[2].sock = sock_client[2];
+	client_arg[2].target = address_server;
+	client_arg[3].sock = sock_client[3];
+	client_arg[3].target = address_server;
 
-	thread_initialize(&threads[0], datagram_server_blocking_thread, sock_server,
-	                  STRING_CONST("server_thread"), THREAD_PRIORITY_NORMAL, 0);
-	thread_initialize(&threads[1], datagram_client_blocking_thread, &client_arg[0],
-	                  STRING_CONST("client_thread"), THREAD_PRIORITY_NORMAL, 0);
-	thread_initialize(&threads[2], datagram_client_blocking_thread, &client_arg[1],
-	                  STRING_CONST("client_thread"), THREAD_PRIORITY_NORMAL, 0);
-	thread_initialize(&threads[3], datagram_client_blocking_thread, &client_arg[2],
-	                  STRING_CONST("client_thread"), THREAD_PRIORITY_NORMAL, 0);
-	thread_initialize(&threads[4], datagram_client_blocking_thread, &client_arg[3],
-	                  STRING_CONST("client_thread"), THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[0], datagram_server_blocking_thread, sock_server, STRING_CONST("server_thread"),
+	                  THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[1], datagram_client_blocking_thread, &client_arg[0], STRING_CONST("client_thread"),
+	                  THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[2], datagram_client_blocking_thread, &client_arg[1], STRING_CONST("client_thread"),
+	                  THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[3], datagram_client_blocking_thread, &client_arg[2], STRING_CONST("client_thread"),
+	                  THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[4], datagram_client_blocking_thread, &client_arg[3], STRING_CONST("client_thread"),
+	                  THREAD_PRIORITY_NORMAL, 0);
 
 	thread_start(&threads[0]);
 	thread_start(&threads[1]);
@@ -439,8 +438,7 @@ DECLARE_TEST(udp, datagram_ipv6) {
 		network_address_ip_set_port(address, server_port);
 		if (socket_bind(sock_server, address))
 			break;
-	}
-	while (true);
+	} while (true);
 
 	address_server = network_address_clone(address);
 	network_address_ip_set_port(address_server, server_port);
@@ -468,21 +466,25 @@ DECLARE_TEST(udp, datagram_ipv6) {
 	socket_set_blocking(sock_client[2], true);
 	socket_set_blocking(sock_client[3], true);
 
-	client_arg[0].sock = sock_client[0]; client_arg[0].target = address_server;
-	client_arg[1].sock = sock_client[1]; client_arg[1].target = address_server;
-	client_arg[2].sock = sock_client[2]; client_arg[2].target = address_server;
-	client_arg[3].sock = sock_client[3]; client_arg[3].target = address_server;
+	client_arg[0].sock = sock_client[0];
+	client_arg[0].target = address_server;
+	client_arg[1].sock = sock_client[1];
+	client_arg[1].target = address_server;
+	client_arg[2].sock = sock_client[2];
+	client_arg[2].target = address_server;
+	client_arg[3].sock = sock_client[3];
+	client_arg[3].target = address_server;
 
-	thread_initialize(&threads[0], datagram_server_blocking_thread, sock_server,
-	                  STRING_CONST("server_thread"), THREAD_PRIORITY_NORMAL, 0);
-	thread_initialize(&threads[1], datagram_client_blocking_thread, &client_arg[0],
-	                  STRING_CONST("client_thread"), THREAD_PRIORITY_NORMAL, 0);
-	thread_initialize(&threads[2], datagram_client_blocking_thread, &client_arg[1],
-	                  STRING_CONST("client_thread"), THREAD_PRIORITY_NORMAL, 0);
-	thread_initialize(&threads[3], datagram_client_blocking_thread, &client_arg[2],
-	                  STRING_CONST("client_thread"), THREAD_PRIORITY_NORMAL, 0);
-	thread_initialize(&threads[4], datagram_client_blocking_thread, &client_arg[3],
-	                  STRING_CONST("client_thread"), THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[0], datagram_server_blocking_thread, sock_server, STRING_CONST("server_thread"),
+	                  THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[1], datagram_client_blocking_thread, &client_arg[0], STRING_CONST("client_thread"),
+	                  THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[2], datagram_client_blocking_thread, &client_arg[1], STRING_CONST("client_thread"),
+	                  THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[3], datagram_client_blocking_thread, &client_arg[2], STRING_CONST("client_thread"),
+	                  THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[4], datagram_client_blocking_thread, &client_arg[3], STRING_CONST("client_thread"),
+	                  THREAD_PRIORITY_NORMAL, 0);
 
 	thread_start(&threads[0]);
 	thread_start(&threads[1]);
@@ -517,15 +519,13 @@ test_udp_declare(void) {
 	ADD_TEST(udp, datagram_ipv6);
 }
 
-static test_suite_t test_udp_suite = {
-	test_udp_application,
-	test_udp_memory_system,
-	test_udp_foundation_config,
-	test_udp_declare,
-	test_udp_initialize,
-	test_udp_finalize,
-	0
-};
+static test_suite_t test_udp_suite = {test_udp_application,
+                                      test_udp_memory_system,
+                                      test_udp_foundation_config,
+                                      test_udp_declare,
+                                      test_udp_initialize,
+                                      test_udp_finalize,
+                                      0};
 
 #if BUILD_MONOLITHIC
 
@@ -549,4 +549,3 @@ test_suite_define(void) {
 }
 
 #endif
-

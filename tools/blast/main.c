@@ -1,9 +1,9 @@
-/* main.c  -  Network blast tool  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
+/* main.c  -  Network blast tool  -  Public Domain  -  2013 Mattias Jansson
  *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
  *
- * https://github.com/rampantpixels/network_lib
+ * https://github.com/mjansson/network_lib
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
@@ -13,22 +13,18 @@
 #include "client.h"
 #include "server.h"
 
-typedef enum {
-	BLAST_NONE = 0,
-	BLAST_SERVER,
-	BLAST_CLIENT
-} blast_mode_t;
+typedef enum { BLAST_NONE = 0, BLAST_SERVER, BLAST_CLIENT } blast_mode_t;
 
 typedef struct {
-	blast_mode_t            mode;
+	blast_mode_t mode;
 
-	//Server args
-	network_address_t**     bind;
-	bool                    daemon;
+	// Server args
+	network_address_t** bind;
+	bool daemon;
 
-	//Client args
-	network_address_t***    target;
-	string_t*               files;
+	// Client args
+	network_address_t*** target;
+	string_t* files;
 } blast_input_t;
 
 static bool should_exit;
@@ -52,7 +48,7 @@ main_initialize(void) {
 	memset(&application, 0, sizeof(application));
 	application.name = string_const(STRING_CONST("blast"));
 	application.short_name = string_const(STRING_CONST("blast"));
-	application.company = string_const(STRING_CONST("Rampant Pixels"));
+	application.company = string_const(STRING_CONST(""));
 	application.flags = APPLICATION_UTILITY;
 
 	log_enable_prefix(false);
@@ -111,7 +107,7 @@ blast_parse_command_line(const string_const_t* cmdline) {
 	memset(&input, 0, sizeof(input));
 	for (arg = 1, asize = array_size(cmdline); arg < asize; ++arg) {
 		if (string_equal(STRING_ARGS(cmdline[arg]), STRING_CONST("-s")) ||
-		        string_equal(STRING_ARGS(cmdline[arg]), STRING_CONST("--server")))
+		    string_equal(STRING_ARGS(cmdline[arg]), STRING_CONST("--server")))
 			input.mode = BLAST_SERVER;
 		else if (string_equal(STRING_ARGS(cmdline[arg]), STRING_CONST("-c")) ||
 		         string_equal(STRING_ARGS(cmdline[arg]), STRING_CONST("--client")))
@@ -126,19 +122,17 @@ blast_parse_command_line(const string_const_t* cmdline) {
 				for (addr = 0, addrsize = array_size(resolved); addr < addrsize; ++addr)
 					array_push(input.bind, resolved[addr]);
 			}
-		}
-		else if (string_equal(STRING_ARGS(cmdline[arg]), STRING_CONST("-t")) ||
-		         string_equal(STRING_ARGS(cmdline[arg]), STRING_CONST("--target"))) {
+		} else if (string_equal(STRING_ARGS(cmdline[arg]), STRING_CONST("-t")) ||
+		           string_equal(STRING_ARGS(cmdline[arg]), STRING_CONST("--target"))) {
 			if (++arg < asize) {
 				network_address_t** resolved = network_address_resolve(STRING_ARGS(cmdline[arg]));
 				if (resolved && array_size(resolved))
 					array_push(input.target, resolved);
 			}
-		}
-		else if (string_equal(STRING_ARGS(cmdline[arg]), STRING_CONST("--")))
-			break; //Stop parsing cmdline options
+		} else if (string_equal(STRING_ARGS(cmdline[arg]), STRING_CONST("--")))
+			break;  // Stop parsing cmdline options
 		else if ((cmdline[arg].length > 1) && (cmdline[arg].str[0] == '-'))
-			continue; //Cmdline argument not parsed here
+			continue;  // Cmdline argument not parsed here
 		else
 			array_push(input.files, string_clone(STRING_ARGS(cmdline[arg])));
 	}
@@ -149,20 +143,20 @@ blast_parse_command_line(const string_const_t* cmdline) {
 
 void
 blast_print_usage(void) {
-	log_info(HASH_BLAST, STRING_CONST(
-	             "blast usage:\n"
-	             "  blast [-s|--server] [-d|-daemon] [-c|--client] [-t|--target host[:port]] [-b|--bind host[:port]] <file> <file> <file> <...> [--]\n"
-	             "    Required arguments for server:\n"
-	             "      -s|--server              Start as server\n"
-	             "      -b||-bind host[:port]    Bind ip address and optional port (multiple)\n"
-	             "    Required arguments for client:\n"
-	             "      -c|--client              Start as client\n"
-	             "      -t|--target host[:port]  Target host (ip or hostname) with optional port (multiple)\n"
-	             "      <file>                   File name (muliple)\n"
-	             "    Optional arguments:\n"
-	             "      -d|--daemon              Run server as daemon\n"
-	             "      --                       Stop parsing command line options\n"
-	         ));
+	log_info(HASH_BLAST,
+	         STRING_CONST("blast usage:\n"
+	                      "  blast [-s|--server] [-d|-daemon] [-c|--client] [-t|--target host[:port]] [-b|--bind "
+	                      "host[:port]] <file> <file> <file> <...> [--]\n"
+	                      "    Required arguments for server:\n"
+	                      "      -s|--server              Start as server\n"
+	                      "      -b||-bind host[:port]    Bind ip address and optional port (multiple)\n"
+	                      "    Required arguments for client:\n"
+	                      "      -c|--client              Start as client\n"
+	                      "      -t|--target host[:port]  Target host (ip or hostname) with optional port (multiple)\n"
+	                      "      <file>                   File name (muliple)\n"
+	                      "    Optional arguments:\n"
+	                      "      -d|--daemon              Run server as daemon\n"
+	                      "      --                       Stop parsing command line options\n"));
 }
 
 void
@@ -176,13 +170,13 @@ blast_process_system_events(void) {
 
 	while ((event = event_next(block, event))) {
 		switch (event->id) {
-		case FOUNDATIONEVENT_TERMINATE:
-			log_debug(HASH_BLAST, STRING_CONST("Terminating due to event"));
-			should_exit = true;
-			break;
+			case FOUNDATIONEVENT_TERMINATE:
+				log_debug(HASH_BLAST, STRING_CONST("Terminating due to event"));
+				should_exit = true;
+				break;
 
-		default:
-			break;
+			default:
+				break;
 		}
 	}
 }

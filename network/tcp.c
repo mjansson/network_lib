@@ -1,9 +1,9 @@
-/* tcp.c  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
+/* tcp.c  -  Network library  -  Public Domain  -  2013 Mattias Jansson
  *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
  *
- * https://github.com/rampantpixels/network_lib
+ * https://github.com/mjansson/network_lib
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
@@ -17,7 +17,7 @@
 #include <foundation/foundation.h>
 
 #if FOUNDATION_PLATFORM_POSIX
-#  include <netinet/tcp.h>
+#include <netinet/tcp.h>
 #endif
 
 static void
@@ -28,8 +28,7 @@ _tcp_stream_initialize(socket_t*, stream_t*);
 
 socket_t*
 tcp_socket_allocate(void) {
-	socket_t* sock = memory_allocate(HASH_NETWORK, sizeof(socket_t), 0,
-	                                 MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	socket_t* sock = memory_allocate(HASH_NETWORK, sizeof(socket_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	tcp_socket_initialize(sock);
 	return sock;
 }
@@ -48,10 +47,8 @@ tcp_socket_listen(socket_t* sock) {
 #if BUILD_ENABLE_LOG
 	char buffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
 #endif
-	if ((sock->fd == NETWORK_SOCKET_INVALID) ||
-	    (sock->state != SOCKETSTATE_NOTCONNECTED) ||
-	    !sock->address_local) {
-		//Must be locally bound
+	if ((sock->fd == NETWORK_SOCKET_INVALID) || (sock->state != SOCKETSTATE_NOTCONNECTED) || !sock->address_local) {
+		// Must be locally bound
 		return false;
 	}
 
@@ -69,9 +66,8 @@ tcp_socket_listen(socket_t* sock) {
 
 #if BUILD_ENABLE_LOG
 	string_t address = network_address_to_string(buffer, sizeof(buffer), sock->address_local, true);
-	log_infof(HASH_NETWORK,
-	          STRING_CONST("Listening on TCP/IP socket (0x%" PRIfixPTR " : %d) %.*s"),
-	          (uintptr_t)sock, sock->fd, STRING_FORMAT(address));
+	log_infof(HASH_NETWORK, STRING_CONST("Listening on TCP/IP socket (0x%" PRIfixPTR " : %d) %.*s"), (uintptr_t)sock,
+	          sock->fd, STRING_FORMAT(address));
 #endif
 	sock->state = SOCKETSTATE_LISTENING;
 
@@ -94,13 +90,12 @@ tcp_socket_accept(socket_t* sock, unsigned int timeoutms) {
 	if (sock->fd == NETWORK_SOCKET_INVALID)
 		return 0;
 
-	if ((sock->state != SOCKETSTATE_LISTENING) ||
-	        (sock->fd == NETWORK_SOCKET_INVALID) ||
-	        !sock->address_local) { //Must be locally bound
-		log_errorf(HASH_NETWORK, ERROR_INVALID_VALUE,
-		           STRING_CONST("Unable to accept on a non-listening/unbound TCP/IP socket (%" PRIfixPTR
-		                        " : %d) state %d)"),
-		           (uintptr_t)sock, sock->fd, sock->state);
+	if ((sock->state != SOCKETSTATE_LISTENING) || (sock->fd == NETWORK_SOCKET_INVALID) ||
+	    !sock->address_local) {  // Must be locally bound
+		log_errorf(
+		    HASH_NETWORK, ERROR_INVALID_VALUE,
+		    STRING_CONST("Unable to accept on a non-listening/unbound TCP/IP socket (%" PRIfixPTR " : %d) state %d)"),
+		    (uintptr_t)sock, sock->fd, sock->state);
 		return 0;
 	}
 
@@ -132,10 +127,11 @@ tcp_socket_accept(socket_t* sock, unsigned int timeoutms) {
 				FD_SET(sock->fd, &fdread);
 				FD_SET(sock->fd, &fderr);
 
-				tval.tv_sec  = timeoutms / 1000;
+				tval.tv_sec = timeoutms / 1000;
 				tval.tv_usec = (timeoutms % 1000) * 1000;
 
-				ret = select(sock->fd + 1, &fdread, 0, &fderr, (timeoutms != NETWORK_TIMEOUT_INFINITE) ? &tval : nullptr);
+				ret =
+				    select(sock->fd + 1, &fdread, 0, &fderr, (timeoutms != NETWORK_TIMEOUT_INFINITE) ? &tval : nullptr);
 				if (ret > 0) {
 					address_len = address_remote->address_size;
 					fd = (int)accept(sock->fd, &address_ip->saddr, &address_len);
@@ -172,15 +168,12 @@ tcp_socket_accept(socket_t* sock, unsigned int timeoutms) {
 		char listenbuf[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
 		char localbuf[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
 		char remotebuf[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
-		string_t listenstr = network_address_to_string(listenbuf, sizeof(listenbuf),
-		                                               sock->address_local, true);
-		string_t localstr = network_address_to_string(localbuf, sizeof(localbuf),
-		                                              accepted->address_local, true);
-		string_t remotestr = network_address_to_string(remotebuf, sizeof(remotebuf),
-		                                               accepted->address_remote, true);
+		string_t listenstr = network_address_to_string(listenbuf, sizeof(listenbuf), sock->address_local, true);
+		string_t localstr = network_address_to_string(localbuf, sizeof(localbuf), accepted->address_local, true);
+		string_t remotestr = network_address_to_string(remotebuf, sizeof(remotebuf), accepted->address_remote, true);
 		log_infof(HASH_NETWORK,
-		          STRING_CONST("Accepted connection on TCP/IP socket (0x%"
-		                       PRIfixPTR" : %d) %.*s: created socket (0x%" PRIfixPTR " : %d) %.*s with remote address %.*s"),
+		          STRING_CONST("Accepted connection on TCP/IP socket (0x%" PRIfixPTR
+		                       " : %d) %.*s: created socket (0x%" PRIfixPTR " : %d) %.*s with remote address %.*s"),
 		          (uintptr_t)sock, sock->fd, STRING_FORMAT(listenstr), (uintptr_t)accepted, accepted->fd,
 		          STRING_FORMAT(localstr), STRING_FORMAT(remotestr));
 	}
@@ -197,9 +190,7 @@ tcp_socket_delay(socket_t* sock) {
 void
 tcp_socket_set_delay(socket_t* sock, bool delay) {
 	int flag;
-	sock->flags = (delay ?
-	               sock->flags | SOCKETFLAG_TCPDELAY :
-	               sock->flags & ~SOCKETFLAG_TCPDELAY);
+	sock->flags = (delay ? sock->flags | SOCKETFLAG_TCPDELAY : sock->flags & ~SOCKETFLAG_TCPDELAY);
 	flag = (delay ? 0 : 1);
 	if (sock->fd != NETWORK_SOCKET_INVALID)
 		setsockopt(sock->fd, IPPROTO_TCP, TCP_NODELAY, (const char*)&flag, sizeof(int));
@@ -215,13 +206,12 @@ _tcp_socket_open(socket_t* sock, unsigned int family) {
 		int err = NETWORK_SOCKET_ERROR;
 		string_const_t errmsg = system_error_message(err);
 		log_errorf(HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL,
-		           STRING_CONST("Unable to open TCP/IP socket (0x%" PRIfixPTR " : %d): %.*s (%d)"),
-		           (uintptr_t)sock, sock->fd, STRING_FORMAT(errmsg), err);
+		           STRING_CONST("Unable to open TCP/IP socket (0x%" PRIfixPTR " : %d): %.*s (%d)"), (uintptr_t)sock,
+		           sock->fd, STRING_FORMAT(errmsg), err);
 		sock->fd = NETWORK_SOCKET_INVALID;
-	}
-	else {
-		log_debugf(HASH_NETWORK, STRING_CONST("Opened TCP/IP socket (0x%" PRIfixPTR " : %d)"),
-		           (uintptr_t)sock, sock->fd);
+	} else {
+		log_debugf(HASH_NETWORK, STRING_CONST("Opened TCP/IP socket (0x%" PRIfixPTR " : %d)"), (uintptr_t)sock,
+		           sock->fd);
 		tcp_socket_set_delay(sock, sock->flags & SOCKETFLAG_TCPDELAY);
 	}
 }
@@ -232,4 +222,3 @@ _tcp_stream_initialize(socket_t* sock, stream_t* stream) {
 	stream->reliable = 1;
 	stream->path = string_allocate_format(STRING_CONST("tcp://%" PRIfixPTR), (uintptr_t)sock);
 }
-

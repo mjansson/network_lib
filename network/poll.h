@@ -1,9 +1,9 @@
-/* poll.h  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
+/* poll.h  -  Network library  -  Public Domain  -  2013 Mattias Jansson
  *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
  *
- * https://github.com/rampantpixels/network_lib
+ * https://github.com/mjansson/network_lib
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
@@ -49,6 +49,4 @@ NETWORK_API void
 network_poll_sockets(network_poll_t* poll, socket_t** sockets, size_t max_sockets);
 
 NETWORK_API size_t
-network_poll(network_poll_t* poll, network_poll_event_t* event, size_t capacity,
-             unsigned int timeoutms);
-
+network_poll(network_poll_t* poll, network_poll_event_t* event, size_t capacity, unsigned int timeoutms);

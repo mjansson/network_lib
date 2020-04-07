@@ -1,9 +1,9 @@
-/* stream.h  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
+/* stream.h  -  Network library  -  Public Domain  -  2013 Mattias Jansson
  *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
  *
- * https://github.com/rampantpixels/network_lib
+ * https://github.com/mjansson/network_lib
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
@@ -15,7 +15,7 @@
 
 #include <foundation/foundation.h>
 
-static stream_vtable_t   _socket_stream_vtable;
+static stream_vtable_t _socket_stream_vtable;
 
 static size_t
 _socket_stream_available_nonblock_read(const socket_stream_t* stream) {
@@ -29,10 +29,9 @@ _socket_stream_doflush(socket_stream_t* stream) {
 
 	if (!stream->write_out)
 		return;
-	
+
 	sock = stream->socket;
-	if ((sock->fd == NETWORK_SOCKET_INVALID) ||
-	    (sock->state != SOCKETSTATE_CONNECTED))
+	if ((sock->fd == NETWORK_SOCKET_INVALID) || (sock->state != SOCKETSTATE_CONNECTED))
 		return;
 
 	written = socket_write(sock, stream->buffer_out, stream->write_out);
@@ -40,8 +39,7 @@ _socket_stream_doflush(socket_stream_t* stream) {
 		if (written < stream->write_out) {
 			memmove(stream->buffer_out, stream->buffer_out + written, stream->write_out - written);
 			stream->write_out -= written;
-		}
-		else {
+		} else {
 			stream->write_out = 0;
 		}
 	}
@@ -61,8 +59,7 @@ _socket_stream_read(stream_t* stream, void* buffer, size_t size) {
 	sock = sockstream->socket;
 
 	if ((sock->fd == NETWORK_SOCKET_INVALID) ||
-	    ((sock->state != SOCKETSTATE_CONNECTED) && (sock->state != SOCKETSTATE_DISCONNECTED)) ||
-	    !size)
+	    ((sock->state != SOCKETSTATE_CONNECTED) && (sock->state != SOCKETSTATE_DISCONNECTED)) || !size)
 		goto exit;
 
 	do {
@@ -79,8 +76,9 @@ _socket_stream_read(stream_t* stream, void* buffer, size_t size) {
 				memcpy(buffer, sockstream->buffer_in + sockstream->read_in, copy);
 
 #if BUILD_ENABLE_NETWORK_DUMP_TRAFFIC > 0
-			log_debugf(HASH_NETWORK, STRING_CONST("Socket stream (0x%" PRIfixPTR
-			                                      " : %d) read %" PRIsize" of %" PRIsize " bytes from buffer position %" PRIsize),
+			log_debugf(HASH_NETWORK,
+			           STRING_CONST("Socket stream (0x%" PRIfixPTR " : %d) read %" PRIsize " of %" PRIsize
+			                        " bytes from buffer position %" PRIsize),
 			           (uintptr_t)sock, sock->fd, copy, want_read, sockstream->read_in);
 #endif
 
@@ -96,19 +94,18 @@ _socket_stream_read(stream_t* stream, void* buffer, size_t size) {
 			FOUNDATION_ASSERT(sockstream->read_in == 0);
 			FOUNDATION_ASSERT(sockstream->write_in == 0);
 			sockstream->read_in = 0;
-			sockstream->write_in = socket_read(sock, sockstream->buffer_in,
-			                                   sockstream->buffer_in_size);
+			sockstream->write_in = socket_read(sock, sockstream->buffer_in, sockstream->buffer_in_size);
 			if (sockstream->write_in > 0)
 				try_again = true;
 		}
-	}
-	while ((was_read < size) && try_again);
+	} while ((was_read < size) && try_again);
 
 	if (was_read < size) {
 		if (was_read)
-			log_warnf(HASH_NETWORK, WARNING_SUSPICIOUS,
-			          STRING_CONST("Socket stream (0x%" PRIfixPTR " : %d): partial read %" PRIsize " of %" PRIsize " bytes"),
-			          (uintptr_t)sock, sock->fd, was_read, size);
+			log_warnf(
+			    HASH_NETWORK, WARNING_SUSPICIOUS,
+			    STRING_CONST("Socket stream (0x%" PRIfixPTR " : %d): partial read %" PRIsize " of %" PRIsize " bytes"),
+			    (uintptr_t)sock, sock->fd, was_read, size);
 		socket_poll_state(sock);
 	}
 
@@ -126,10 +123,8 @@ _socket_stream_write(stream_t* stream, const void* buffer, size_t size) {
 
 	sockstream = (socket_stream_t*)stream;
 	sock = sockstream->socket;
-	
-	if ((sock->fd == NETWORK_SOCKET_INVALID) ||
-	    (sock->state != SOCKETSTATE_CONNECTED) ||
-	    !size || !buffer)
+
+	if ((sock->fd == NETWORK_SOCKET_INVALID) || (sock->state != SOCKETSTATE_CONNECTED) || !size || !buffer)
 		goto exit;
 
 	remain = sockstream->buffer_out_size - sockstream->write_out;
@@ -157,16 +152,16 @@ _socket_stream_write(stream_t* stream, const void* buffer, size_t size) {
 		_socket_stream_doflush(sockstream);
 
 		if (sock->state != SOCKETSTATE_CONNECTED) {
-			log_warnf(HASH_NETWORK, WARNING_SUSPICIOUS,
-			          STRING_CONST("Socket stream (0x%" PRIfixPTR " : %d): partial write %" PRIsize " of %" PRIsize " bytes"),
-			          (uintptr_t)sock, sock->fd, was_written, size);
+			log_warnf(
+			    HASH_NETWORK, WARNING_SUSPICIOUS,
+			    STRING_CONST("Socket stream (0x%" PRIfixPTR " : %d): partial write %" PRIsize " of %" PRIsize " bytes"),
+			    (uintptr_t)sock, sock->fd, was_written, size);
 			break;
 		}
 
 		remain = sockstream->buffer_out_size - sockstream->write_out;
 
-	}
-	while (remain);
+	} while (remain);
 
 exit:
 
@@ -190,7 +185,7 @@ _socket_stream_eos(stream_t* stream) {
 
 	state = socket_poll_state(sock);
 	if (((state != SOCKETSTATE_CONNECTED) || (sock->fd == NETWORK_SOCKET_INVALID)) &&
-	        !_socket_stream_available_nonblock_read(sockstream))
+	    !_socket_stream_available_nonblock_read(sockstream))
 		eos = true;
 
 	return eos;
@@ -214,9 +209,7 @@ _socket_stream_buffer_read(stream_t* stream) {
 
 	sockstream = (socket_stream_t*)stream;
 	sock = sockstream->socket;
-	if ((sock->fd == NETWORK_SOCKET_INVALID) ||
-	    (sock->state != SOCKETSTATE_CONNECTED) ||
-	    sockstream->write_in)
+	if ((sock->fd == NETWORK_SOCKET_INVALID) || (sock->state != SOCKETSTATE_CONNECTED) || sockstream->write_in)
 		return;
 
 	available = _socket_available_fd(sock->fd);
@@ -265,8 +258,7 @@ _socket_stream_seek(stream_t* stream, ssize_t offset, stream_seek_mode_t directi
 	if ((direction != STREAM_SEEK_CURRENT) || (offset < 0)) {
 		log_error(HASH_NETWORK, ERROR_UNSUPPORTED,
 		          STRING_CONST("Invalid call, only forward seeking allowed on sockets"));
-	}
-	else {
+	} else {
 		_socket_stream_read(stream, 0, (size_t)offset);
 	}
 }
@@ -296,8 +288,7 @@ stream_t*
 socket_stream_allocate(socket_t* sock, size_t buffer_in, size_t buffer_out) {
 	size_t size = sizeof(socket_stream_t) + buffer_in + buffer_out;
 
-	socket_stream_t* sockstream = memory_allocate(HASH_NETWORK, size, 0,
-	                                              MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	socket_stream_t* sockstream = memory_allocate(HASH_NETWORK, size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	sockstream->buffer_in = pointer_offset(sockstream, sizeof(socket_stream_t));
 	sockstream->buffer_out = pointer_offset(sockstream->buffer_in, buffer_in);
 	sockstream->buffer_in_size = buffer_in;
@@ -308,7 +299,7 @@ socket_stream_allocate(socket_t* sock, size_t buffer_in, size_t buffer_out) {
 
 void
 socket_stream_initialize(socket_stream_t* stream, socket_t* sock) {
-	//Network streams are always little endian by default
+	// Network streams are always little endian by default
 	stream_initialize((stream_t*)stream, BYTEORDER_LITTLEENDIAN);
 
 	stream->type = STREAMTYPE_SOCKET;

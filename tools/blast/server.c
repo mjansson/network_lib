@@ -1,9 +1,9 @@
-/* server.c  -  Network blast tool  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
+/* server.c  -  Network blast tool  -  Public Domain  -  2013 Mattias Jansson
  *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
  *
- * https://github.com/rampantpixels/network_lib
+ * https://github.com/mjansson/network_lib
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
@@ -16,27 +16,27 @@
 #define BLAST_SERVER_TIMEOUT 30
 
 typedef struct blast_server_source_t {
-	network_address_t*       address;
-	socket_t*                sock;
-	uint64_t                 token;
-	bool                     got_payload;
-	tick_t                   last_recv;
-	blast_writer_t*          writer;
-	uint32_t                 ack[PACKET_ACK_HISTORY];
-	int                      ack_offset;
-	tick_t                   last_ack;
-	int                      last_ack_offset;
+	network_address_t* address;
+	socket_t* sock;
+	uint64_t token;
+	bool got_payload;
+	tick_t last_recv;
+	blast_writer_t* writer;
+	uint32_t ack[PACKET_ACK_HISTORY];
+	int ack_offset;
+	tick_t last_ack;
+	int last_ack_offset;
 } blast_server_source_t;
 
 typedef struct blast_server_t {
-	blast_server_source_t**  sources;
-	uint64_t                 token_counter;
+	blast_server_source_t** sources;
+	uint64_t token_counter;
 } blast_server_t;
 
 static blast_server_source_t*
 blast_server_source_allocate(void) {
-	blast_server_source_t* source = memory_allocate(HASH_BLAST, sizeof(blast_server_source_t), 0,
-	                                                MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	blast_server_source_t* source =
+	    memory_allocate(HASH_BLAST, sizeof(blast_server_source_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	memset(source->ack, 0xFF, sizeof(uint32_t) * PACKET_ACK_HISTORY);
 	return source;
 }
@@ -95,7 +95,7 @@ blast_server_send_acks(blast_server_t* server) {
 	unsigned int isrc, ssize;
 	for (isrc = 0, ssize = array_size(server->sources); isrc < ssize; ++isrc) {
 		blast_server_source_t* source = server->sources[isrc];
-		//TODO: Base on round-trip time and back-off rate (back-off reset on recv packet)
+		// TODO: Base on round-trip time and back-off rate (back-off reset on recv packet)
 		if (time_elapsed(source->last_ack) > REAL_C(0.05)) {
 			blast_server_send_ack(source);
 		}
@@ -106,7 +106,7 @@ static void
 blast_server_queue_ack(blast_server_source_t* source, uint32_t ack) {
 	int send_trigger;
 
-	//log_infof( HASH_BLAST, "Queue ACK for seq %d in slot %d", ack, source->ack_offset );
+	// log_infof( HASH_BLAST, "Queue ACK for seq %d in slot %d", ack, source->ack_offset );
 
 	source->ack[source->ack_offset++] = ack;
 	if (source->ack_offset >= PACKET_ACK_HISTORY)
@@ -130,8 +130,8 @@ blast_server_has_ack(blast_server_source_t* source, uint32_t ack) {
 }
 
 static void
-blast_server_process_handshake(blast_server_t* server, socket_t* sock,
-                               void* data, size_t size, const network_address_t* address) {
+blast_server_process_handshake(blast_server_t* server, socket_t* sock, void* data, size_t size,
+                               const network_address_t* address) {
 	packet_handshake_t* handshake = data;
 	blast_server_source_t* source = 0;
 	unsigned int isrc, ssize;
@@ -162,14 +162,12 @@ blast_server_process_handshake(blast_server_t* server, socket_t* sock,
 	}
 
 	if (source) {
-		if (source->writer &&
-		        !string_equal(STRING_ARGS(source->writer->name), handshake->name, handshake->namesize)) {
+		if (source->writer && !string_equal(STRING_ARGS(source->writer->name), handshake->name, handshake->namesize)) {
 			log_infof(HASH_BLAST, STRING_CONST("Source re-initializing with new writer"));
 			blast_writer_close(source->writer);
 			source->writer = 0;
 		}
-	}
-	else {
+	} else {
 		source = blast_server_source_allocate();
 		source->sock = sock;
 		source->address = network_address_clone(address);
@@ -177,13 +175,12 @@ blast_server_process_handshake(blast_server_t* server, socket_t* sock,
 	}
 
 	if (!source->writer) {
-		source->writer = blast_writer_open(handshake->name, (size_t)handshake->namesize,
-		                                   handshake->datasize);
+		source->writer = blast_writer_open(handshake->name, (size_t)handshake->namesize, handshake->datasize);
 		source->token = (++server->token_counter) & PACKET_TOKEN_MASK;
 		source->last_ack = time_current();
-		log_infof(HASH_BLAST, STRING_CONST("Prepare transfer of '%.*s' size %" PRIsize " with token %" PRIu64 " from %.*s"),
-		          (int)handshake->namesize, handshake->name, (size_t)handshake->datasize,
-		          source->token, STRING_FORMAT(addr));
+		log_infof(
+		    HASH_BLAST, STRING_CONST("Prepare transfer of '%.*s' size %" PRIsize " with token %" PRIu64 " from %.*s"),
+		    (int)handshake->namesize, handshake->name, (size_t)handshake->datasize, source->token, STRING_FORMAT(addr));
 	}
 
 	handshake->token = source->token;
@@ -193,8 +190,8 @@ blast_server_process_handshake(blast_server_t* server, socket_t* sock,
 }
 
 static void
-blast_server_process_payload(blast_server_t* server, socket_t* sock,
-                             void* data, size_t size, const network_address_t* address) {
+blast_server_process_payload(blast_server_t* server, socket_t* sock, void* data, size_t size,
+                             const network_address_t* address) {
 	packet_payload_t* packet = (packet_payload_t*)data;
 	blast_server_source_t* source = 0;
 	unsigned int isrc, ssize;
@@ -202,8 +199,7 @@ blast_server_process_payload(blast_server_t* server, socket_t* sock,
 	uint64_t offset;
 
 	for (isrc = 0, ssize = array_size(server->sources); isrc < ssize; ++isrc) {
-		if ((server->sources[isrc]->sock == sock) &&
-		        (network_address_equal(server->sources[isrc]->address, address))) {
+		if ((server->sources[isrc]->sock == sock) && (network_address_equal(server->sources[isrc]->address, address))) {
 			source = server->sources[isrc];
 			break;
 		}
@@ -244,8 +240,7 @@ blast_server_process_payload(blast_server_t* server, socket_t* sock,
 	buffer = source->writer->map(source->writer, offset, PACKET_CHUNK_SIZE);
 	if (!buffer) {
 		log_warnf(HASH_BLAST, WARNING_SUSPICIOUS,
-		          STRING_CONST("Unable to map chunk for payload seq %" PRIu64 " out of range"),
-		          packet->seq);
+		          STRING_CONST("Unable to map chunk for payload seq %" PRIu64 " out of range"), packet->seq);
 		return;
 	}
 
@@ -254,7 +249,8 @@ blast_server_process_payload(blast_server_t* server, socket_t* sock,
 	memcpy(buffer, packet->data, PACKET_CHUNK_SIZE);
 	source->writer->unmap(source->writer, buffer, offset, PACKET_CHUNK_SIZE);
 
-	//log_infof( HASH_BLAST, "Wrote payload @ offset %lld (seq %lld) in transfer of '%s' size %lld with token %d", offset, packet->seq, source->writer->name, source->writer->size, source->token );
+	// log_infof( HASH_BLAST, "Wrote payload @ offset %lld (seq %lld) in transfer of '%s' size %lld with token %d",
+	// offset, packet->seq, source->writer->name, source->writer->size, source->token );
 }
 
 static bool
@@ -271,11 +267,9 @@ blast_server_read(blast_server_t* server, socket_t* sock) {
 		packet_t* packet = &databuf.packet;
 		if (packet->type == PACKET_HANDSHAKE) {
 			blast_server_process_handshake(server, sock, databuf.buffer, size, address);
-		}
-		else if (packet->type == PACKET_PAYLOAD) {
+		} else if (packet->type == PACKET_PAYLOAD) {
 			blast_server_process_payload(server, sock, databuf.buffer, size, address);
-		}
-		else {
+		} else {
 			log_warnf(HASH_BLAST, WARNING_SUSPICIOUS, STRING_CONST("Unknown datagram on socket"));
 		}
 		size = udp_socket_recvfrom(sock, databuf.buffer, sizeof(databuf.buffer), &address);
@@ -289,16 +283,14 @@ blast_server_tick(blast_server_t* server) {
 	for (isrc = 0, ssize = array_size(server->sources); isrc < ssize;) {
 		if (time_elapsed(server->sources[isrc]->last_recv) > BLAST_SERVER_TIMEOUT) {
 			char addrbuf[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
-			string_t addr = network_address_to_string(addrbuf, sizeof(addrbuf),
-			                                          server->sources[isrc]->address, true);
+			string_t addr = network_address_to_string(addrbuf, sizeof(addrbuf), server->sources[isrc]->address, true);
 			log_infof(HASH_BLAST, STRING_CONST("Deleting inactive source from %.*s"), STRING_FORMAT(addr));
 
 			blast_server_source_deallocate(server->sources[isrc]);
 
 			array_erase(server->sources, isrc);
 			--ssize;
-		}
-		else {
+		} else {
 			blast_server_send_acks(server);
 			++isrc;
 		}
@@ -311,29 +303,28 @@ blast_server_run(bool daemon, network_poll_t* poll, blast_server_t* server) {
 	bool complete;
 
 	if (daemon) {
-		//TODO: Implement
+		// TODO: Implement
 	}
 
 	network_poll_event_t events[64];
 	while (!blast_should_exit()) {
-		size_t num_events = network_poll(poll, events, sizeof(events) / sizeof(events[0]),
-		                                 blast_server_time_until_ack(server));
+		size_t num_events =
+		    network_poll(poll, events, sizeof(events) / sizeof(events[0]), blast_server_time_until_ack(server));
 		size_t ievt;
 
 		for (ievt = 0; ievt < num_events; ++ievt) {
 			switch (events[ievt].event) {
-			case NETWORKEVENT_DATAIN:
-				complete = blast_server_read(server, events[ievt].socket);
-				if (complete) {
-
-				}
-				break;
-			case NETWORKEVENT_CONNECTION:
-			case NETWORKEVENT_CONNECTED:
-			case NETWORKEVENT_ERROR:
-			case NETWORKEVENT_HANGUP:
-			default:
-				break;
+				case NETWORKEVENT_DATAIN:
+					complete = blast_server_read(server, events[ievt].socket);
+					if (complete) {
+					}
+					break;
+				case NETWORKEVENT_CONNECTION:
+				case NETWORKEVENT_CONNECTED:
+				case NETWORKEVENT_ERROR:
+				case NETWORKEVENT_HANGUP:
+				default:
+					break;
 			}
 		}
 		blast_process_system_events();

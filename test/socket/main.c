@@ -1,9 +1,9 @@
-/* main.c  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
+/* main.c  -  Network library  -  Public Domain  -  2013 Mattias Jansson
  *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
  *
- * https://github.com/rampantpixels/network_lib
+ * https://github.com/mjansson/network_lib
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
@@ -20,7 +20,7 @@ test_socket_application(void) {
 	memset(&app, 0, sizeof(app));
 	app.name = string_const(STRING_CONST("Network socket tests"));
 	app.short_name = string_const(STRING_CONST("test_socket"));
-	app.company = string_const(STRING_CONST("Rampant Pixels"));
+	app.company = string_const(STRING_CONST(""));
 	app.flags = APPLICATION_UTILITY;
 	app.exception_handler = test_exception_handler;
 	return app;
@@ -222,15 +222,13 @@ test_socket_declare(void) {
 	ADD_TEST(udp, bind);
 }
 
-static test_suite_t test_socket_suite = {
-	test_socket_application,
-	test_socket_memory_system,
-	test_socket_foundation_config,
-	test_socket_declare,
-	test_socket_initialize,
-	test_socket_finalize,
-	0
-};
+static test_suite_t test_socket_suite = {test_socket_application,
+                                         test_socket_memory_system,
+                                         test_socket_foundation_config,
+                                         test_socket_declare,
+                                         test_socket_initialize,
+                                         test_socket_finalize,
+                                         0};
 
 #if BUILD_MONOLITHIC
 
@@ -254,4 +252,3 @@ test_suite_define(void) {
 }
 
 #endif
-

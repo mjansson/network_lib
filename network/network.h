@@ -1,9 +1,9 @@
-/* network.h  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
+/* network.h  -  Network library  -  Public Domain  -  2013 Mattias Jansson
  *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
  *
- * https://github.com/rampantpixels/network_lib
+ * https://github.com/mjansson/network_lib
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
@@ -49,8 +49,7 @@ NETWORK_API network_config_t
 network_module_config(void);
 
 NETWORK_API void
-network_module_parse_config(const char* path, size_t path_size,
-                            const char* buffer, size_t size,
+network_module_parse_config(const char* path, size_t path_size, const char* buffer, size_t size,
                             const json_token_t* tokens, size_t num_tokens);
 
 /*! Query network module build version

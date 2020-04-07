@@ -1,9 +1,9 @@
-/* main.c  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
+/* main.c  -  Network library  -  Public Domain  -  2013 Mattias Jansson
  *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
  *
- * https://github.com/rampantpixels/network_lib
+ * https://github.com/mjansson/network_lib
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
@@ -20,7 +20,7 @@ test_tcp_application(void) {
 	memset(&app, 0, sizeof(app));
 	app.name = string_const(STRING_CONST("Network TCP/IP tests"));
 	app.short_name = string_const(STRING_CONST("test_tcp"));
-	app.company = string_const(STRING_CONST("Rampant Pixels"));
+	app.company = string_const(STRING_CONST(""));
 	app.flags = APPLICATION_UTILITY;
 	app.exception_handler = test_exception_handler;
 	return app;
@@ -99,10 +99,10 @@ stream_blocking_thread(void* arg) {
 		stream_seek(stream, 59, STREAM_SEEK_CURRENT);
 		EXPECT_EQ(stream_read(stream, buffer_in, 42), 42);
 		EXPECT_EQ(stream_write(stream, buffer_out, 215), 215);
-		EXPECT_EQ(stream_write(stream, buffer_out, 1), 1); //433 bytes written
+		EXPECT_EQ(stream_write(stream, buffer_out, 1), 1);  // 433 bytes written
 		stream_flush(stream);
 		EXPECT_EQ(stream_read(stream, buffer_in, 51), 51);
-		EXPECT_EQ(stream_read(stream, buffer_in, 218), 218); //433 bytes read
+		EXPECT_EQ(stream_read(stream, buffer_in, 218), 218);  // 433 bytes read
 		thread_yield();
 	}
 
@@ -125,7 +125,7 @@ DECLARE_TEST(tcp, connect_ipv4) {
 	if (!network_supports_ipv4())
 		return 0;
 
-	//Blocking with timeout
+	// Blocking with timeout
 	sock_client = tcp_socket_allocate();
 
 	socket_set_blocking(sock_client, true);
@@ -146,7 +146,7 @@ DECLARE_TEST(tcp, connect_ipv4) {
 	network_address_array_deallocate(addresses);
 	socket_deallocate(sock_client);
 
-	//Blocking with zero timeout
+	// Blocking with zero timeout
 	success = false;
 	sock_client = tcp_socket_allocate();
 
@@ -166,14 +166,13 @@ DECLARE_TEST(tcp, connect_ipv4) {
 	if (success) {
 		EXPECT_TRUE((socket_state(sock_client) == SOCKETSTATE_CONNECTING) ||
 		            (socket_state(sock_client) == SOCKETSTATE_CONNECTED));
-	}
-	else {
+	} else {
 		EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_NOTCONNECTED);
 	}
 
 	socket_deallocate(sock_client);
 
-	//Blocking without timeout
+	// Blocking without timeout
 	success = false;
 	sock_client = tcp_socket_allocate();
 
@@ -194,7 +193,7 @@ DECLARE_TEST(tcp, connect_ipv4) {
 
 	socket_deallocate(sock_client);
 
-	//Unblocking with timeout
+	// Unblocking with timeout
 	sock_client = tcp_socket_allocate();
 
 	socket_set_blocking(sock_client, false);
@@ -215,7 +214,7 @@ DECLARE_TEST(tcp, connect_ipv4) {
 	network_address_array_deallocate(addresses);
 	socket_deallocate(sock_client);
 
-	//Unblocking with zero timeout
+	// Unblocking with zero timeout
 	success = false;
 	sock_client = tcp_socket_allocate();
 
@@ -235,14 +234,13 @@ DECLARE_TEST(tcp, connect_ipv4) {
 	if (success) {
 		EXPECT_TRUE((socket_state(sock_client) == SOCKETSTATE_CONNECTING) ||
 		            (socket_state(sock_client) == SOCKETSTATE_CONNECTED));
-	}
-	else {
+	} else {
 		EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_NOTCONNECTED);
 	}
 
 	socket_deallocate(sock_client);
 
-	//Unblocking without timeout
+	// Unblocking without timeout
 	success = false;
 	sock_client = tcp_socket_allocate();
 
@@ -276,7 +274,7 @@ DECLARE_TEST(tcp, connect_ipv6) {
 	if (!network_supports_ipv6())
 		return 0;
 
-	//Blocking with timeout
+	// Blocking with timeout
 	sock_client = tcp_socket_allocate();
 
 	socket_set_blocking(sock_client, true);
@@ -297,7 +295,7 @@ DECLARE_TEST(tcp, connect_ipv6) {
 	network_address_array_deallocate(addresses);
 	socket_deallocate(sock_client);
 
-	//Blocking without timeout
+	// Blocking without timeout
 	success = false;
 	sock_client = tcp_socket_allocate();
 
@@ -318,7 +316,7 @@ DECLARE_TEST(tcp, connect_ipv6) {
 
 	socket_deallocate(sock_client);
 
-	//Unblocking with timeout
+	// Unblocking with timeout
 	sock_client = tcp_socket_allocate();
 
 	socket_set_blocking(sock_client, false);
@@ -339,7 +337,7 @@ DECLARE_TEST(tcp, connect_ipv6) {
 	network_address_array_deallocate(addresses);
 	socket_deallocate(sock_client);
 
-	//Unblocking without timeout
+	// Unblocking without timeout
 	sock_client = tcp_socket_allocate();
 
 	socket_set_blocking(sock_client, false);
@@ -358,8 +356,7 @@ DECLARE_TEST(tcp, connect_ipv6) {
 	if (success) {
 		EXPECT_TRUE((socket_state(sock_client) == SOCKETSTATE_CONNECTING) ||
 		            (socket_state(sock_client) == SOCKETSTATE_CONNECTED));
-	}
-	else {
+	} else {
 		EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_NOTCONNECTED);
 	}
 
@@ -403,8 +400,7 @@ DECLARE_TEST(tcp, io_ipv4) {
 		}
 	}
 	EXPECT_NE(address_connect, 0);
-	network_address_ip_set_port(address_connect,
-	                            network_address_ip_port(socket_address_local(sock_listen)));
+	network_address_ip_set_port(address_connect, network_address_ip_port(socket_address_local(sock_listen)));
 	socket_set_blocking(sock_client, false);
 	socket_connect(sock_client, address_connect, 0);
 	state = socket_state(sock_client);
@@ -427,10 +423,10 @@ DECLARE_TEST(tcp, io_ipv4) {
 
 	atomic_store32(&io_completed, 0, memory_order_release);
 
-	thread_initialize(&threads[0], io_blocking_thread, sock_server, STRING_CONST("io_thread"),
-	                  THREAD_PRIORITY_NORMAL, 0);
-	thread_initialize(&threads[1], io_blocking_thread, sock_client, STRING_CONST("io_thread"),
-	                  THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[0], io_blocking_thread, sock_server, STRING_CONST("io_thread"), THREAD_PRIORITY_NORMAL,
+	                  0);
+	thread_initialize(&threads[1], io_blocking_thread, sock_client, STRING_CONST("io_thread"), THREAD_PRIORITY_NORMAL,
+	                  0);
 
 	thread_start(&threads[0]);
 	thread_start(&threads[1]);
@@ -483,8 +479,7 @@ DECLARE_TEST(tcp, io_ipv6) {
 		}
 	}
 	EXPECT_NE(address_connect, 0);
-	network_address_ip_set_port(address_connect,
-	                            network_address_ip_port(socket_address_local(sock_listen)));
+	network_address_ip_set_port(address_connect, network_address_ip_port(socket_address_local(sock_listen)));
 	socket_set_blocking(sock_client, false);
 	socket_connect(sock_client, address_connect, 0);
 	state = socket_state(sock_client);
@@ -504,10 +499,10 @@ DECLARE_TEST(tcp, io_ipv6) {
 
 	atomic_store32(&io_completed, 0, memory_order_release);
 
-	thread_initialize(&threads[0], io_blocking_thread, sock_server, STRING_CONST("io_thread"),
-	                  THREAD_PRIORITY_NORMAL, 0);
-	thread_initialize(&threads[1], io_blocking_thread, sock_client, STRING_CONST("io_thread"),
-	                  THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&threads[0], io_blocking_thread, sock_server, STRING_CONST("io_thread"), THREAD_PRIORITY_NORMAL,
+	                  0);
+	thread_initialize(&threads[1], io_blocking_thread, sock_client, STRING_CONST("io_thread"), THREAD_PRIORITY_NORMAL,
+	                  0);
 
 	thread_start(&threads[0]);
 	thread_start(&threads[1]);
@@ -560,8 +555,7 @@ DECLARE_TEST(tcp, stream_ipv4) {
 		}
 	}
 	EXPECT_NE(address_connect, 0);
-	network_address_ip_set_port(address_connect,
-	                            network_address_ip_port(socket_address_local(sock_listen)));
+	network_address_ip_set_port(address_connect, network_address_ip_port(socket_address_local(sock_listen)));
 	socket_set_blocking(sock_client, false);
 	socket_connect(sock_client, address_connect, 0);
 	state = socket_state(sock_client);
@@ -637,8 +631,7 @@ DECLARE_TEST(tcp, stream_ipv6) {
 		}
 	}
 	EXPECT_NE(address_connect, 0);
-	network_address_ip_set_port(address_connect,
-	                            network_address_ip_port(socket_address_local(sock_listen)));
+	network_address_ip_set_port(address_connect, network_address_ip_port(socket_address_local(sock_listen)));
 	socket_set_blocking(sock_client, false);
 	socket_connect(sock_client, address_connect, 0);
 	state = socket_state(sock_client);
@@ -689,15 +682,13 @@ test_tcp_declare(void) {
 	ADD_TEST(tcp, stream_ipv6);
 }
 
-static test_suite_t test_tcp_suite = {
-	test_tcp_application,
-	test_tcp_memory_system,
-	test_tcp_foundation_config,
-	test_tcp_declare,
-	test_tcp_initialize,
-	test_tcp_finalize,
-	0
-};
+static test_suite_t test_tcp_suite = {test_tcp_application,
+                                      test_tcp_memory_system,
+                                      test_tcp_foundation_config,
+                                      test_tcp_declare,
+                                      test_tcp_initialize,
+                                      test_tcp_finalize,
+                                      0};
 
 #if BUILD_MONOLITHIC
 
@@ -721,4 +712,3 @@ test_suite_define(void) {
 }
 
 #endif
-

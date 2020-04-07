@@ -1,4 +1,4 @@
-package com.rampantpixels.network.test;
+package com.maniccoder.network.test;
 
 import android.os.Bundle;
 import android.app.NativeActivity;

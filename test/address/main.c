@@ -1,9 +1,9 @@
-/* main.c  -  Network library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
+/* main.c  -  Network library  -  Public Domain  -  2013 Mattias Jansson
  *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
  *
- * https://github.com/rampantpixels/network_lib
+ * https://github.com/mjansson/network_lib
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
@@ -19,7 +19,7 @@ test_address_application(void) {
 	memset(&app, 0, sizeof(app));
 	app.name = string_const(STRING_CONST("Network address tests"));
 	app.short_name = string_const(STRING_CONST("test_address"));
-	app.company = string_const(STRING_CONST("Rampant Pixels"));
+	app.company = string_const(STRING_CONST(""));
 	app.flags = APPLICATION_UTILITY;
 	app.exception_handler = test_exception_handler;
 	return app;
@@ -30,7 +30,7 @@ test_address_memory_system(void) {
 	return memory_system_malloc();
 }
 
-static foundation_config_t 
+static foundation_config_t
 test_address_foundation_config(void) {
 	foundation_config_t config;
 	memset(&config, 0, sizeof(config));
@@ -66,8 +66,7 @@ DECLARE_TEST(address, local) {
 	EXPECT_GE(array_size(addresses), expected_addresses);
 
 	hostname = system_hostname(buffer, sizeof(buffer));
-	log_debugf(HASH_NETWORK, STRING_CONST("%u local addresses (%.*s)"), array_size(addresses),
-	           STRING_FORMAT(hostname));
+	log_debugf(HASH_NETWORK, STRING_CONST("%u local addresses (%.*s)"), array_size(addresses), STRING_FORMAT(hostname));
 	for (iaddr = 0, addrsize = array_size(addresses); iaddr < addrsize; ++iaddr) {
 		string_t address_str = network_address_to_string(buffer, sizeof(buffer), addresses[iaddr], true);
 		log_debugf(HASH_NETWORK, STRING_CONST("  %.*s"), STRING_FORMAT(address_str));
@@ -330,15 +329,13 @@ test_address_declare(void) {
 	ADD_TEST(address, family);
 }
 
-static test_suite_t test_address_suite = {
-	test_address_application,
-	test_address_memory_system,
-	test_address_foundation_config,
-	test_address_declare,
-	test_address_initialize,
-	test_address_finalize,
-	0
-};
+static test_suite_t test_address_suite = {test_address_application,
+                                          test_address_memory_system,
+                                          test_address_foundation_config,
+                                          test_address_declare,
+                                          test_address_initialize,
+                                          test_address_finalize,
+                                          0};
 
 #if BUILD_MONOLITHIC
 
@@ -362,4 +359,3 @@ test_suite_define(void) {
 }
 
 #endif
-

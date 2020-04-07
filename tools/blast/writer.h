@@ -1,9 +1,9 @@
-/* writer.h  -  Network blast tool  -  Public Domain  -  2015 Mattias Jansson / Rampant Pixels
+/* writer.h  -  Network blast tool  -  Public Domain  -  2015 Mattias Jansson
  *
  * This library provides a network abstraction built on foundation streams. The latest source code is
  * always available at
  *
- * https://github.com/rampantpixels/network_lib
+ * https://github.com/mjansson/network_lib
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
@@ -18,12 +18,12 @@ typedef void* (*write_map_fn)(blast_writer_t* writer, uint64_t offset, int size)
 typedef void (*write_unmap_fn)(blast_writer_t* writer, void* buffer, uint64_t offset, int size);
 
 struct blast_writer_t {
-	string_t         name;
-	void*            data;
-	uint64_t         size;
+	string_t name;
+	void* data;
+	uint64_t size;
 	write_prepare_fn prepare;
-	write_map_fn     map;
-	write_unmap_fn   unmap;
+	write_map_fn map;
+	write_unmap_fn unmap;
 };
 
 extern blast_writer_t*
