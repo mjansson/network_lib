@@ -184,8 +184,8 @@ struct socket_t {
 
 #define NETWORK_DECLARE_POLL_BASE \
 	unsigned int timeout;         \
-	size_t max_sockets;           \
-	size_t num_sockets
+	size_t sockets_max;           \
+	size_t sockets_count
 
 #if FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_ANDROID
 #define NETWORK_DECLARE_POLL_PLATFORM \

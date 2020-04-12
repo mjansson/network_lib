@@ -71,13 +71,13 @@ network_module_initialize(const network_config_t config) {
 
 void
 network_module_parse_config(const char* path, size_t path_size, const char* buffer, size_t size,
-                            const json_token_t* tokens, size_t num_tokens) {
+                            const json_token_t* tokens, size_t tokens_count) {
 	FOUNDATION_UNUSED(path);
 	FOUNDATION_UNUSED(path_size);
 	FOUNDATION_UNUSED(buffer);
 	FOUNDATION_UNUSED(size);
 	FOUNDATION_UNUSED(tokens);
-	FOUNDATION_UNUSED(num_tokens);
+	FOUNDATION_UNUSED(tokens_count);
 }
 
 bool

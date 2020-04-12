@@ -19,10 +19,10 @@
 #include <network/types.h>
 
 NETWORK_API network_poll_t*
-network_poll_allocate(unsigned int num_sockets);
+network_poll_allocate(unsigned int max_sockets);
 
 NETWORK_API void
-network_poll_initialize(network_poll_t* poll, unsigned int num_sockets);
+network_poll_initialize(network_poll_t* poll, unsigned int max_sockets);
 
 NETWORK_API void
 network_poll_finalize(network_poll_t* poll);
@@ -43,7 +43,7 @@ NETWORK_API bool
 network_poll_has_socket(network_poll_t* poll, socket_t* sock);
 
 NETWORK_API size_t
-network_poll_num_sockets(network_poll_t* poll);
+network_poll_sockets_count(network_poll_t* poll);
 
 NETWORK_API void
 network_poll_sockets(network_poll_t* poll, socket_t** sockets, size_t max_sockets);

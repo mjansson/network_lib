@@ -262,7 +262,7 @@ network_address_local(void) {
 	PIP_ADAPTER_ADDRESSES adapter;
 	IP_ADAPTER_ADDRESSES* adapter_address = 0;
 	unsigned long address_size = 8000;
-	int num_retries = 4;
+	int retry_count = 4;
 	unsigned long ret = 0;
 #endif
 
@@ -282,7 +282,7 @@ network_address_local(void) {
 		} else {
 			break;
 		}
-	} while (num_retries-- > 0);
+	} while (retry_count-- > 0);
 
 	if (!adapter_address || (ret != NO_ERROR)) {
 		string_const_t errmsg = system_error_message(ret);
