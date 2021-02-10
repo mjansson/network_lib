@@ -131,7 +131,7 @@ DECLARE_TEST(tcp, connect_ipv4) {
 	socket_set_blocking(sock_client, true);
 
 	success = false;
-	addresses = network_address_resolve(STRING_CONST("www.rampantpixels.com:80"));
+	addresses = network_address_resolve(STRING_CONST("www.google.com:80"));
 	start = time_current();
 	for (iaddr = 0; !success && iaddr < array_size(addresses); ++iaddr) {
 		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV4)
@@ -153,7 +153,7 @@ DECLARE_TEST(tcp, connect_ipv4) {
 	socket_set_blocking(sock_client, true);
 
 	success = false;
-	addresses = network_address_resolve(STRING_CONST("www.rampantpixels.com:80"));
+	addresses = network_address_resolve(STRING_CONST("www.google.com:80"));
 	for (iaddr = 0; iaddr < array_size(addresses); ++iaddr) {
 		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV4)
 			continue;
@@ -179,7 +179,7 @@ DECLARE_TEST(tcp, connect_ipv4) {
 	socket_set_blocking(sock_client, true);
 
 	success = false;
-	addresses = network_address_resolve(STRING_CONST("www.rampantpixels.com:80"));
+	addresses = network_address_resolve(STRING_CONST("www.google.com:80"));
 	for (iaddr = 0; iaddr < array_size(addresses); ++iaddr) {
 		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV4)
 			continue;
@@ -199,7 +199,7 @@ DECLARE_TEST(tcp, connect_ipv4) {
 	socket_set_blocking(sock_client, false);
 
 	success = false;
-	addresses = network_address_resolve(STRING_CONST("www.rampantpixels.com:80"));
+	addresses = network_address_resolve(STRING_CONST("www.google.com:80"));
 	start = time_current();
 	for (iaddr = 0; iaddr < array_size(addresses); ++iaddr) {
 		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV4)
@@ -221,7 +221,7 @@ DECLARE_TEST(tcp, connect_ipv4) {
 	socket_set_blocking(sock_client, false);
 
 	success = false;
-	addresses = network_address_resolve(STRING_CONST("www.rampantpixels.com:80"));
+	addresses = network_address_resolve(STRING_CONST("www.google.com:80"));
 	for (iaddr = 0; iaddr < array_size(addresses); ++iaddr) {
 		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV4)
 			continue;
@@ -247,7 +247,7 @@ DECLARE_TEST(tcp, connect_ipv4) {
 	socket_set_blocking(sock_client, false);
 
 	success = false;
-	addresses = network_address_resolve(STRING_CONST("www.rampantpixels.com:80"));
+	addresses = network_address_resolve(STRING_CONST("www.google.com:80"));
 	for (iaddr = 0; iaddr < array_size(addresses); ++iaddr) {
 		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV4)
 			continue;
@@ -280,7 +280,7 @@ DECLARE_TEST(tcp, connect_ipv6) {
 	socket_set_blocking(sock_client, true);
 
 	success = false;
-	addresses = network_address_resolve(STRING_CONST("www.rampantpixels.com:80"));
+	addresses = network_address_resolve(STRING_CONST("www.google.com:80"));
 	start = time_current();
 	for (iaddr = 0; iaddr < array_size(addresses); ++iaddr) {
 		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV6)
@@ -302,7 +302,7 @@ DECLARE_TEST(tcp, connect_ipv6) {
 	socket_set_blocking(sock_client, true);
 
 	success = false;
-	addresses = network_address_resolve(STRING_CONST("www.rampantpixels.com:80"));
+	addresses = network_address_resolve(STRING_CONST("www.google.com:80"));
 	for (iaddr = 0; iaddr < array_size(addresses); ++iaddr) {
 		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV6)
 			continue;
@@ -322,7 +322,7 @@ DECLARE_TEST(tcp, connect_ipv6) {
 	socket_set_blocking(sock_client, false);
 
 	success = false;
-	addresses = network_address_resolve(STRING_CONST("www.rampantpixels.com:80"));
+	addresses = network_address_resolve(STRING_CONST("www.google.com:80"));
 	start = time_current();
 	for (iaddr = 0; iaddr < array_size(addresses); ++iaddr) {
 		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV6)
@@ -343,7 +343,7 @@ DECLARE_TEST(tcp, connect_ipv6) {
 	socket_set_blocking(sock_client, false);
 
 	success = false;
-	addresses = network_address_resolve(STRING_CONST("www.rampantpixels.com:80"));
+	addresses = network_address_resolve(STRING_CONST("www.google.com:80"));
 	for (iaddr = 0; iaddr < array_size(addresses); ++iaddr) {
 		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV6)
 			continue;

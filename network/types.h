@@ -104,6 +104,7 @@ struct network_config_t {
 
 struct network_address_t {
 	NETWORK_DECLARE_NETWORK_ADDRESS;
+	struct sockaddr_storage saddr;
 };
 
 #define NETWORK_DECLARE_NETWORK_ADDRESS_IP NETWORK_DECLARE_NETWORK_ADDRESS

@@ -25,6 +25,9 @@ NETWORK_API void
 socket_deallocate(socket_t* sock);
 
 NETWORK_API bool
+socket_create(socket_t* sock);
+
+NETWORK_API bool
 socket_bind(socket_t* sock, const network_address_t* address);
 
 NETWORK_API bool
@@ -55,7 +58,8 @@ NETWORK_API void
 socket_set_reuse_port(socket_t* sock, bool reuse);
 
 NETWORK_API bool
-socket_set_multicast_group(socket_t* sock, network_address_t* address, bool allow_loopback);
+socket_set_multicast_group(socket_t* sock, const network_address_t* multicast_address,
+                           const network_address_t* local_address, bool allow_loopback);
 
 NETWORK_API const network_address_t*
 socket_address_local(const socket_t* sock);

@@ -90,11 +90,11 @@ network_module_finalize(void) {
 	if (!_network_initialized)
 		return;
 
-	log_debug(HASH_NETWORK, STRING_CONST("Terminating network services"));
-
 #if FOUNDATION_PLATFORM_WINDOWS
 	WSACleanup();
 #endif
+
+	log_debug(HASH_NETWORK, STRING_CONST("Finalized network services"));
 }
 
 network_config_t

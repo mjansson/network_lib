@@ -50,6 +50,12 @@ _socket_create_fd(socket_t* sock, network_address_family_t family) {
 	return sock->fd;
 }
 
+bool
+socket_create(socket_t* sock) {
+	_socket_create_fd(sock, sock->family);
+	return (sock->fd >= 0);
+}
+
 void
 socket_finalize(socket_t* sock) {
 	log_debugf(HASH_NETWORK, STRING_CONST("Finalizing socket (0x%" PRIfixPTR " : %d)"), (uintptr_t)sock, sock->fd);
@@ -107,6 +113,9 @@ socket_bind(socket_t* sock, const network_address_t* address) {
 		          (uintptr_t)sock, sock->fd, STRING_FORMAT(address_str), STRING_FORMAT(errmsg), sockerr);
 #endif
 	}
+
+	if (success && sock->beacon)
+		socket_set_beacon(sock, sock->beacon);
 
 	return success;
 }
@@ -349,31 +358,95 @@ socket_set_reuse_port(socket_t* sock, bool reuse) {
 }
 
 bool
-socket_set_multicast_group(socket_t* sock, network_address_t* address, bool allow_loopback) {
+socket_set_multicast_group(socket_t* sock, const network_address_t* multicast_address,
+                           const network_address_t* local_address, bool allow_loopback) {
 	unsigned char ttl = 1;
 	unsigned char loopback = (allow_loopback ? 1 : 0);
-	struct ip_mreq req;
 
-	if (sock->fd == NETWORK_SOCKET_INVALID)
+	if ((sock->fd == NETWORK_SOCKET_INVALID) || !multicast_address)
 		return false;
 
 	// TODO: TTL 1 means local network, should be split out to separate control function
 	setsockopt(sock->fd, IPPROTO_IP, IP_MULTICAST_TTL, (const char*)&ttl, sizeof(ttl));
 	setsockopt(sock->fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const char*)&loopback, sizeof(loopback));
 
-	memset(&req, 0, sizeof(req));
-	req.imr_multiaddr.s_addr = ((network_address_ipv4_t*)address)->saddr.sin_addr.s_addr;
-	req.imr_interface.s_addr = INADDR_ANY;
-	if (setsockopt(sock->fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)&req, sizeof(req)) != 0) {
-		const int sockerr = NETWORK_SOCKET_ERROR;
-		const string_const_t errmsg = system_error_message(sockerr);
-		log_errorf(HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL,
-		           STRING_CONST("Add multicast group failed on socket (0x%" PRIfixPTR " : %d): %.*s (%d)"),
-		           (uintptr_t)sock, sock->fd, STRING_FORMAT(errmsg), sockerr);
-		FOUNDATION_UNUSED(sockerr);
+	if (sock->family == NETWORK_ADDRESSFAMILY_IPV6) {
+		if ((multicast_address->family != NETWORK_ADDRESSFAMILY_IPV6) ||
+		    (local_address && (local_address->family != NETWORK_ADDRESSFAMILY_IPV6))) {
+			log_errorf(
+			    HASH_NETWORK, ERROR_INVALID_VALUE,
+			    STRING_CONST("Add multicast group failed on socket (0x%" PRIfixPTR " : %d): Invalid address family"),
+			    (uintptr_t)sock, sock->fd);
+			return false;
+		}
+
+		struct ipv6_mreq req;
+		memset(&req, 0, sizeof(req));
+		req.ipv6mr_multiaddr = ((const network_address_ipv6_t*)multicast_address)->saddr.sin6_addr;
+		if (setsockopt(sock->fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, (char*)&req, sizeof(req))) {
+			const int sockerr = NETWORK_SOCKET_ERROR;
+			const string_const_t errmsg = system_error_message(sockerr);
+			log_errorf(HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL,
+			           STRING_CONST("Add multicast group failed on socket (0x%" PRIfixPTR " : %d): %.*s (%d)"),
+			           (uintptr_t)sock, sock->fd, STRING_FORMAT(errmsg), sockerr);
+			FOUNDATION_UNUSED(sockerr);
+			return false;
+		}
+		if (local_address) {
+			unsigned int ifindex = 0;
+			if (setsockopt(sock->fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, (const char*)&ifindex, sizeof(ifindex)) != 0) {
+				const int sockerr = NETWORK_SOCKET_ERROR;
+				const string_const_t errmsg = system_error_message(sockerr);
+				log_errorf(HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL,
+				           STRING_CONST("Set multicast interface failed on socket (0x%" PRIfixPTR " : %d): %.*s (%d)"),
+				           (uintptr_t)sock, sock->fd, STRING_FORMAT(errmsg), sockerr);
+				FOUNDATION_UNUSED(sockerr);
+				return false;
+			}
+		}
+	} else if (sock->family == NETWORK_ADDRESSFAMILY_IPV4) {
+		if ((multicast_address->family != NETWORK_ADDRESSFAMILY_IPV4) ||
+		    (local_address && (local_address->family != NETWORK_ADDRESSFAMILY_IPV4))) {
+			log_errorf(
+			    HASH_NETWORK, ERROR_INVALID_VALUE,
+			    STRING_CONST("Add multicast group failed on socket (0x%" PRIfixPTR " : %d): Invalid address family"),
+			    (uintptr_t)sock, sock->fd);
+			return false;
+		}
+
+		struct ip_mreq req;
+		memset(&req, 0, sizeof(req));
+		req.imr_multiaddr.s_addr = ((const network_address_ipv4_t*)multicast_address)->saddr.sin_addr.s_addr;
+		if (local_address)
+			req.imr_interface.s_addr = ((const network_address_ipv4_t*)local_address)->saddr.sin_addr.s_addr;
+		if (setsockopt(sock->fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)&req, sizeof(req)) != 0) {
+			const int sockerr = NETWORK_SOCKET_ERROR;
+			const string_const_t errmsg = system_error_message(sockerr);
+			log_errorf(HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL,
+			           STRING_CONST("Add multicast group failed on socket (0x%" PRIfixPTR " : %d): %.*s (%d)"),
+			           (uintptr_t)sock, sock->fd, STRING_FORMAT(errmsg), sockerr);
+			FOUNDATION_UNUSED(sockerr);
+			return false;
+		}
+		if (local_address && (((const network_address_ipv4_t*)local_address)->saddr.sin_addr.s_addr != INADDR_ANY)) {
+			if (setsockopt(sock->fd, IPPROTO_IP, IP_MULTICAST_IF,
+			               (const char*)&((const network_address_ipv4_t*)local_address)->saddr.sin_addr,
+			               sizeof(((const network_address_ipv4_t*)local_address)->saddr.sin_addr)) != 0) {
+				const int sockerr = NETWORK_SOCKET_ERROR;
+				const string_const_t errmsg = system_error_message(sockerr);
+				log_errorf(HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL,
+				           STRING_CONST("Set multicast interface failed on socket (0x%" PRIfixPTR " : %d): %.*s (%d)"),
+				           (uintptr_t)sock, sock->fd, STRING_FORMAT(errmsg), sockerr);
+				FOUNDATION_UNUSED(sockerr);
+				return false;
+			}
+		}
+	} else {
+		log_errorf(HASH_NETWORK, ERROR_INVALID_VALUE,
+		           STRING_CONST("Add multicast group failed on socket (0x%" PRIfixPTR " : %d): Unknown socket family"),
+		           (uintptr_t)sock, sock->fd);
 		return false;
 	}
-
 	return true;
 }
 
@@ -755,13 +828,14 @@ socket_set_beacon(socket_t* sock, beacon_t* beacon) {
 	if (!sock->event)
 		sock->event = CreateEventA(nullptr, FALSE, FALSE, nullptr);
 	sock->beacon = beacon;
-	if (sock->beacon && (sock->state == SOCKETSTATE_LISTENING)) {
-		WSAEventSelect(sock->fd, sock->event, FD_ACCEPT);
-		beacon_add_handle(beacon, sock->event);
-	}
-	if (sock->beacon && (sock->state == SOCKETSTATE_CONNECTED)) {
-		WSAEventSelect(sock->fd, sock->event, FD_READ | FD_CLOSE);
-		beacon_add_handle(beacon, sock->event);
+	if (sock->beacon) {
+		if (sock->state == SOCKETSTATE_LISTENING) {
+			WSAEventSelect(sock->fd, sock->event, FD_ACCEPT);
+			beacon_add_handle(beacon, sock->event);
+		} else if ((sock->type == NETWORK_SOCKETTYPE_UDP) || (sock->state == SOCKETSTATE_CONNECTED)) {
+			WSAEventSelect(sock->fd, sock->event, FD_READ | FD_CLOSE);
+			beacon_add_handle(beacon, sock->event);
+		}
 	}
 #else
 	if (sock->beacon && (sock->fd != NETWORK_SOCKET_INVALID))

@@ -171,22 +171,9 @@ DECLARE_TEST(address, resolve) {
 		network_address_array_deallocate(addresses);
 	}
 
-	addresses = network_address_resolve(STRING_CONST("zion.rampantpixels.com:1234"));
-	if (has_ipv6 && (array_size(addresses) == (expected_addresses - 1))) {
-		has_ipv6 = false;
-		--expected_addresses;
-	}
-	log_debugf(HASH_NETWORK, STRING_CONST("zion.rampantpixels.com:1234 -> %u addresses"), array_size(addresses));
-	EXPECT_EQ(array_size(addresses), expected_addresses);
-	for (iaddr = 0, addrsize = array_size(addresses); iaddr < addrsize; ++iaddr) {
-		string_t address_str = network_address_to_string(buffer, sizeof(buffer), addresses[iaddr], true);
-		log_debugf(HASH_NETWORK, STRING_CONST("  %.*s"), STRING_FORMAT(address_str));
-	}
-	network_address_array_deallocate(addresses);
-
 	addresses = network_address_resolve(STRING_CONST("www.google.com"));
 	log_debugf(HASH_NETWORK, STRING_CONST("www.google.com -> %u addresses"), array_size(addresses));
-	EXPECT_GE(array_size(addresses), expected_addresses);
+	EXPECT_GE(array_size(addresses), 0);
 	for (iaddr = 0, addrsize = array_size(addresses); iaddr < addrsize; ++iaddr) {
 		string_t address_str = network_address_to_string(buffer, sizeof(buffer), addresses[iaddr], true);
 		log_debugf(HASH_NETWORK, STRING_CONST("  %.*s"), STRING_FORMAT(address_str));

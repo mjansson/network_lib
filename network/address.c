@@ -312,7 +312,7 @@ network_address_local(void) {
 				memcpy(&ipv4->saddr, unicast->Address.lpSockaddr, sizeof(struct sockaddr_in));
 
 				array_push(addresses, (network_address_t*)ipv4);
-			} else if (unicast->Address.lpSockaddr->sa_family == AF_INET6) {
+			} else if ((unicast->Address.lpSockaddr->sa_family == AF_INET6) && (unicast->DadState == NldsPreferred)) {
 				network_address_ipv6_t* ipv6 = memory_allocate(HASH_NETWORK, sizeof(network_address_ipv6_t), 0,
 				                                               MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 				ipv6->family = NETWORK_ADDRESSFAMILY_IPV6;
