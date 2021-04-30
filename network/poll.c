@@ -373,7 +373,7 @@ network_poll(network_poll_t* pollobj, network_poll_event_t* events, size_t capac
 		}
 		if ((sock->state == SOCKETSTATE_CONNECTING) && FD_ISSET(fd, &fdwrite)) {
 			update_slot = true;
-			sock->state = SOCKETSTATE_CONNECTED;
+			_socket_set_state(sock, SOCKETSTATE_CONNECTED);
 			network_poll_push_event(events, capacity, events_count, NETWORKEVENT_CONNECTED, sock);
 		}
 		if (FD_ISSET(fd, &fderr)) {

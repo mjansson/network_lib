@@ -59,6 +59,8 @@ socket_create(socket_t* sock) {
 void
 socket_finalize(socket_t* sock) {
 	log_debugf(HASH_NETWORK, STRING_CONST("Finalizing socket (0x%" PRIfixPTR " : %d)"), (uintptr_t)sock, sock->fd);
+	if (sock->beacon)
+		socket_set_beacon(sock, 0);
 	socket_close(sock);
 #if FOUNDATION_PLATFORM_WINDOWS
 	if (sock->event)
@@ -138,13 +140,13 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 	if ((timeoutms != NETWORK_TIMEOUT_INFINITE) && blocking)
 		socket_set_blocking(sock, false);
 
-	sock->state = SOCKETSTATE_CONNECTING;
+	_socket_set_state(sock, SOCKETSTATE_CONNECTING);
 
 	address_ip = (const network_address_ip_t*)address;
 	err = connect(sock->fd, &address_ip->saddr, (socklen_t)address_ip->address_size);
 	if (!err) {
 		failed = false;
-		sock->state = SOCKETSTATE_CONNECTED;
+		_socket_set_state(sock, SOCKETSTATE_CONNECTED);
 	} else {
 		bool in_progress = false;
 		err = NETWORK_SOCKET_ERROR;
@@ -184,7 +186,7 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 					if (!serr && !FD_ISSET(sock->fd, &fderr)) {
 						failed = false;
 						if (FD_ISSET(sock->fd, &fdwrite))
-							sock->state = SOCKETSTATE_CONNECTED;
+							_socket_set_state(sock, SOCKETSTATE_CONNECTED);
 					} else {
 						err = serr;
 #if BUILD_ENABLE_DEBUG_LOG
@@ -226,7 +228,7 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 		           STRING_CONST("Failed to connect TCP/IP socket (0x%" PRIfixPTR " : %d) to remote host %.*s: %.*s"),
 		           (uintptr_t)sock, sock->fd, STRING_FORMAT(address_str), STRING_FORMAT(error_message));
 #endif
-		sock->state = SOCKETSTATE_NOTCONNECTED;
+		_socket_set_state(sock, SOCKETSTATE_NOTCONNECTED);
 		return err;
 	}
 
@@ -245,9 +247,6 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 		           sock->fd, STRING_FORMAT(address_str));
 	}
 #endif
-
-	if ((sock->state == SOCKETSTATE_CONNECTED) && sock->beacon)
-		socket_set_beacon(sock, sock->beacon);
 
 	return 0;
 }
@@ -495,9 +494,7 @@ socket_poll_state(socket_t* sock) {
 				log_debugf(HASH_NETWORK, STRING_CONST("Socket (0x%" PRIfixPTR " : %d): CONNECTING -> CONNECTED"),
 				           (uintptr_t)sock, sock->fd);
 #endif
-				sock->state = SOCKETSTATE_CONNECTED;
-				if (sock->beacon)
-					socket_set_beacon(sock, sock->beacon);
+				_socket_set_state(sock, SOCKETSTATE_CONNECTED);
 			}
 			break;
 
@@ -508,7 +505,7 @@ socket_poll_state(socket_t* sock) {
 				log_debugf(HASH_NETWORK, STRING_CONST("Socket (0x%" PRIfixPTR " : %d): hangup in CONNECTED"),
 				           (uintptr_t)sock, sock->fd);
 #endif
-				sock->state = SOCKETSTATE_DISCONNECTED;
+				_socket_set_state(sock, SOCKETSTATE_DISCONNECTED);
 				// Fall through to disconnected check for close
 			} else
 				break;
@@ -745,8 +742,8 @@ socket_close(socket_t* sock) {
 	if (sock->fd != NETWORK_SOCKET_INVALID) {
 		fd = sock->fd;
 		sock->fd = NETWORK_SOCKET_INVALID;
-		sock->state = SOCKETSTATE_NOTCONNECTED;
 		sock->family = 0;
+		_socket_set_state(sock, SOCKETSTATE_NOTCONNECTED);
 	}
 
 	sock->address_local = nullptr;
@@ -835,6 +832,9 @@ socket_set_beacon(socket_t* sock, beacon_t* beacon) {
 		} else if ((sock->type == NETWORK_SOCKETTYPE_UDP) || (sock->state == SOCKETSTATE_CONNECTED)) {
 			WSAEventSelect(sock->fd, sock->event, FD_READ | FD_CLOSE);
 			beacon_add_handle(beacon, sock->event);
+		} else if ((sock->type == NETWORK_SOCKETTYPE_TCP) && (sock->state == SOCKETSTATE_CONNECTING)) {
+			WSAEventSelect(sock->fd, sock->event, FD_WRITE | FD_CLOSE);
+			beacon_add_handle(beacon, sock->event);
 		}
 	}
 #else
@@ -844,4 +844,11 @@ socket_set_beacon(socket_t* sock, beacon_t* beacon) {
 	if (sock->beacon && (sock->fd != NETWORK_SOCKET_INVALID))
 		beacon_add_fd(sock->beacon, sock->fd);
 #endif
+}
+
+void
+_socket_set_state(socket_t* sock, socket_state_t state) {
+	sock->state = state;
+	if (sock->beacon)
+		socket_set_beacon(sock, sock->beacon);
 }

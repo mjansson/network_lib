@@ -74,6 +74,9 @@ _socket_close_fd(int fd);
 NETWORK_API void
 _socket_store_address_local(socket_t* sock, int family);
 
+NETWORK_API void
+_socket_set_state(socket_t* sock, socket_state_t state);
+
 NETWORK_API int
 _socket_available_fd(int fd);
 

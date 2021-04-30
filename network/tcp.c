@@ -69,10 +69,7 @@ tcp_socket_listen(socket_t* sock) {
 	log_infof(HASH_NETWORK, STRING_CONST("Listening on TCP/IP socket (0x%" PRIfixPTR " : %d) %.*s"), (uintptr_t)sock,
 	          sock->fd, STRING_FORMAT(address));
 #endif
-	sock->state = SOCKETSTATE_LISTENING;
-
-	if (sock->beacon)
-		socket_set_beacon(sock, sock->beacon);
+	_socket_set_state(sock, SOCKETSTATE_LISTENING);
 
 	return true;
 }
@@ -157,10 +154,10 @@ tcp_socket_accept(socket_t* sock, unsigned int timeoutms) {
 	}
 
 	accepted->fd = fd;
-	accepted->state = SOCKETSTATE_CONNECTED;
 	accepted->family = address_ip->family;
 	accepted->address_remote = (network_address_t*)address_remote;
 
+	_socket_set_state(accepted, SOCKETSTATE_CONNECTED);
 	_socket_store_address_local(accepted, (int)address_ip->family);
 
 #if BUILD_ENABLE_LOG
