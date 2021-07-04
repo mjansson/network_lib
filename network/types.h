@@ -95,7 +95,7 @@ typedef void (*socket_open_fn)(socket_t*, unsigned int);
 typedef void (*socket_stream_initialize_fn)(socket_t*, stream_t*);
 
 struct network_config_t {
-	size_t _unused;
+	size_t unused;
 };
 
 #define NETWORK_DECLARE_NETWORK_ADDRESS \
@@ -111,17 +111,26 @@ struct network_address_t {
 
 typedef struct network_address_ip_t {
 	NETWORK_DECLARE_NETWORK_ADDRESS_IP;
-	struct sockaddr saddr;  // Aliased to ipv4/ipv6 struct
+	union {
+		struct sockaddr saddr;  // Aliased to ipv4/ipv6 struct
+		struct sockaddr_storage saddr_storage;
+	};
 } network_address_ip_t;
 
 typedef struct network_address_ipv4_t {
 	NETWORK_DECLARE_NETWORK_ADDRESS_IP;
-	struct sockaddr_in saddr;
+	union {
+		struct sockaddr_in saddr;
+		struct sockaddr_storage saddr_storage;
+	};
 } network_address_ipv4_t;
 
 typedef struct network_address_ipv6_t {
 	NETWORK_DECLARE_NETWORK_ADDRESS_IP;
-	struct sockaddr_in6 saddr;
+	union {
+		struct sockaddr_in6 saddr;
+		struct sockaddr_storage saddr_storage;
+	};
 } network_address_ipv6_t;
 
 struct network_poll_slot_t {
