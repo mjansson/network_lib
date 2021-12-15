@@ -18,10 +18,10 @@
 #include <foundation/windows.h>
 #endif
 
-network_config_t _network_config;
-static bool _network_initialized;
-static bool _network_supports_ipv4;
-static bool _network_supports_ipv6;
+network_config_t network_config;
+static bool network_initialized;
+static bool network_has_ipv4;
+static bool network_has_ipv6;
 
 static void
 network_initialize_config(const network_config_t config) {
@@ -32,7 +32,7 @@ int
 network_module_initialize(const network_config_t config) {
 	int fd;
 
-	if (_network_initialized)
+	if (network_initialized)
 		return 0;
 
 	network_initialize_config(config);
@@ -57,14 +57,14 @@ network_module_initialize(const network_config_t config) {
 
 	// Check support
 	fd = (int)socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	_network_supports_ipv4 = !(fd < 0);
-	_socket_close_fd(fd);
+	network_has_ipv4 = !(fd < 0);
+	socket_close_fd(fd);
 
 	fd = (int)socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
-	_network_supports_ipv6 = !(fd < 0);
-	_socket_close_fd(fd);
+	network_has_ipv6 = !(fd < 0);
+	socket_close_fd(fd);
 
-	_network_initialized = true;
+	network_initialized = true;
 
 	return 0;
 }
@@ -82,12 +82,12 @@ network_module_parse_config(const char* path, size_t path_size, const char* buff
 
 bool
 network_module_is_initialized(void) {
-	return _network_initialized;
+	return network_initialized;
 }
 
 void
 network_module_finalize(void) {
-	if (!_network_initialized)
+	if (!network_initialized)
 		return;
 
 #if FOUNDATION_PLATFORM_WINDOWS
@@ -99,15 +99,15 @@ network_module_finalize(void) {
 
 network_config_t
 network_module_config(void) {
-	return _network_config;
+	return network_config;
 }
 
 bool
 network_supports_ipv4(void) {
-	return _network_supports_ipv4;
+	return network_has_ipv4;
 }
 
 bool
 network_supports_ipv6(void) {
-	return _network_supports_ipv6;
+	return network_has_ipv6;
 }

@@ -21,10 +21,10 @@
 #endif
 
 static void
-_tcp_socket_open(socket_t*, unsigned int);
+tcp_socket_open(socket_t*, unsigned int);
 
 static void
-_tcp_stream_initialize(socket_t*, stream_t*);
+tcp_stream_initialize(socket_t*, stream_t*);
 
 socket_t*
 tcp_socket_allocate(void) {
@@ -35,11 +35,11 @@ tcp_socket_allocate(void) {
 
 void
 tcp_socket_initialize(socket_t* sock) {
-	_socket_initialize(sock);
+	socket_initialize(sock);
 
 	sock->type = NETWORK_SOCKETTYPE_TCP;
-	sock->open_fn = _tcp_socket_open;
-	sock->stream_initialize_fn = _tcp_stream_initialize;
+	sock->open_fn = tcp_socket_open;
+	sock->stream_initialize_fn = tcp_stream_initialize;
 }
 
 bool
@@ -69,10 +69,16 @@ tcp_socket_listen(socket_t* sock) {
 	log_infof(HASH_NETWORK, STRING_CONST("Listening on TCP/IP socket (0x%" PRIfixPTR " : %d) %.*s"), (uintptr_t)sock,
 	          sock->fd, STRING_FORMAT(address));
 #endif
-	_socket_set_state(sock, SOCKETSTATE_LISTENING);
+	socket_set_state(sock, SOCKETSTATE_LISTENING);
 
 	return true;
 }
+
+#if FOUNDATION_COMPILER_CLANG
+#if __has_warning("-Wreserved-identifier")
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+#endif
+#endif
 
 socket_t*
 tcp_socket_accept(socket_t* sock, unsigned int timeoutms) {
@@ -149,7 +155,7 @@ tcp_socket_accept(socket_t* sock, unsigned int timeoutms) {
 	accepted = tcp_socket_allocate();
 	if (!accepted) {
 		log_debugf(HASH_NETWORK, STRING_CONST("Unable to allocate socket for accepted fd: %d"), fd);
-		_socket_close_fd(fd);
+		socket_close_fd(fd);
 		return 0;
 	}
 
@@ -157,8 +163,8 @@ tcp_socket_accept(socket_t* sock, unsigned int timeoutms) {
 	accepted->family = address_ip->family;
 	accepted->address_remote = (network_address_t*)address_remote;
 
-	_socket_set_state(accepted, SOCKETSTATE_CONNECTED);
-	_socket_store_address_local(accepted, (int)address_ip->family);
+	socket_set_state(accepted, SOCKETSTATE_CONNECTED);
+	socket_store_address_local(accepted, (int)address_ip->family);
 
 #if BUILD_ENABLE_LOG
 	{
@@ -194,7 +200,7 @@ tcp_socket_set_delay(socket_t* sock, bool delay) {
 }
 
 static void
-_tcp_socket_open(socket_t* sock, unsigned int family) {
+tcp_socket_open(socket_t* sock, unsigned int family) {
 	if (sock->fd != NETWORK_SOCKET_INVALID)
 		return;
 
@@ -214,7 +220,7 @@ _tcp_socket_open(socket_t* sock, unsigned int family) {
 }
 
 void
-_tcp_stream_initialize(socket_t* sock, stream_t* stream) {
+tcp_stream_initialize(socket_t* sock, stream_t* stream) {
 	stream->inorder = 1;
 	stream->reliable = 1;
 	stream->path = string_allocate_format(STRING_CONST("tcp://%" PRIfixPTR), (uintptr_t)sock);

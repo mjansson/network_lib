@@ -60,25 +60,25 @@ typedef enum {
 #define NETWORK_RESOLV_ERROR NETWORK_SOCKET_ERROR
 #endif
 
-NETWORK_EXTERN network_config_t _network_config;
+NETWORK_EXTERN network_config_t network_config;
 
 NETWORK_API int
-_socket_create_fd(socket_t* sock, network_address_family_t family);
+socket_create_fd(socket_t* sock, network_address_family_t family);
 
 NETWORK_API void
-_socket_initialize(socket_t* sock);
+socket_initialize(socket_t* sock);
 
 NETWORK_API void
-_socket_close_fd(int fd);
+socket_close_fd(int fd);
 
 NETWORK_API void
-_socket_store_address_local(socket_t* sock, int family);
+socket_store_address_local(socket_t* sock, int family);
 
 NETWORK_API void
-_socket_set_state(socket_t* sock, socket_state_t state);
+socket_set_state(socket_t* sock, socket_state_t state);
 
 NETWORK_API int
-_socket_available_fd(int fd);
+socket_available_fd(int fd);
 
 NETWORK_API int
 socket_streams_initialize(void);

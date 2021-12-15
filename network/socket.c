@@ -17,10 +17,10 @@
 #include <foundation/foundation.h>
 
 static void
-_socket_set_blocking_fd(int fd, bool block);
+socket_set_blocking_fd(int fd, bool block);
 
 void
-_socket_initialize(socket_t* sock) {
+socket_initialize(socket_t* sock) {
 	memset(sock, 0, sizeof(socket_t));
 	sock->fd = NETWORK_SOCKET_INVALID;
 	sock->flags = 0;
@@ -28,7 +28,7 @@ _socket_initialize(socket_t* sock) {
 }
 
 int
-_socket_create_fd(socket_t* sock, network_address_family_t family) {
+socket_create_fd(socket_t* sock, network_address_family_t family) {
 	if (sock->fd != NETWORK_SOCKET_INVALID) {
 		if (sock->family != family) {
 			FOUNDATION_ASSERT_FAILFORMAT_LOG(
@@ -52,7 +52,7 @@ _socket_create_fd(socket_t* sock, network_address_family_t family) {
 
 bool
 socket_create(socket_t* sock) {
-	_socket_create_fd(sock, sock->family);
+	socket_create_fd(sock, sock->family);
 	return (sock->fd >= 0);
 }
 
@@ -88,13 +88,13 @@ socket_bind(socket_t* sock, const network_address_t* address) {
 
 	FOUNDATION_ASSERT(address);
 
-	if (_socket_create_fd(sock, address->family) == NETWORK_SOCKET_INVALID)
+	if (socket_create_fd(sock, address->family) == NETWORK_SOCKET_INVALID)
 		return false;
 
 	address_ip = (const network_address_ip_t*)address;
 	if (bind(sock->fd, &address_ip->saddr, (socklen_t)address_ip->address_size) == 0) {
 		// Store local address
-		_socket_store_address_local(sock, (int)address_ip->family);
+		socket_store_address_local(sock, (int)address_ip->family);
 		success = true;
 #if BUILD_ENABLE_LOG
 		{
@@ -122,8 +122,14 @@ socket_bind(socket_t* sock, const network_address_t* address) {
 	return success;
 }
 
+#if FOUNDATION_COMPILER_CLANG
+#if __has_warning("-Wreserved-identifier")
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+#endif
+#endif
+
 static int
-_socket_connect(socket_t* sock, const network_address_t* address, unsigned int timeoutms) {
+socket_connect_impl(socket_t* sock, const network_address_t* address, unsigned int timeoutms) {
 	const network_address_ip_t* address_ip;
 	bool blocking;
 	bool failed = true;
@@ -140,13 +146,13 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 	if ((timeoutms != NETWORK_TIMEOUT_INFINITE) && blocking)
 		socket_set_blocking(sock, false);
 
-	_socket_set_state(sock, SOCKETSTATE_CONNECTING);
+	socket_set_state(sock, SOCKETSTATE_CONNECTING);
 
 	address_ip = (const network_address_ip_t*)address;
 	err = connect(sock->fd, &address_ip->saddr, (socklen_t)address_ip->address_size);
 	if (!err) {
 		failed = false;
-		_socket_set_state(sock, SOCKETSTATE_CONNECTED);
+		socket_set_state(sock, SOCKETSTATE_CONNECTED);
 	} else {
 		bool in_progress = false;
 		err = NETWORK_SOCKET_ERROR;
@@ -186,7 +192,7 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 					if (!serr && !FD_ISSET(sock->fd, &fderr)) {
 						failed = false;
 						if (FD_ISSET(sock->fd, &fdwrite))
-							_socket_set_state(sock, SOCKETSTATE_CONNECTED);
+							socket_set_state(sock, SOCKETSTATE_CONNECTED);
 					} else {
 						err = serr;
 #if BUILD_ENABLE_DEBUG_LOG
@@ -228,7 +234,7 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 		           STRING_CONST("Failed to connect TCP/IP socket (0x%" PRIfixPTR " : %d) to remote host %.*s: %.*s"),
 		           (uintptr_t)sock, sock->fd, STRING_FORMAT(address_str), STRING_FORMAT(error_message));
 #endif
-		_socket_set_state(sock, SOCKETSTATE_NOTCONNECTED);
+		socket_set_state(sock, SOCKETSTATE_NOTCONNECTED);
 		return err;
 	}
 
@@ -236,7 +242,7 @@ _socket_connect(socket_t* sock, const network_address_t* address, unsigned int t
 	sock->address_remote = network_address_clone(address);
 
 	if (!sock->address_local)
-		_socket_store_address_local(sock, (int)address_ip->family);
+		socket_store_address_local(sock, (int)address_ip->family);
 
 #if BUILD_ENABLE_DEBUG_LOG
 	{
@@ -257,7 +263,7 @@ socket_connect(socket_t* sock, const network_address_t* address, unsigned int ti
 
 	FOUNDATION_ASSERT(address);
 
-	if (_socket_create_fd(sock, address->family) == NETWORK_SOCKET_INVALID)
+	if (socket_create_fd(sock, address->family) == NETWORK_SOCKET_INVALID)
 		return false;
 
 	if (sock->state != SOCKETSTATE_NOTCONNECTED) {
@@ -272,7 +278,7 @@ socket_connect(socket_t* sock, const network_address_t* address, unsigned int ti
 		return false;
 	}
 
-	err = _socket_connect(sock, address, timeoutms);
+	err = socket_connect_impl(sock, address, timeoutms);
 	if (err) {
 #if BUILD_ENABLE_LOG
 		char buffer[NETWORK_ADDRESS_NUMERIC_MAX_LENGTH];
@@ -300,7 +306,7 @@ void
 socket_set_blocking(socket_t* sock, bool block) {
 	sock->flags = (block ? sock->flags | SOCKETFLAG_BLOCKING : sock->flags & ~SOCKETFLAG_BLOCKING);
 	if (sock->fd != NETWORK_SOCKET_INVALID)
-		_socket_set_blocking_fd(sock->fd, block);
+		socket_set_blocking_fd(sock->fd, block);
 }
 
 bool
@@ -494,18 +500,18 @@ socket_poll_state(socket_t* sock) {
 				log_debugf(HASH_NETWORK, STRING_CONST("Socket (0x%" PRIfixPTR " : %d): CONNECTING -> CONNECTED"),
 				           (uintptr_t)sock, sock->fd);
 #endif
-				_socket_set_state(sock, SOCKETSTATE_CONNECTED);
+				socket_set_state(sock, SOCKETSTATE_CONNECTED);
 			}
 			break;
 
 		case SOCKETSTATE_CONNECTED:
-			available = _socket_available_fd(sock->fd);
+			available = socket_available_fd(sock->fd);
 			if (available < 0) {
 #if BUILD_ENABLE_DEBUG_LOG
 				log_debugf(HASH_NETWORK, STRING_CONST("Socket (0x%" PRIfixPTR " : %d): hangup in CONNECTED"),
 				           (uintptr_t)sock, sock->fd);
 #endif
-				_socket_set_state(sock, SOCKETSTATE_DISCONNECTED);
+				socket_set_state(sock, SOCKETSTATE_DISCONNECTED);
 				// Fall through to disconnected check for close
 			} else
 				break;
@@ -532,7 +538,7 @@ socket_fd(socket_t* sock) {
 
 size_t
 socket_available_read(const socket_t* sock) {
-	return (sock->fd != NETWORK_SOCKET_INVALID) ? (unsigned int)_socket_available_fd(sock->fd) : 0;
+	return (sock->fd != NETWORK_SOCKET_INVALID) ? (unsigned int)socket_available_fd(sock->fd) : 0;
 }
 
 size_t
@@ -709,7 +715,7 @@ socket_write(socket_t* sock, const void* buffer, size_t size) {
 
 // Returns -1 if nothing available and socket closed, 0 if nothing available but still open, >0 if data available
 int
-_socket_available_fd(int fd) {
+socket_available_fd(int fd) {
 	bool closed = false;
 	int available = 0;
 
@@ -743,7 +749,7 @@ socket_close(socket_t* sock) {
 		fd = sock->fd;
 		sock->fd = NETWORK_SOCKET_INVALID;
 		sock->family = 0;
-		_socket_set_state(sock, SOCKETSTATE_NOTCONNECTED);
+		socket_set_state(sock, SOCKETSTATE_NOTCONNECTED);
 	}
 
 	sock->address_local = nullptr;
@@ -751,8 +757,8 @@ socket_close(socket_t* sock) {
 
 	if (fd != NETWORK_SOCKET_INVALID) {
 		log_debugf(HASH_NETWORK, STRING_CONST("Closing socket (0x%" PRIfixPTR " : %d)"), (uintptr_t)sock, fd);
-		_socket_set_blocking_fd(fd, false);
-		_socket_close_fd(fd);
+		socket_set_blocking_fd(fd, false);
+		socket_close_fd(fd);
 	}
 
 	if (local_address)
@@ -762,7 +768,7 @@ socket_close(socket_t* sock) {
 }
 
 void
-_socket_close_fd(int fd) {
+socket_close_fd(int fd) {
 #if FOUNDATION_PLATFORM_WINDOWS
 	shutdown(fd, SD_BOTH);
 	closesocket(fd);
@@ -775,7 +781,7 @@ _socket_close_fd(int fd) {
 }
 
 void
-_socket_set_blocking_fd(int fd, bool block) {
+socket_set_blocking_fd(int fd, bool block) {
 #if FOUNDATION_PLATFORM_WINDOWS
 	unsigned long param = block ? 0 : 1;
 	ioctlsocket(fd, FIONBIO, &param);
@@ -788,7 +794,7 @@ _socket_set_blocking_fd(int fd, bool block) {
 }
 
 void
-_socket_store_address_local(socket_t* sock, int family) {
+socket_store_address_local(socket_t* sock, int family) {
 	network_address_ip_t* address_local = 0;
 
 	FOUNDATION_ASSERT(sock);
@@ -847,7 +853,7 @@ socket_set_beacon(socket_t* sock, beacon_t* beacon) {
 }
 
 void
-_socket_set_state(socket_t* sock, socket_state_t state) {
+socket_set_state(socket_t* sock, socket_state_t state) {
 	sock->state = state;
 	if (sock->beacon)
 		socket_set_beacon(sock, sock->beacon);

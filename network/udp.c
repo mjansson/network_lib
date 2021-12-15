@@ -16,10 +16,10 @@
 #include <foundation/foundation.h>
 
 static void
-_udp_socket_open(socket_t*, unsigned int);
+udp_socket_open(socket_t*, unsigned int);
 
 static void
-_udp_stream_initialize(socket_t*, stream_t*);
+udp_stream_initialize(socket_t*, stream_t*);
 
 socket_t*
 udp_socket_allocate(void) {
@@ -30,15 +30,15 @@ udp_socket_allocate(void) {
 
 void
 udp_socket_initialize(socket_t* sock) {
-	_socket_initialize(sock);
+	socket_initialize(sock);
 
 	sock->type = NETWORK_SOCKETTYPE_UDP;
-	sock->open_fn = _udp_socket_open;
-	sock->stream_initialize_fn = _udp_stream_initialize;
+	sock->open_fn = udp_socket_open;
+	sock->stream_initialize_fn = udp_stream_initialize;
 }
 
 static void
-_udp_socket_open(socket_t* sock, unsigned int family) {
+udp_socket_open(socket_t* sock, unsigned int family) {
 	if (sock->fd != NETWORK_SOCKET_INVALID)
 		return;
 
@@ -56,7 +56,7 @@ _udp_socket_open(socket_t* sock, unsigned int family) {
 }
 
 void
-_udp_stream_initialize(socket_t* sock, stream_t* stream) {
+udp_stream_initialize(socket_t* sock, stream_t* stream) {
 	stream->inorder = 0;
 	stream->reliable = 0;
 	stream->path = string_allocate_format(STRING_CONST("udp://%" PRIfixPTR), (uintptr_t)sock);
@@ -168,7 +168,7 @@ udp_socket_sendto(socket_t* sock, const void* buffer, size_t size, const network
 		    (uintptr_t)sock, sock->fd, sock->state);
 		return 0;
 	}
-	if (_socket_create_fd(sock, address->family) == NETWORK_SOCKET_INVALID) {
+	if (socket_create_fd(sock, address->family) == NETWORK_SOCKET_INVALID) {
 		FOUNDATION_ASSERT_FAILFORMAT_LOG(
 		    HASH_NETWORK, "Trying to datagram send from an invalid UDP socket (0x%" PRIfixPTR " : %d) in state %u",
 		    (uintptr_t)sock, sock->fd, sock->state);
@@ -215,7 +215,7 @@ udp_socket_sendto(socket_t* sock, const void* buffer, size_t size, const network
 #endif
 
 		if (!sock->address_local)
-			_socket_store_address_local(sock, (int)address->family);
+			socket_store_address_local(sock, (int)address->family);
 
 		return (size_t)ret;
 	}
