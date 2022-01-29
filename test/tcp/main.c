@@ -411,8 +411,8 @@ DECLARE_TEST(tcp, io_ipv4) {
 
 	sock_server = tcp_socket_accept(sock_listen, 0);
 
-	int client_state = socket_poll_state(sock_client);
-	int server_state = socket_poll_state(sock_server);
+	socket_state_t client_state = socket_poll_state(sock_client);
+	socket_state_t server_state = socket_poll_state(sock_server);
 	EXPECT_INTEQ(client_state, SOCKETSTATE_CONNECTED);
 	EXPECT_INTEQ(server_state, SOCKETSTATE_CONNECTED);
 
