@@ -29,6 +29,7 @@
 #include <sys/select.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <net/if.h>
 #include <netdb.h>
 #if !FOUNDATION_PLATFORM_ANDROID
 #include <ifaddrs.h>

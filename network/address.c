@@ -383,6 +383,10 @@ network_address_local(void) {
 	for (ifa = ifaddr; ifa; ifa = ifa->ifa_next) {
 		if (!ifa->ifa_addr)
 			continue;
+		if (!(ifa->ifa_flags & IFF_UP))
+			continue;
+		if (ifa->ifa_flags & IFF_POINTOPOINT)
+			continue;
 
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			network_address_ipv4_t* ipv4 = memory_allocate(HASH_NETWORK, sizeof(network_address_ipv4_t), 0,
@@ -393,11 +397,16 @@ network_address_local(void) {
 
 			array_push(addresses, (network_address_t*)ipv4);
 		} else if (ifa->ifa_addr->sa_family == AF_INET6) {
+			struct sockaddr_in6 saddr_in6;
+			memcpy(&saddr_in6, ifa->ifa_addr, sizeof(struct sockaddr_in6));
+			// Ignore link-local addresses
+			if (saddr_in6.sin6_scope_id)
+				continue;
 			network_address_ipv6_t* ipv6 = memory_allocate(HASH_NETWORK, sizeof(network_address_ipv6_t), 0,
 			                                               MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 			ipv6->family = NETWORK_ADDRESSFAMILY_IPV6;
 			ipv6->address_size = sizeof(struct sockaddr_in6);
-			memcpy(&ipv6->saddr, ifa->ifa_addr, sizeof(struct sockaddr_in6));
+			memcpy(&ipv6->saddr, &saddr_in6, sizeof(struct sockaddr_in6));
 
 			array_push(addresses, (network_address_t*)ipv6);
 		}

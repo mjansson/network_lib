@@ -66,22 +66,30 @@ DECLARE_TEST(address, local) {
 	EXPECT_GE(array_size(addresses), expected_addresses);
 
 	hostname = system_hostname(buffer, sizeof(buffer));
-	log_debugf(HASH_NETWORK, STRING_CONST("%u local addresses (%.*s)"), array_size(addresses), STRING_FORMAT(hostname));
+	log_infof(HASH_NETWORK, STRING_CONST("%u local addresses (%.*s)"), array_size(addresses), STRING_FORMAT(hostname));
 	for (iaddr = 0, addrsize = array_size(addresses); iaddr < addrsize; ++iaddr) {
 		string_t address_str = network_address_to_string(buffer, sizeof(buffer), addresses[iaddr], true);
-		log_debugf(HASH_NETWORK, STRING_CONST("  %.*s"), STRING_FORMAT(address_str));
+		log_infof(HASH_NETWORK, STRING_CONST("  %.*s"), STRING_FORMAT(address_str));
 
 		if (string_equal(STRING_ARGS(address_str), STRING_CONST("127.0.0.1")))
 			found_localhost_ipv4 = true;
 		if (string_equal(STRING_ARGS(address_str), STRING_CONST("::1")))
 			found_localhost_ipv6 = true;
+	}
 
-		memory_deallocate(addresses[iaddr]);
-
+	for (iaddr = 0, addrsize = array_size(addresses); iaddr < addrsize; ++iaddr) {
 		for (iother = iaddr + 1; iother < addrsize; ++iother) {
 			bool addr_equal = network_address_equal(addresses[iaddr], addresses[iother]);
+			if (addr_equal) {
+				char otherbuffer[512];
+				string_t address_str = network_address_to_string(buffer, sizeof(buffer), addresses[iaddr], true);
+				string_t other_address_str = network_address_to_string(otherbuffer, sizeof(otherbuffer), addresses[iother], true);
+				log_errorf(HASH_NETWORK, ERROR_INVALID_VALUE, STRING_CONST("%.*s %.*s %u"), STRING_FORMAT(address_str), STRING_FORMAT(other_address_str), addresses[iaddr]->address_size);
+			}
 			EXPECT_FALSE(addr_equal);
 		}
+
+		memory_deallocate(addresses[iaddr]);
 	}
 	array_deallocate(addresses);
 
