@@ -37,8 +37,6 @@ network_module_initialize(const network_config_t config) {
 
 	network_initialize_config(config);
 
-	log_debugf(HASH_NETWORK, STRING_CONST("Initializing network services"));
-
 #if FOUNDATION_PLATFORM_WINDOWS
 	{
 		WSADATA wsadata;
@@ -93,8 +91,6 @@ network_module_finalize(void) {
 #if FOUNDATION_PLATFORM_WINDOWS
 	WSACleanup();
 #endif
-
-	log_debug(HASH_NETWORK, STRING_CONST("Finalized network services"));
 }
 
 network_config_t
