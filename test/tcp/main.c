@@ -312,7 +312,33 @@ DECLARE_TEST(tcp, connect_ipv6) {
 	}
 	network_address_array_deallocate(addresses);
 
-	EXPECT_EQ(socket_state(sock_client), success ? SOCKETSTATE_CONNECTED : SOCKETSTATE_NOTCONNECTED);
+	if (success) {
+		EXPECT_TRUE((socket_state(sock_client) == SOCKETSTATE_CONNECTING) ||
+		            (socket_state(sock_client) == SOCKETSTATE_CONNECTED));
+	} else {
+		EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_NOTCONNECTED);
+	}
+
+	socket_deallocate(sock_client);
+
+	// Blocking with infinite timeout
+	success = false;
+	sock_client = tcp_socket_allocate();
+
+	socket_set_blocking(sock_client, true);
+
+	success = false;
+	addresses = network_address_resolve(STRING_CONST("www.google.com:80"));
+	for (iaddr = 0; iaddr < array_size(addresses); ++iaddr) {
+		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV6)
+			continue;
+
+		success = socket_connect(sock_client, addresses[iaddr], NETWORK_TIMEOUT_INFINITE);
+		break;
+	}
+	network_address_array_deallocate(addresses);
+
+	EXPECT_EQ(socket_state(sock_client), (success ? SOCKETSTATE_CONNECTED : SOCKETSTATE_NOTCONNECTED));
 
 	socket_deallocate(sock_client);
 
@@ -331,7 +357,7 @@ DECLARE_TEST(tcp, connect_ipv6) {
 		success = socket_connect(sock_client, addresses[iaddr], 5000);
 		break;
 	}
-	EXPECT_REALLE(time_elapsed(start), REAL_C(2.5));
+	EXPECT_REALLE(time_elapsed(start), REAL_C(5.5));
 	EXPECT_EQ(socket_state(sock_client), success ? SOCKETSTATE_CONNECTED : SOCKETSTATE_NOTCONNECTED);
 
 	network_address_array_deallocate(addresses);
@@ -359,6 +385,26 @@ DECLARE_TEST(tcp, connect_ipv6) {
 	} else {
 		EXPECT_EQ(socket_state(sock_client), SOCKETSTATE_NOTCONNECTED);
 	}
+
+	socket_deallocate(sock_client);
+
+	// Unblocking with infinite timeout
+	sock_client = tcp_socket_allocate();
+
+	socket_set_blocking(sock_client, false);
+
+	success = false;
+	addresses = network_address_resolve(STRING_CONST("www.google.com:80"));
+	for (iaddr = 0; iaddr < array_size(addresses); ++iaddr) {
+		if (network_address_family(addresses[iaddr]) != NETWORK_ADDRESSFAMILY_IPV6)
+			continue;
+
+		success = socket_connect(sock_client, addresses[iaddr], NETWORK_TIMEOUT_INFINITE);
+		break;
+	}
+	network_address_array_deallocate(addresses);
+
+	EXPECT_EQ(socket_state(sock_client), success ? SOCKETSTATE_CONNECTED : SOCKETSTATE_NOTCONNECTED);
 
 	socket_deallocate(sock_client);
 
