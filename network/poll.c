@@ -129,7 +129,6 @@ network_poll_add_socket(network_poll_t* pollobj, socket_t* sock) {
 		           sock->fd);
 
 		pollobj->slots[slot].sock = sock;
-		pollobj->slots[slot].fd = sock->fd;
 		++pollobj->sockets_count;
 
 		network_poll_update_slot(pollobj, slot, sock);
