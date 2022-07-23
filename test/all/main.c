@@ -220,6 +220,8 @@ extern int
 test_tcp_run(void);
 extern int
 test_udp_run(void);
+extern int
+test_poll_run(void);
 typedef int (*test_run_fn)(void);
 
 static void*
@@ -330,7 +332,7 @@ main_run(void* main_arg) {
 
 #if BUILD_MONOLITHIC
 
-	test_run_fn tests[] = { test_address_run, test_socket_run, test_tcp_run, test_udp_run, 0};
+	test_run_fn tests[] = { test_address_run, test_socket_run, test_tcp_run, test_udp_run, test_poll_run, 0};
 
 #if FOUNDATION_PLATFORM_ANDROID
 

@@ -35,7 +35,7 @@ if target.is_windows():
 #    generator.bin('blast', ['main.c', 'client.c', 'reader.c', 'server.c', 'writer.c'], 'blast', basepath = 'tools', implicit_deps = [network_lib], dependlibs = dependlibs, libs = ['network'] + extralibs, configs = configs)
 
 test_cases = [
-  'address', 'socket', 'tcp', 'udp'
+  'address', 'socket', 'tcp', 'udp', 'poll'
 ]
 if toolchain.is_monolithic() or target.is_ios() or target.is_android() or target.is_tizen():
   #Build one fat binary with all test cases
