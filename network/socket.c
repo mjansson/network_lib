@@ -679,10 +679,12 @@ socket_write(socket_t* sock, const void* buffer, size_t size) {
 			if (sockerr == EAGAIN)
 #endif
 			{
-				log_warnf(HASH_NETWORK, WARNING_SUSPICIOUS,
-				          STRING_CONST("Partial socket send() on (0x%" PRIfixPTR " : %d): %" PRIsize " of %" PRIsize
-				                       " bytes written to socket (SO_ERROR %d)"),
-				          (uintptr_t)sock, sock->fd, total_write, size, serr);
+				if (serr) {
+					log_warnf(HASH_NETWORK, WARNING_SUSPICIOUS,
+					          STRING_CONST("Partial socket send() on (0x%" PRIfixPTR " : %d): %" PRIsize " of %" PRIsize
+					                       " bytes written to socket (SO_ERROR %d)"),
+					          (uintptr_t)sock, sock->fd, total_write, size, serr);
+				}
 			} else {
 				const string_const_t errstr = system_error_message(sockerr);
 				log_warnf(
