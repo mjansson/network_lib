@@ -108,14 +108,19 @@ network_poll_update_slot(network_poll_t* pollobj, size_t slot, socket_t* sock) {
 	if (pollobj->slots[slot].fd != sock->fd) {
 		add = true;
 		if (pollobj->slots[slot].fd != NETWORK_SOCKET_INVALID) {
-			epoll_ctl(pollobj->fd_poll, EPOLL_CTL_DEL, pollobj->slots[slot].fd, &event);
+			if (epoll_ctl(pollobj->fd_poll, EPOLL_CTL_DEL, pollobj->slots[slot].fd, &event) < 0)
+				log_errorf(HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Network poll: Failed deleting socket fd %d"),
+				           pollobj->slots[slot].fd);
 			pollobj->slots[slot].fd = NETWORK_SOCKET_INVALID;
 		}
 	}
 	if (sock->fd != NETWORK_SOCKET_INVALID) {
 		event.events = ((sock->state == SOCKETSTATE_CONNECTING) ? EPOLLOUT : EPOLLIN) | EPOLLERR | EPOLLHUP;
 		event.data.fd = (int)slot;
-		epoll_ctl(pollobj->fd_poll, add ? EPOLL_CTL_ADD : EPOLL_CTL_MOD, sock->fd, &event);
+		if (epoll_ctl(pollobj->fd_poll, add ? EPOLL_CTL_ADD : EPOLL_CTL_MOD, sock->fd, &event) < 0) {
+			log_errorf(HASH_NETWORK, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Network poll: Failed %s socket (0x%" PRIfixPTR " : %d)"),
+			           add ? "adding" : "modifying", (uintptr_t)sock, sock->fd);
+		}
 	}
 #endif
 	pollobj->slots[slot].fd = sock->fd;
@@ -129,6 +134,7 @@ network_poll_add_socket(network_poll_t* pollobj, socket_t* sock) {
 		           sock->fd);
 
 		pollobj->slots[slot].sock = sock;
+		pollobj->slots[slot].fd = NETWORK_SOCKET_INVALID;
 		++pollobj->sockets_count;
 
 		network_poll_update_slot(pollobj, slot, sock);

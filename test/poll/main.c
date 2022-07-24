@@ -52,7 +52,11 @@ test_poll_finalize(void) {
 }
 
 DECLARE_TEST(poll, poll) {
-	socket_t* sock_tcp[2] = {tcp_socket_allocate(), tcp_socket_allocate()};
+	//log_set_suppress(HASH_NETWORK, ERRORLEVEL_NONE);
+
+	network_poll_event_t event[64];
+	size_t event_capacity = sizeof(event) / sizeof(event[0]);
+
 	socket_t* sock_udp[2] = {udp_socket_allocate(), udp_socket_allocate()};
 
 	network_poll_t* poll = network_poll_allocate(1024);
@@ -62,25 +66,77 @@ DECLARE_TEST(poll, poll) {
 	socket_bind(sock_udp[1], local_address[0]);
 	network_address_array_deallocate(local_address);
 
-	network_poll_add_socket(poll, sock_udp[0]);
-	network_poll_add_socket(poll, sock_udp[1]);
+	EXPECT_TRUE(network_poll_add_socket(poll, sock_udp[0]));
+	EXPECT_TRUE(network_poll_add_socket(poll, sock_udp[1]));
 
 	uint64_t data = HASH_NETWORK;
 	udp_socket_sendto(sock_udp[0], &data, sizeof(data), socket_address_local(sock_udp[1]));
 
-	network_poll_event_t event[64];
-	size_t event_capacity = sizeof(event) / sizeof(event[0]);
 	size_t event_count = network_poll(poll, event, event_capacity, NETWORK_TIMEOUT_INFINITE);
 	EXPECT_EQ(event_count, 1);
 	EXPECT_EQ(event[0].event, NETWORKEVENT_DATAIN);
 	EXPECT_EQ(event[0].socket, sock_udp[1]);
 
-	network_poll_deallocate(poll);
+	event_count = network_poll(poll, event, event_capacity, NETWORK_TIMEOUT_INFINITE);
+	EXPECT_EQ(event_count, 1);
+	EXPECT_EQ(event[0].event, NETWORKEVENT_DATAIN);
+	EXPECT_EQ(event[0].socket, sock_udp[1]);
 
-	socket_deallocate(sock_tcp[0]);
-	socket_deallocate(sock_tcp[1]);
+	const network_address_t* addr;
+	uint64_t data_read = 0;
+	size_t read = udp_socket_recvfrom(sock_udp[1], &data_read, sizeof(data_read), &addr);
+	EXPECT_EQ(read, sizeof(uint64_t));
+	EXPECT_EQ(data_read, HASH_NETWORK);
+	EXPECT_TRUE(network_address_equal(addr, socket_address_local(sock_udp[0])));
+
+	udp_socket_sendto(sock_udp[0], &data, sizeof(data), socket_address_local(sock_udp[1]));
+	udp_socket_sendto(sock_udp[1], &data, sizeof(data), socket_address_local(sock_udp[0]));
+
+	event_count = network_poll(poll, event, event_capacity, NETWORK_TIMEOUT_INFINITE);
+	EXPECT_EQ(event_count, 2);
+	EXPECT_EQ(event[0].event, NETWORKEVENT_DATAIN);
+	EXPECT_EQ(event[1].event, NETWORKEVENT_DATAIN);
+
+	network_poll_deallocate(poll);
 	socket_deallocate(sock_udp[0]);
 	socket_deallocate(sock_udp[1]);
+
+	socket_t* sock_tcp[2] = {tcp_socket_allocate(), tcp_socket_allocate()};
+
+	poll = network_poll_allocate(1024);
+
+	local_address = network_address_local();
+	socket_bind(sock_tcp[0], local_address[0]);
+	socket_bind(sock_tcp[1], local_address[0]);
+	network_address_array_deallocate(local_address);
+
+	tcp_socket_set_delay(sock_tcp[0], false);
+	tcp_socket_set_delay(sock_tcp[1], false);
+
+	socket_set_blocking(sock_tcp[0], false);
+	socket_set_blocking(sock_tcp[1], false);
+
+	EXPECT_TRUE(tcp_socket_listen(sock_tcp[0]));
+	EXPECT_TRUE(network_poll_add_socket(poll, sock_tcp[0]));
+
+	EXPECT_TRUE(socket_connect(sock_tcp[1], socket_address_local(sock_tcp[0]), 0));
+	EXPECT_TRUE(network_poll_add_socket(poll, sock_tcp[1]));
+
+	event_count = network_poll(poll, event, event_capacity, NETWORK_TIMEOUT_INFINITE);
+	EXPECT_EQ(event_count, 2);
+	EXPECT_EQ(event[0].event, NETWORKEVENT_CONNECTION);
+	EXPECT_EQ(event[0].socket, sock_tcp[0]);
+	EXPECT_EQ(event[1].event, NETWORKEVENT_CONNECTED);
+	EXPECT_EQ(event[1].socket, sock_tcp[1]);
+
+	socket_t* sock_connected = tcp_socket_accept(sock_tcp[0], 0);
+	EXPECT_NE(sock_connected, 0);
+	socket_deallocate(sock_connected);
+
+	network_poll_deallocate(poll);
+	socket_deallocate(sock_tcp[0]);
+	socket_deallocate(sock_tcp[1]);
+
 	return 0;
 }
 
